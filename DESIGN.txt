@@ -20,29 +20,115 @@ Purpose:
 
 How to Run:
 ---------
-    <Placeholder>
-    Testing
+    
 
 Structure:
 -------
     <Placeholder>
 
-    Files:
+    Files:        
+        .gitignore - Lists the regexps for file names to ignore when
+            committing to git.
+
+        DESIGN.txt - You're reading it right now.
+        LICENSE.txt - Code License
+        README.rst - Readme file. Format is such that git can parse it.
+
+        copy_to_django.sql 
+        dev.sh
+        initial_data.json
+
+        The following files are created by Django
+
+        __init__.py - Must remain empty. Tells Python that directory
+            should be considered a Python package. 
+        manage.py - Command-line utility for interacting with the
+            project.
+        settings.py - Settings/configurations for the project. 
+        urls.py - URL declarations for the project.
+
+
+        graph/ - Contains files for accessing the databases for
+            building the graphs.
+
+
+            __init__.py - Must remain empty. Declares directory as a
+                Python package.
+            admin.py - Manages Administration part of the
+                database. Allows editing from within Django.
+            context_processors.py
+            daemon.py
+            fake_rhizome_profiles.py - Contains dummied data for
+                testing. Resembles data from an Energy Monitor.
+            models.py - Defines database layout
+            tests.py - Holds tests for use by manage.py in the root
+                folder. Is effectively ignorable, just created
+                by Django.
+            urls.py - Contains regular expressions for parsing URLS
+                such that they can access the database
+                appropriately. 
+            views.py - Contains information on creating the webpages
+
+
+            management/ - Empty package besides its contained
+                commands...
+
+            management/commands/
+                __init__.py - Declares directory as python package
+                create_power_averages.py - Inserts missing power
+                    averages for all sensors, based on sensor readings
+                    already in the database
+                develdb.py - Set up the environment for development
+                    testing. Changes sensor settings to energyfaker's
+                    settings rather than real settings
+                energyfaker.py - Imitates the Energy Monitoring
+                    devices so that the system can be tested without
+                    using the real monitors.
+                energymon.py - Connects to the energy monitoring
+                    devices. 
+
+
+        static/ - Contains files for creating displays of graphs
+
+            dynamic_graph.js -
+            loading.gif - The animation for the loading bar
+            mon_status.js - 
+            screen.css - Contains styles for the entire site
+            static_graph.js -
+            static_graph_form.js -
+
+            flot/ - Javascript plotting library for jQuery
+                
+            jquery-ui/ - 
+
+
+        templates/ - Contains html pages to be used as templates.
+
+
     Data Structures:
     Important Algorithms:
 
 Limitations: 
 ---------
     Django requires a pre-Python 3.x installation
-    Devices send data every 10 seconds, thus all computation must be faster than 10 seconds.
+    Devices send data every 10 seconds, thus all computation must be
+        faster than 10 seconds.
     Devices can not accept more than one connection at a time.
+    When downloading the data, json format is not human readable
+    There is a large amount of data, such that backing it up takes 30
+        minutes, which is unacceptable given the device limitation
+        earlier. 
+    Data is currently only stored on the server itself.
 
 
 Possible Improvements:
 ------------------
-- Watch the data coming in and figure out if a sensor has gone crazy/offline
-- Re-design the website with all features in mind to create a efficient user experience
-- Update some of the software packages used (e.g. Python 2.6 change to Python 2.7)
-- Automate data backup
-- Make the code easier to expand to more sensors
-- Rework the download script
+    Watch the data coming in and figure out if a sensor has gone
+        crazy/offline 
+    Re-design the website with all features in mind to create a
+        efficient user experience 
+    Update some of the software packages used (e.g. Python 2.6 change
+        to Python 2.7) 
+    Automate data backup
+    Make the code easier to expand to more sensors 
+    Rework the download script 
