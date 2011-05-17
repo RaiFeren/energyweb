@@ -33,6 +33,10 @@ Structure:
 
 Limitations: 
 ---------
+    Django requires a pre-Python 3.x installation
+    Devices send data every 10 seconds, thus all computation must be faster than 10 seconds.
+    Devices can not accept more than one connection at a time.
+
 
 Possible Improvements:
 ------------------
