@@ -1,0 +1,38 @@
+==========
+Design of energyweb -- The Energy Monitoring System for Harvey Mudd College
+==========
+
+Authors of Program:
+    Chandler May - chandler_may@hmc.edu
+    Beryl Egerter - beryl_egerter@hmc.edu
+    Rai Feren - rai_feren@hmc.edu
+
+==========
+
+Purpose:
+------
+    For monitoring the energy usage of the various buildings on Harvey
+    Mudd College. This system creates a website on which users can
+    view a graph that displays the readings from the energy
+    monitors. Graphs can be either updating in real time but
+    constrained time periods, or user specified static graphs.
+
+
+How to Run:
+---------
+    <Placeholder>
+
+
+Structure:
+-------
+    <Placeholder>
+
+    Files:
+    Data Structures:
+    Important Algorithms:
+
+Limitations: 
+---------
+
+Possible Improvements:
+------------------
