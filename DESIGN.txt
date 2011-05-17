@@ -36,3 +36,9 @@ Limitations:
 
 Possible Improvements:
 ------------------
+- Watch the data coming in and figure out if a sensor has gone crazy/offline
+- Re-design the website with all features in mind to create a efficient user experience
+- Update some of the software packages used (e.g. Python 2.6 change to Python 2.7)
+- Automate data backup
+- Make the code easier to expand to more sensors
+- Rework the download script
