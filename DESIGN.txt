@@ -3,9 +3,12 @@ Design of energyweb -- The Energy Monitoring System for Harvey Mudd College
 ==========
 
 Authors of Program:
-    Chandler May - chandler_may@hmc.edu
-    Beryl Egerter - beryl_egerter@hmc.edu
-    Rai Feren - rai_feren@hmc.edu
+------------------
+
+    Chandler May, HMC '11 - cjmay4754@gmail.com
+
+    Beryl Egerter, HMC '13 - beryl_egerter@hmc.edu
+    Rai Feren, HMC '13 - rai_feren@hmc.edu
 
 ==========
 
@@ -17,16 +20,37 @@ Purpose:
     monitors. Graphs can be either updating in real time but
     constrained time periods, or user specified static graphs.
 
+==========
 
 How to Run:
 ---------
-    
+    dev.sh contains useful functions.
+
+    ./dev.sh init 
+        Puts the server in a development environment. Will create a
+        database with "development-friendly data"
+    ./dev.sh start
+        Starts all monitors
+    ./dev.sh stop
+        Stops all monitors
+    ./dev.sh restart
+        Restarts all monitors
+
+    If the monitors stop working, do hard resets, then ssh in and
+    ./dev restart
+
+    manage.py is for interacting with the Django framework. As you
+    might notice by looking at dev.sh, dev.sh simply calls manage.py
+    with various arguments. Look up Django to see how manage.py
+    works...
+
+==========
 
 Structure:
 -------
-    <Placeholder>
 
     Files:        
+    -----
         .gitignore - Lists the regexps for file names to ignore when
             committing to git.
 
@@ -34,9 +58,15 @@ Structure:
         LICENSE.txt - Code License
         README.rst - Readme file. Format is such that git can parse it.
 
-        copy_to_django.sql 
-        dev.sh
-        initial_data.json
+        copy_to_django.sql - Apparently exists to transition from an
+            older version of energyweb to the Django database. Unsure
+            if it still has any purposeful functionality.
+        dev.sh - Script for managing the server. Able to start, stop,
+            and restart the monitors. Also can boot into testing mode.
+        initial_data.json - Associates Dorms with colors, as well as
+            identifying which sensors are with which dorms, what IP
+            addresses each sensor has, and what the multiplicative
+            factor is.
 
         The following files are created by Django
 
@@ -90,23 +120,56 @@ Structure:
 
         static/ - Contains files for creating displays of graphs
 
-            dynamic_graph.js -
+            dynamic_graph.js - Reads data from the database and posts
+                it to the website for the dynamic graph
             loading.gif - The animation for the loading bar
-            mon_status.js - 
+            mon_status.js - Reads data from the database and posts it
+                to the website for the table of statistics beneath the
+                dynamic graph
             screen.css - Contains styles for the entire site
-            static_graph.js -
-            static_graph_form.js -
+            static_graph.js - Draws the "custom graph"
+            static_graph_form.js - Gets data from the website for
+                drawing the graph
 
             flot/ - Javascript plotting library for jQuery
                 
             jquery-ui/ - 
 
 
-        templates/ - Contains html pages to be used as templates.
+        templates/ - Contains html pages to be used as
+            templates. Pages are marked using template formatting.
+
+            404.html - Displays when an invalid URL is entered
+            500.html - Default error page
+            base.html - Template for entire website. Page specific
+                information is entered in the {} areas
+
+            graph/ - Contains contents for filling in the templates
+                data_interface.html - Contents for the Custom Graph,
+                    specifically the page where it queries the user
+                    about what time frame they'd like to examine.
+                dynamic_graph.html - Contents for the Home
+                    Graph. Creates an empty div to be filled in via
+                    Javascript, and then creates the table of energy
+                    statistics 
+                mon_status.html - Creates the table for reporting
+                    statistics on how long it takes for the system to
+                    receive data from sensors.
+                static_graph.html - Creates an empty div for
+                    Javascript to fill in for the Custom Graph.
+                static_graph_form.html - Creates the user input form
+                    for the custom graph. This is for specifying the
+                    time frame to look at.
 
 
-    Data Structures:
+    Data Structures: 
+    ---------------
+        Most important data is stored in a SQL database. 
+
     Important Algorithms:
+    ---------------------
+
+==========
 
 Limitations: 
 ---------
@@ -119,16 +182,19 @@ Limitations:
         minutes, which is unacceptable given the device limitation
         earlier. 
     Data is currently only stored on the server itself.
+    System is unable to recognize when a sensor is down.
 
+==========
 
 Possible Improvements:
 ------------------
     Watch the data coming in and figure out if a sensor has gone
-        crazy/offline 
+        crazy/offline then send notification in some way.
     Re-design the website with all features in mind to create a
         efficient user experience 
     Update some of the software packages used (e.g. Python 2.6 change
         to Python 2.7) 
     Automate data backup
-    Make the code easier to expand to more sensors 
+    Make the code more modular for expand to more sensors 
     Rework the download script 
+    Rework on ways to backup data
