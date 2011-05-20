@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 class SensorGroup(models.Model):
     name = models.CharField(max_length=32, unique=True)
-    color = models.CharField(max_length=6)
+    color = models.CharField(max_length=6) # color rendered on graph
 
     def __unicode__(self):
         return self.name
@@ -30,21 +30,27 @@ class SensorReading(models.Model):
     sensor = models.ForeignKey(Sensor)
     reading_time = models.DateTimeField(db_index=True)
     rindex = models.PositiveSmallIntegerField()
+
     awatthr = models.PositiveIntegerField()
     bwatthr = models.PositiveIntegerField()
     cwatthr = models.PositiveIntegerField()
+
     avarhr = models.PositiveIntegerField()
     bvarhr = models.PositiveIntegerField()
     cvarhr = models.PositiveIntegerField()
+
     avahr = models.PositiveIntegerField()
     bvahr = models.PositiveIntegerField()
     cvahr = models.PositiveIntegerField()
+
     airms = models.PositiveIntegerField()
     birms = models.PositiveIntegerField()
     cirms = models.PositiveIntegerField()
+
     avrms = models.PositiveIntegerField()
     bvrms = models.PositiveIntegerField()
     cvrms = models.PositiveIntegerField()
+
     freq = models.PositiveIntegerField()
     tempc = models.IntegerField()
 
@@ -80,6 +86,7 @@ class PowerAverage(models.Model):
     first_reading_time = models.DateTimeField()
     last_reading_time = models.DateTimeField()
     trunc_reading_time = models.DateTimeField(db_index=True)
+
     sensor = models.ForeignKey(Sensor)
     num_points = models.PositiveIntegerField()
     watts = models.FloatField()
@@ -237,13 +244,16 @@ class PowerAverage(models.Model):
 
 class SRProfile(models.Model):
     sensor_reading = models.ForeignKey(SensorReading)
+
     power_average_inserts = models.IntegerField()
     power_average_updates = models.IntegerField()
+
     transaction_time = models.IntegerField()
 
 
 class Setting(models.Model):
     VALUE_TYPE_CHOICES = (('bool', 'Boolean'),)
+
     name = models.CharField(max_length=32, unique=True)
     value_type = models.CharField(max_length=32, choices=VALUE_TYPE_CHOICES)
     value = models.TextField(blank=True)

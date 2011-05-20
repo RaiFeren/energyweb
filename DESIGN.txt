@@ -5,10 +5,10 @@ Design of energyweb -- The Energy Monitoring System for Harvey Mudd College
 Authors of Program:
 ------------------
 
-    Chandler May, HMC '11 - cjmay4754@gmail.com
+    Chandler May, HMC Math '11 - cjmay4754@gmail.com
 
-    Beryl Egerter, HMC '13 - beryl_egerter@hmc.edu
-    Rai Feren, HMC '13 - rai_feren@hmc.edu
+    Beryl Egerter, HMC CS '13 - beryl_egerter@hmc.edu
+    Rai Feren, HMC CS '13 - rai_feren@hmc.edu
 
 ==========
 
@@ -21,10 +21,44 @@ Purpose:
     constrained time periods, or user specified static graphs.
 
 ==========
+HOW TO USE
+==========
+
+How to use git:
+----------
+    Work is hosted on github. This allows for open source
+    collaboration.
+
+    Follow git's documentation for forking the project and installing
+    git if necessary. The following will assume you already have a
+    copy cloned to your computer.
+
+    If a file has been added or changed, execute the following
+    commands
+
+        git add <FILENAME>
+            Yes, use add EVEN when changing or deleting a file. This
+            adds it to the list of things to be committed.
+        git commit
+            This will open up your default editor. Place a Subject
+            line on the first line, then have a blank line, then
+            whatever your update message is.
+            This command seems to exist mostly to set the commit
+            message.
+        git push
+            This command actually sends it to the git server.
+
+    If a file has been changed on git, execute the following command
+    
+        git pull
 
 How to Run:
 ---------
-    dev.sh contains useful functions.
+    First off, make sure you are logged into the server as energy.
+    May need to execute
+        sudo su - energy
+
+    Once you're in...
 
     ./dev.sh init 
         Puts the server in a development environment. Will create a
@@ -44,10 +78,20 @@ How to Run:
     with various arguments. Look up Django to see how manage.py
     works...
 
-==========
+    ./backup.sh
+        Will backup the PostgreSQL database on the machine. 
+        Then saves the data in the format
+        energy.TIME.sql.gz where TIME is
+            4 digits for year
+            2 digits for month
+            2 digits for day
+            2 digits for minute
+            2 digits for hour
 
-Structure:
--------
+
+==========
+STRUCTURE
+==========
 
     Files:        
     -----
@@ -61,6 +105,7 @@ Structure:
         copy_to_django.sql - Apparently exists to transition from an
             older version of energyweb to the Django database. Unsure
             if it still has any purposeful functionality.
+        backup.sh - Script for backing up the server.
         dev.sh - Script for managing the server. Able to start, stop,
             and restart the monitors. Also can boot into testing mode.
         initial_data.json - Associates Dorms with colors, as well as
@@ -100,8 +145,7 @@ Structure:
             views.py - Contains information on creating the webpages
 
 
-            management/ - Empty package besides its contained
-                commands...
+            management/ - Contains commands for use by Django
 
             management/commands/
                 __init__.py - Declares directory as python package
@@ -112,8 +156,7 @@ Structure:
                     testing. Changes sensor settings to energyfaker's
                     settings rather than real settings
                 energyfaker.py - Imitates the Energy Monitoring
-                    devices so that the system can be tested without
-                    using the real monitors.
+                    devices.
                 energymon.py - Connects to the energy monitoring
                     devices. 
 
@@ -133,7 +176,7 @@ Structure:
 
             flot/ - Javascript plotting library for jQuery
                 
-            jquery-ui/ - 
+            jquery-ui/ - Library for the Web User Interface
 
 
         templates/ - Contains html pages to be used as
@@ -164,15 +207,16 @@ Structure:
 
     Data Structures: 
     ---------------
-        Most important data is stored in a SQL database. 
+        Most important data is stored in a SQL database.
+        
 
     Important Algorithms:
     ---------------------
 
 ==========
+LIMITATIONS
+==========
 
-Limitations: 
----------
     Django requires a pre-Python 3.x installation
     Devices send data every 10 seconds, thus all computation must be
         faster than 10 seconds.
@@ -185,9 +229,9 @@ Limitations:
     System is unable to recognize when a sensor is down.
 
 ==========
+POSSIBLE IMPROVEMENTS
+==========
 
-Possible Improvements:
-------------------
     Watch the data coming in and figure out if a sensor has gone
         crazy/offline then send notification in some way.
     Re-design the website with all features in mind to create a

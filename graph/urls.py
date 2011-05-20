@@ -1,3 +1,8 @@
+"""
+Contains regexs for the URLS.
+Used so the graphs can parse URL into input for the graphing functions
+"""
+
 from django.conf.urls.defaults import *
 from django.conf import settings
 
