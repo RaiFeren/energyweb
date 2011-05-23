@@ -5,6 +5,11 @@ $(function () {
     var desired_first_record = null;
     var sg_xy_pairs = {};
     var sensor_groups = null;
+
+    function kw_tickformatter(val, axis) {
+        // Workaround to get units on the y axis
+        return val + " kW";
+    }
     
     function array_index_of(ar, x) {
         // (IE doesn't have Array.indexOf)
@@ -139,6 +144,36 @@ $(function () {
                     rnd(group_month_average));
             }
         }
+        // Finally, make the graph
+        graph_opts = {
+            series: {
+                lines: {show: true},
+                points: {show: false}
+            },
+            legend: {
+                show: true,
+                position: 'ne',
+                backgroundOpacity: 0.6,
+                noColumns: sensor_groups.length
+            },
+            yaxis: {
+                min: 0,
+                tickFormatter: kw_tickformatter,
+            },
+            xaxis: {
+                min: desired_first_record,
+                mode: 'time',
+                timeformat: '%h:%M %p',
+                twelveHourClock: true
+            },
+            grid: {
+                show: true,
+                color: '#d0d0d0',
+                borderColor: '#bbbbbb',
+                backgroundColor: { colors: ['#dbefff', '#ffffff']}
+            }
+        };
+        $.plot($('#graph'), series, graph_opts);
     
         if (first_time) {
             first_time = false;
@@ -151,7 +186,10 @@ $(function () {
         $.getJSON(data_url, refreshdata_json_cb);
     }
 
-    // Initially, hide the table
+    // Initially, hide the table and show a loading animation instead of
+    // the graph
     $('#energystats').hide();
+    $('#graph').append(
+        '<img class="loading" src="' + MEDIA_URL + 'loading.gif" />');
     refreshdata();
 });
