@@ -1,17 +1,16 @@
 {% extends "base.html" %}
 
-{% block title %}Energy Usage at Mudd: Energy Statistics{% endblock %}
+{% block title %}Energy Usage at Mudd{% endblock %}
 
 {% block morehead %}
 <script language="javascript" type="text/javascript">
     var MEDIA_URL = "{{ MEDIA_URL }}";
     var data_url = "{{ data_url }}";
 </script>
-<script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}energy_statistics_table.js"></script>
+<script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}dynamic_graph.js"></script>
 {% endblock %}
 
 {% block content %}
-
 <div id="graph"></div>
 
 <table class="center" id="energystats">
@@ -82,36 +81,6 @@
             {% endfor %}
         </tr>
     </tbody>
-</table>
-
-New table:
-<table class="center" id="energystats2">
-  <thead>
-    <tr>
-      <th>Dorm</th>
-      <th>Current Power Use (kW)</th>
-      <th>Average since Monday (kW)</th>
-      <th>Average this month (kW)</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for sg in sensor_groups %} <!--Iterate over dorms to put name,
-  3 readings into graph-->
-    <tr>
-      <th>
-	<!--Variable for building name here-->
-      </th>
-      <th>
-	<!--Variable for curr power here-->
-      </th>
-      <th>
-	<!--Variable for avg since Mon here-->
-      </th>
-      <th>
-	<!--Variable for avg this month here -->
-      </th>
-    </tr>
-    {% endfor %}   
 </table>
 
 {% endblock %}
