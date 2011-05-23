@@ -148,17 +148,17 @@ def _get_sensor_groups():
 
 def data_interface(request):
     '''
-    A mostly static-HTML view explaining the public data interface.
+    A view returning the HTML for the dynamic (home-page) graph.
+    (This graph represents the last three hours and updates
+    automatically.)
     '''
-    return render_to_response('graph/data_interface.html', 
-        {'interface_url_template': 
-             '/graph/static/<start>/to/<end>/<res>/data.json',
-         'interface_start_placeholder': '<start>',
-         'interface_end_placeholder': '<end>',
-         'interface_res_placeholder': '<res>',
-         'interface_junk_suffix': '?junk=<junk>',
-         'interface_junk_placeholder': '<junk>',
-         'res_choices': StaticGraphForm.RES_CHOICES},
+    junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
+    start_dt = datetime.datetime.now() - datetime.timedelta(0, 3600*3, 0)
+    data = str(int(calendar.timegm(start_dt.timetuple()) * 1000))
+    return render_to_response('graph/dynamic_graph.html', 
+        {'sensor_groups': _get_sensor_groups()[0],
+         'data_url': reverse('energyweb.graph.views.dynamic_graph_data', 
+                             kwargs={'data': data}) + '?junk=' + junk},
         context_instance=RequestContext(request))
 
 
