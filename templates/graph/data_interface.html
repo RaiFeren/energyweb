@@ -1,11 +1,87 @@
 {% extends "base.html" %}
 
-{% block title %}Energy Usage at Mudd: Data Interface{% endblock %}
+{% block title %}Energy Usage at Mudd: Energy Statistics{% endblock %}
 
 {% block morehead %}
+<script language="javascript" type="text/javascript">
+    var MEDIA_URL = "{{ MEDIA_URL }}";
+    var data_url = "{{ data_url }}";
+</script>
+<script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}energy_statistics_table.js"></script>
 {% endblock %}
 
 {% block content %}
+
+<table class="center" id="energystats">
+    <colgroup id="colgroupstats">
+    <col id="leftthcol" />
+    {% for sg in sensor_groups %}
+        {% for s in sg.3 %}
+            <col class="col{{ sg.3|length }}" />
+        {% endfor %}
+    {% endfor %}
+    </colgroup>
+    <tbody>
+        <tr id="trhead">
+            <th rowspan="2" class="leftth"></th>
+            {% for sg in sensor_groups %}
+                {% if sg.3|length > 1 %}
+                    <th colspan="{{ sg.3|length }}">{{ sg.1 }}</th>
+                {% else %}
+                    <th rowspan="2">{{ sg.1 }}</th>
+                {% endif %}
+            {% endfor %}
+        </tr>
+        <tr id="trheadsub">
+            {% for sg in sensor_groups %}
+                {% if sg.3|length > 1 %}
+                    {% for s in sg.3 %}
+                        <th>{{ s.1 }}</th>
+                    {% endfor %}
+                {% endif %}
+            {% endfor %}
+        </tr>
+        <tr id="trweek">
+            <th rowspan="2" class="leftth">Average since Monday (kW)</th>
+            {% for sg in sensor_groups %}
+                {% if sg.3|length > 1 %}
+                    <td colspan="{{ sg.3|length }}" id="WeeklySG{{ sg.0 }}"></td>
+                {% else %}
+                    <td rowspan="2" id="WeeklySG{{ sg.0 }}"></td>
+                {% endif %}
+            {% endfor %}
+        </tr>
+        <tr id="trweeksub">
+            {% for sg in sensor_groups %}
+                {% if sg.3|length > 1 %}
+                    {% for s in sg.3 %}
+                        <td id="WeeklyS{{ s.0 }}"></td>
+                    {% endfor %}
+                {% endif %}
+            {% endfor %}
+        </tr>
+        <tr id="trmonth">
+            <th rowspan="2" class="leftth">Average this month (kW)</th>
+            {% for sg in sensor_groups %}
+                {% if sg.3|length > 1 %}
+                    <td colspan="{{ sg.3|length }}" id="MonthlySG{{ sg.0 }}"></td>
+                {% else %}
+                    <td rowspan="2" id="MonthlySG{{ sg.0 }}"></td>
+                {% endif %}
+            {% endfor %}
+        </tr>
+        <tr id="trmonthsub">
+            {% for sg in sensor_groups %}
+                {% if sg.3|length > 1 %}
+                    {% for s in sg.3 %}
+                        <td id="MonthlyS{{ s.0 }}"></td>
+                    {% endfor %}
+                {% endif %}
+            {% endfor %}
+        </tr>
+    </tbody>
+</table>
+
 <div id="content">
 <p>
     The raw data is available in a JSON format.  It can be retrieved at the URL
@@ -84,5 +160,6 @@ start date of each week.  This holds true even for per-ten-second resolution.
 (The data is easier to work with this way, since some ten-second intervals may
 have no points while some could potentially have two points.)
 </p>
-</div id="content">
+
+
 {% endblock %}
