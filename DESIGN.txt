@@ -88,13 +88,14 @@ How to Run:
             2 digits for minute
             2 digits for hour
 
-
 ==========
 STRUCTURE
 ==========
 
+    -----
     Files:        
     -----
+
         .gitignore - Lists the regexps for file names to ignore when
             committing to git.
 
@@ -113,7 +114,7 @@ STRUCTURE
             addresses each sensor has, and what the multiplicative
             factor is.
 
-        The following files are created by Django
+        --- The following files are created by Django ---
 
         __init__.py - Must remain empty. Tells Python that directory
             should be considered a Python package. 
@@ -122,6 +123,7 @@ STRUCTURE
         settings.py - Settings/configurations for the project. 
         urls.py - URL declarations for the project.
 
+        --- --- ---
 
         graph/ - Contains files for accessing the databases for
             building the graphs.
@@ -131,8 +133,10 @@ STRUCTURE
                 Python package.
             admin.py - Manages Administration part of the
                 database. Allows editing from within Django.
-            context_processors.py
-            daemon.py
+            context_processors.py - Contains Regular Expressions so
+                Django can process URLs.
+            daemon.py - Enables the Energy Monitor system to run in
+                the background.
             fake_rhizome_profiles.py - Contains dummied data for
                 testing. Resembles data from an Energy Monitor.
             models.py - Defines database layout
@@ -144,6 +148,7 @@ STRUCTURE
                 appropriately. 
             views.py - Contains information on creating the webpages
 
+            --- --- ---
 
             management/ - Contains commands for use by Django
 
@@ -160,6 +165,7 @@ STRUCTURE
                 energymon.py - Connects to the energy monitoring
                     devices. 
 
+        --- --- ---
 
         static/ - Contains files for creating displays of graphs
 
@@ -178,6 +184,7 @@ STRUCTURE
                 
             jquery-ui/ - Library for the Web User Interface
 
+        --- --- ---
 
         templates/ - Contains html pages to be used as
             templates. Pages are marked using template formatting.
@@ -187,7 +194,11 @@ STRUCTURE
             base.html - Template for entire website. Page specific
                 information is entered in the {} areas
 
-            graph/ - Contains contents for filling in the templates
+            --- --- ---
+
+            graph/ - Contains contents for filling in the templates,
+                using Django templating markup
+
                 data_interface.html - Contents for the Custom Graph,
                     specifically the page where it queries the user
                     about what time frame they'd like to examine.
@@ -204,41 +215,127 @@ STRUCTURE
                     for the custom graph. This is for specifying the
                     time frame to look at.
 
-
+    ---------------
     Data Structures: 
     ---------------
-        Most important data is stored in a SQL database.
-        
 
-    Important Algorithms:
-    ---------------------
+        The system has three essential layers
+            Model - the PostgreSQL database
+            Template - HTML, CSS, and Javascript for rendering the
+                website
+            Views - the Django that handles the interaction between
+                the Models and Template.
+
+        ----        
+
+        Inside the Database, there are the following tables,
+
+            SensorGroup
+                name (32 Characters)
+                color (6 Characters)
+
+            Sensor
+                name (32 Characters)
+                ip (ip address)
+                sensor_group (a SensorGroup)
+                three_phase (boolean)
+                factor (Floating point number)
+                port (Integer)
+
+            SensorReading
+                sensor (a Sensor)
+                reading_time (Time)
+                rindex (Positive Integer)
+                awatthr (Positive Integer)
+                bwatthr (Positive Integer)
+                cwatthr (Positive Integer)
+                avarhr (Positive Integer)
+                bvarhr (Positive Integer)
+                cvarhr (Positive Integer)
+                avahr (Positive Integer)
+                bvahr (Positive Integer)
+                airms (Positive Integer)
+                birms (Positive Integer)
+                cirms (Positive Integer)
+                avrms (Positive Integer)
+                bvrms (Positive Integer)
+                cvrms (Positive Integer)
+                freq (Positive Integer)
+                tempc (Integer)
+
+            PowerAverage
+                first_reading_time (Time)
+                last_reading_time (Time)
+                trunc_reading_time (Time)
+                sensor (a Sensor)
+                num_points (Positive Integer)
+                watts (Float)
+                average_type (32 characters, must be one of the
+                pre-specified types)
+
+            SRProfile - Sensor Reading Profile
+                sensor_reading (a SensorReading)
+                power_average_inserts (Integer)
+                power_average_updates (Integer)
+                transaction_time (Integer)
+
+            Setting
+                name (32 characters)
+                value_type (32 characters)
+                value (Text)
+
+            Signal
+                name (32 characters)
+                data (Text)
+
+        ----
+
+        Templates are broken up into two components:
+
+                the base in templates/base.html
+
+                the contents within the five files in the
+                    templates/graph folders. 
+
+        ----
+
+        Views are managed in graph/views.py
 
 ==========
 LIMITATIONS
 ==========
 
-    Django requires a pre-Python 3.x installation
-    Devices send data every 10 seconds, thus all computation must be
-        faster than 10 seconds.
-    Devices can not accept more than one connection at a time.
-    When downloading the data, json format is not human readable
-    There is a large amount of data, such that backing it up takes 30
-        minutes, which is unacceptable given the device limitation
-        earlier. 
-    Data is currently only stored on the server itself.
-    System is unable to recognize when a sensor is down.
+    Inherent in System:
+    ----
+        Django requires a pre-Python 3.x installation.
+        Devices send data every 10 seconds, thus all computation must
+            be faster than 10 seconds.
+        Devices can not accept more than one connection at a time.
+        There is a large amount of data, such that backing it up takes
+            30 minutes and consumes the CPU and Memory for that time.
+
+    Revisable:
+    ----
+        To download graph data from the web, user must input
+            timestamps and desired resolution by hand.
+        When downloading the data, json format is not human readable.
+        Data is currently only stored on the server itself without backups.
+        System is unable to recognize when a sensor is down, causing
+            delays in troubleshooting
 
 ==========
 POSSIBLE IMPROVEMENTS
 ==========
 
-    Watch the data coming in and figure out if a sensor has gone
-        crazy/offline then send notification in some way.
+    Update software packages used (e.g. Python 2.6 change
+        to Python 2.7) 
+    Make the code more modular for expand to more sensors 
+
     Re-design the website with all features in mind to create a
         efficient user experience 
-    Update some of the software packages used (e.g. Python 2.6 change
-        to Python 2.7) 
+    Rework the download data script 
+
+    Watch the data coming in and figure out if a sensor has gone
+        crazy/offline then send notification in some way.
     Automate data backup
-    Make the code more modular for expand to more sensors 
-    Rework the download script 
     Rework on ways to backup data
