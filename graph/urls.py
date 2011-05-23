@@ -12,6 +12,7 @@ urlpatterns = patterns('energyweb.graph.views',
     (r'^static/$', 'static_graph'),
     (r'^static/(?P<start>\d+)/to/(?P<end>\d+)/(?P<res>[a-z]+(\*10)?)/data.json$', 'static_graph_data'),
     (r'^interface/$', 'data_interface'),
+    (r'^interface/(?P<data>\d+)/data.json$', 'data_interface_data'),
     (r'^status/$', 'mon_status'),
     (r'^status/data.json$', 'mon_status_data'),
 )
