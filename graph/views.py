@@ -161,6 +161,123 @@ def data_interface(request):
                              kwargs={'data': data}) + '?junk=' + junk},
         context_instance=RequestContext(request))
 
+def data_interface_data(request, data):
+    '''
+    A view returning the JSON data used to populate the dynamic graph.
+    '''
+    from django.db import connection, transaction
+    cur = connection.cursor()
+
+    (sensor_groups, sensor_ids, sensor_ids_by_group) = _get_sensor_groups()
+
+    week_and_month_averages = dict(week={}, month={})
+
+    for average_type in ('week', 'month'):
+        trunc_reading_time = None
+        for average in PowerAverage.objects.filter(average_type=average_type
+            ).order_by('-trunc_reading_time')[:len(sensor_ids)]:
+
+            if trunc_reading_time is None:
+                trunc_reading_time = average.trunc_reading_time
+            if average.trunc_reading_time == trunc_reading_time:
+                # Note that we limited the query by the number of sensors in
+                # the database.  However, there may not be an average for
+                # every sensor for this time period.  If this is the case,
+                # some of the results will be for an earlier time period and
+                # have an earlier trunc_reading_time .
+                week_and_month_averages[average_type][average.sensor_id] \
+                    = average.watts / 1000.0
+        for sensor_id in sensor_ids:
+            if not week_and_month_averages[average_type].has_key(sensor_id):
+                # We didn't find an average for this sensor; set the entry
+                # to None.
+                week_and_month_averages[average_type][sensor_id] = None
+
+    week_averages = week_and_month_averages['week']
+    month_averages = week_and_month_averages['month']
+
+    # If the client has supplied data (a string of digits in the
+    # URL---representing UTC seconds since the epoch), then we only
+    # consider data since (and including) that timestamp.
+
+    # The max is here just in case a client accidentally calls this
+    # view with a weeks-old timestamp...
+    start_dt = max(datetime.datetime.utcfromtimestamp(int(data) / 1000),
+                   datetime.datetime.now() - datetime.timedelta(0, 3600*3, 0))
+    PowerAverage.graph_data_execute(cur, 'second*10', start_dt)
+
+    # Also note, above, that if data was supplied then we selected
+    # everything since the provided timestamp's truncated date,
+    # including that date.  We will always provide the client with
+    # a new copy of the latest record he received last time, since
+    # that last record may have changed (more sensors may have
+    # submitted measurements and added to it).  The second to
+    # latest and older records, however, will never change.
+
+    # Now organize the query in a format amenable to the 
+    # (javascript) client.  (The grapher wants (x, y) pairs.)
+
+    sg_xy_pairs = dict([[sg[0], []] for sg in sensor_groups])
+    r = cur.fetchone()
+    if r is None:
+        d = {'no_results': True,
+             'week_averages': week_and_month_averages['week'],
+             'month_averages': week_and_month_averages['month']}
+    else:
+        per = r[2]
+        per_incr = datetime.timedelta(0, 10, 0)
+    
+        # At the end of each outer loop, we increment per (the current
+        # ten-second period of time we're considering) by ten seconds.
+        while r is not None:
+            # Remember that the JavaScript client takes (and
+            # gives) UTC timestamps in ms
+            x = int(calendar.timegm(per.timetuple()) * 1000)
+            for sg in sensor_groups:
+                y = 0
+                for sid in sensor_ids_by_group[sg[0]]:
+                    # If this sensor has a reading for the current per,
+                    # update y.  There are three ways the sensor might
+                    # not have such a reading:
+                    # 1. r is None, i.e. there are no more readings at
+                    #    all
+                    # 2. r is not None and r[2] > per, i.e. there are 
+                    #    more readings but not for this per
+                    # 3. r is not None and r[2] <= per and r[1] != s[0],
+                    #    i.e. there are more readings for this per,
+                    #    but none for this sensor
+                    if r is not None and r[2] <= per and r[1] == sid:
+                        # If y is None, leave it as such.   Else, add
+                        # this sensor reading to y.  Afterwards, in
+                        # either case, fetch a new row.
+                        if y is not None:
+                            y += float(r[0])
+                        r = cur.fetchone()
+                    else:
+                        y = None
+                sg_xy_pairs[sg[0]].append((x, y))
+            per += per_incr
+    
+        last_record = x
+        # desired_first_record lags by (3:00:00 - 0:00:10) = 2:59:50
+        desired_first_record = x - 1000*3600*3 + 1000*10
+    
+        junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
+        data_url = reverse('energyweb.graph.views.dynamic_graph_data', 
+                           kwargs={'data': str(last_record)}) + '?junk=' + junk
+        d = {'no_results': False,
+             'sg_xy_pairs': sg_xy_pairs,
+             'desired_first_record':
+                 desired_first_record,
+             'week_averages': week_and_month_averages['week'],
+             'month_averages': week_and_month_averages['month'],
+             'sensor_groups': sensor_groups,
+             'data_url': data_url}
+
+    json_serializer = serializers.get_serializer("json")()
+    return HttpResponse(simplejson.dumps(d),
+                        mimetype='application/json')
+
 
 def dynamic_graph(request):
     '''
