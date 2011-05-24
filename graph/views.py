@@ -152,7 +152,8 @@ def data_interface(request):
     (This table holds curr. use and avg of past week/month)
     '''
     junk=str(calendar.timegm(datetime.datetime.now().timetuple()))
-    data = str()
+    start_dt = datetime.datetime.now() - datetime.timedelta(0, 3600*3, 0)
+    data = str(int(calendar.timegm(start_dt.timetuple()) * 1000))
     return render_to_response('graph/data_interface.html',
         {'sensor_groups': _get_sensor_groups()[0],
          'data_url': reverse('energyweb.graph.views.data_interface_data',
