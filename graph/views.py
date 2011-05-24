@@ -117,8 +117,17 @@ class StaticGraphForm(forms.Form):
 # TODO: this could probably be done in a more portable way.
 def _get_sensor_groups():
     '''
-    Return a list representing the sensors and sensor groups.  (See the
-    code for a description of the structure of the list.)
+    Return a list with three elements, representing the sensors and sensor groups.
+    The zeroth element is a list containing:
+      -The sensor group id (building id)
+      -The sensor group name (building name)
+      -The sensor group color (building color for graphing)
+      - A list containing [sensor id, sensor name] for all sensors associated
+        with the sensor group
+    The first element is a list of individual sensor ids.
+    The second element is a dictionary with:
+      -keys: sensor group ids (building ids)
+      -values: all sensors belonging to that building
     '''
     sensors = Sensor.objects.select_related().order_by('sensor_group__pk')
 
