@@ -3,9 +3,9 @@ $(function () {
 
     var first_time = true;
     var desired_first_record = null;
-    var sg_xy_pairs = {};
     var sensor_groups = null;
 
+    // Probably unnecessary function
     function kw_tickformatter(val, axis) {
         // Workaround to get units on the y axis
         return val + " kW";
@@ -40,8 +40,6 @@ $(function () {
         // data_url was defined previously (before loading this file).
         data_url = data.data_url;
 
-        desired_first_record = data.desired_first_record;
-
         var series_opts = [];
         var series = [];
         var missed_week_average, 
@@ -50,15 +48,9 @@ $(function () {
             group_id,
             group_week_average, 
             group_month_average, 
-            graph_opts;
 
         if (first_time) {
             sensor_groups = data.sensor_groups;
-
-            // When data is received the first time, reveal the table 
-            // and remove the graph's loading animation
-            $('#energystats').show();
-            $('#graph').empty();
         }
     
         for (var i=0; i < sensor_groups.length; i++) {
@@ -67,40 +59,6 @@ $(function () {
             missed_week_average = false;
             missed_month_average = false;
             group_id = sensor_groups[i][0];
-    
-            if (first_time) {
-                sg_xy_pairs[group_id] = data.sg_xy_pairs[group_id];
-            } else {
-                /* We've already collected some data, so combine it 
-                 * with the new.  About this slicing:  We're 
-                 * discarding our latest record, preferring the new copy
-                 * from the sever, since last time we may have e.g. 
-                 * collected data just before a sensor reported a 
-                 * reading (for the 10-second time period we were 
-                 * considering).  Hence, while the latest record may be
-                 * incomplete, the second latest (and older) records are
-                 * safe---they will never change.
-                 */
-                var j;
-                for (j=0; j < sg_xy_pairs[group_id].length; j++) {
-                    if (sg_xy_pairs[group_id][j][0] >= desired_first_record) {
-                        // We break out of the loop when j is the index
-                        // of the earliest record on or later than
-                        // desired_first_record
-                        break;
-                    }
-                }
-                sg_xy_pairs[group_id] = sg_xy_pairs[group_id].slice(j,
-                        sg_xy_pairs[group_id].length - 1
-                    ).concat(
-                        data.sg_xy_pairs[group_id]);
-            }
-            
-            series.push({
-                data: sg_xy_pairs[group_id],
-                label: sensor_groups[i][1],
-                color: '#' + sensor_groups[i][2]
-            });
     
             for (var j=0; j < sensor_groups[i][3].length; j++) {
                 sensor_id = sensor_groups[i][3][j][0];
@@ -144,36 +102,6 @@ $(function () {
                     rnd(group_month_average));
             }
         }
-        // Finally, make the graph
-        graph_opts = {
-            series: {
-                lines: {show: true},
-                points: {show: false}
-            },
-            legend: {
-                show: true,
-                position: 'ne',
-                backgroundOpacity: 0.6,
-                noColumns: sensor_groups.length
-            },
-            yaxis: {
-                min: 0,
-                tickFormatter: kw_tickformatter,
-            },
-            xaxis: {
-                min: desired_first_record,
-                mode: 'time',
-                timeformat: '%h:%M %p',
-                twelveHourClock: true
-            },
-            grid: {
-                show: true,
-                color: '#d0d0d0',
-                borderColor: '#bbbbbb',
-                backgroundColor: { colors: ['#dbefff', '#ffffff']}
-            }
-        };
-        $.plot($('#graph'), series, graph_opts);
     
         if (first_time) {
             first_time = false;
@@ -188,8 +116,5 @@ $(function () {
 
     // Initially, hide the table and show a loading animation instead of
     // the graph
-    $('#energystats').hide();
-    $('#graph').append(
-        '<img class="loading" src="' + MEDIA_URL + 'loading.gif" />');
     refreshdata();
 });
