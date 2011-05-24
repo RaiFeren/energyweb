@@ -48,7 +48,7 @@ $(function () {
             graph_opts;
         // Used to mark which lines to plot
         var choice_container =$("#choices");
-        var chosen_lines = [];
+        var chosen_lines = {};
 
         if (first_time) {
             sensor_groups = data.sensor_groups;
@@ -64,7 +64,7 @@ $(function () {
                                         + '" checked="checked" id="id' 
                                         + sensor_groups[i][0]
                                         + '">'
-                                        + '<label for]"id' 
+                                        + '<label for "id' 
                                         + sensor_groups[i][0]
                                         + '">'
                                         + sensor_groups[i][1] // Building Name
@@ -76,7 +76,7 @@ $(function () {
         // Update which lines we want to plot. Must happen each update
         choice_container.find("input:checked").each(function () {
             var group_number = $(this).attr("name");
-            chosen_lines.push(group_number);
+            chosen_lines[group_number]=''; // dummy so can use in function
         });
 
         for (var i=0; i < sensor_groups.length; i++) {
