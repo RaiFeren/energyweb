@@ -8,6 +8,13 @@
     var data_url = "{{ data_url }}";
 </script>
 <script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}dynamic_graph.js"></script>
+<script language="javascript" type="text/javascript">
+$(function()
+  {
+  alert("This did something!");
+  }
+)();
+</script>
 {% endblock %}
 
 {% block content %}
