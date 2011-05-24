@@ -6,11 +6,36 @@
 <script language="javascript" type="text/javascript">
     var MEDIA_URL = "{{ MEDIA_URL }}";
     var data_url = "{{ data_url }}";
+    var sensor_groups = "{{ sensor_groups }}";
+    alert(sensor_groups);
 </script>
 <script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}energy_statistics_table.js"></script>
 {% endblock %}
 
 {% block content %}
+<table class="center" id="energystats">
+  <thead>
+    <tr id="trhead">
+      <th>Dorm</th>
+      <th>Current Use (kW)</th>
+      <th>Average Since Monday (kW)</th>
+      <th>Average This Month (kW)</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for sg in sensor_groups %}
+      <tr id="row{{ sg.1 }}">
+	<td "name{{ sg.1 }}">{{ sg.1 }}</td>
+	<td "curr{{ sg.1 }}">currpowerhere</td>
+	<td "week{{ sg.1 }}">weekpowerhere</td>
+	<td "month{{ sg.1 }}">monthpowerhere</td>
+      </tr>
+    {% endfor %}
+      
+</table>
+
+
+<!--AHHH THIS TABLE SHOULD NOT BE HERE EVENTUALLY
 <table class="center" id="energystats">
     <colgroup id="colgroupstats">
     <col id="leftthcol" />
@@ -80,5 +105,6 @@
         </tr>
     </tbody>
 </table>
+-->
 
 {% endblock %}
