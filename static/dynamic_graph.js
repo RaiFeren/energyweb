@@ -46,6 +46,9 @@ $(function () {
             group_week_average, 
             group_month_average, 
             graph_opts;
+        // Used to mark which lines to plot
+        var choice_container =$("#choices");
+        var chosen_lines = [];
 
         if (first_time) {
             sensor_groups = data.sensor_groups;
@@ -53,8 +56,29 @@ $(function () {
             // When data is received the first time,
             // remove the graph's loading animation
             $('#graph').empty();
+
+            // Generate the checkboxes for plotting
+            for (var i=0; i < sensor_groups.length; i++) {
+                choice_container.append('<br/><input type="checkbox" name="' 
+                                        + sensor_groups[i][0] // Sensor group #
+                                        + '" checked="checked" id="id' 
+                                        + sensor_groups[i][0]
+                                        + '">'
+                                        + '<label for]"id' 
+                                        + sensor_groups[i][0]
+                                        + '">'
+                                        + sensor_groups[i][1] // Building Name
+                                        + '</label>');
+                                       
+            }
         }
-    
+        
+        // Update which lines we want to plot. Must happen each update
+        choice_container.find("input:checked").each(function () {
+            var group_number = $(this).attr("name");
+            chosen_lines.push(group_number);
+        });
+
         for (var i=0; i < sensor_groups.length; i++) {
             group_id = sensor_groups[i][0];
     
@@ -86,11 +110,14 @@ $(function () {
                         data.sg_xy_pairs[group_id]);
             }
             
-            series.push({
-                data: sg_xy_pairs[group_id],
-                label: sensor_groups[i][1],
-                color: '#' + sensor_groups[i][2]
-            });
+            // plot only the selected lines
+            if (group_id in chosen_lines) {
+                series.push({
+                    data: sg_xy_pairs[group_id],
+                    label: sensor_groups[i][1],
+                    color: '#' + sensor_groups[i][2]
+                });
+            }
         }
         // Finally, make the graph
         graph_opts = {
