@@ -58,9 +58,8 @@ $(function () {
             $('#graph').empty();
 
             // Creates table for listing off dorms
-            choice_container.append('<table><tr>');
             for (var i=0; i < sensor_groups.length; i++) {
-                choice_container.append('<td><input type="checkbox" name="' 
+                choice_container.append('<br/><input type="checkbox" name="' 
                                         + sensor_groups[i][0] // Sensor group #
                                         + '" checked="checked" id="id' 
                                         + sensor_groups[i][0]
@@ -69,10 +68,8 @@ $(function () {
                                         + sensor_groups[i][0]
                                         + '">'
                                         + sensor_groups[i][1] // Building Name
-                                        + '</label>'</td>);
+                                        + '</label>');
             }
-            choice_container.append('</tr></table>')
-
         }
         
         // Update which lines we want to plot. Must happen each update
