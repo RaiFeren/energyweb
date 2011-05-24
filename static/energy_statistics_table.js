@@ -119,4 +119,4 @@ $(function () {
     // Initially, hide the table and show a loading animation instead of
     // the graph
     refreshdata();
-});
+})();
