@@ -160,12 +160,35 @@ def data_interface(request):
     A view returning the HTML for the dynamic table.
     (This table holds curr. use and avg of past week/month)
     '''
+    sensors = Sensor.objects.select_related().order_by('sensor_group__pk')
+
+    sensor_groups = []
+    sensor_ids = []
+    sensor_ids_by_group = {}
+    sg_id = None
+
+    for sensor in sensors:
+        sensor_ids.append(sensor.pk)
+        if sg_id == sensor.sensor_group.pk:
+            sensor_groups[-1][3].append([sensor.pk, sensor.name])
+            sensor_ids_by_group[sg_id].append(sensor.pk)
+        else:
+            sg_id = sensor.sensor_group.pk
+            sensor_groups.append([
+                         sg_id,
+                         sensor.sensor_group.name,
+                         sensor.sensor_group.color, 
+                         [
+                             [sensor.pk, sensor.name]
+                         ]
+                     ])
+            sensor_ids_by_group[sg_id] = [sensor.pk]
+
     junk=str(calendar.timegm(datetime.datetime.now().timetuple()))
     start_dt = datetime.datetime.now() - datetime.timedelta(0, 3600*3, 0)
     data = str(int(calendar.timegm(start_dt.timetuple()) * 1000))
     return render_to_response('graph/data_interface.html',
-        {'sensor_groups': _get_sensor_groups()[0],
-         'one': 1},
+        {'sensor_groups': sensor_groups},
         context_instance=RequestContext(request))
     
 
