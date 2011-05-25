@@ -184,9 +184,9 @@ def data_interface(request):
                      ])
             sensor_ids_by_group[sg_id] = [sensor.pk]
 
-    junk=str(calendar.timegm(datetime.datetime.now().timetuple()))
-    start_dt = datetime.datetime.now() - datetime.timedelta(0, 3600*3, 0)
-    data = str(int(calendar.timegm(start_dt.timetuple()) * 1000))
+    #junk=str(calendar.timegm(datetime.datetime.now().timetuple()))
+    #start_dt = datetime.datetime.now() - datetime.timedelta(0, 3600*3, 0)
+    #data = str(int(calendar.timegm(start_dt.timetuple()) * 1000))
     return render_to_response('graph/data_interface.html',
         {'sensor_groups': sensor_groups},
         context_instance=RequestContext(request))
