@@ -169,6 +169,7 @@ def data_interface(request):
     sensor_ids = []
     sensor_ids_by_group = {}
     sg_id = None
+    numbers = [1, 2, 3 ,4]
 
     for sensor in sensors:
         sensor_ids.append(sensor.pk)
@@ -192,7 +193,8 @@ def data_interface(request):
     #data = str(int(calendar.timegm(start_dt.timetuple()) * 1000))
     return render_to_response('graph/data_interface.html',
         {'sensor_groups': sensor_groups,
-         'sensors': sensor_ids},
+         'sensors': sensor_ids,
+         'numberList': numbers},
         context_instance=RequestContext(request))
     
 
