@@ -7,7 +7,8 @@
     //var MEDIA_URL = "{{ MEDIA_URL }}";
     //var data_url = "{{ data_url }}";
     var sensor_group_length = "{{ sensor_groups|length }}";
-    alert("Num of sensor groups: " + {{ sensor_groups|length }});;
+    alert("Num of sensor groups: " + {{ sensor_groups|length }});
+    alert("Num of sensors: " + {{ sensors|length }});
 </script>
 <script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}energy_statistics_table.js"></script>
 {% endblock %}
