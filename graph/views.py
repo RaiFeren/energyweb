@@ -160,7 +160,10 @@ def data_interface(request):
     A view returning the HTML for the dynamic table.
     (This table holds curr. use and avg of past week/month)
     '''
-    sensors = Sensor.objects.all().order_by('sensor_group__pk')
+    try:
+        sensors = Sensor.objects.all().order_by('sensor_group__pk')
+    except Sensor.DoesNotExist:
+        raise Http404
 
     sensor_groups = []
     sensor_ids = []
