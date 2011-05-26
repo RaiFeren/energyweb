@@ -59,7 +59,10 @@ $(function () {
 
             // Creates table for listing off dorms
             for (var i=0; i < sensor_groups.length; i++) {
-                choice_container.append('<br/><input type="checkbox" name="' 
+                choice_container.append('<br/><div id="colorBox'
+                                        + sensor_groups[i][0]
+                                        + '"></br></div>'
+                                        + <input type="checkbox" name="' 
                                         + sensor_groups[i][0] // Sensor group #
                                         + '" checked="checked" id="id' 
                                         + sensor_groups[i][0]
@@ -69,6 +72,7 @@ $(function () {
                                         + '">'
                                         + sensor_groups[i][1] // Building Name
                                         + '</label>');
+                $("colorBox"+sensor_groups[i][0]).css("background-color", "#" + sensor_groups[i][2]);
             }
         }
         
