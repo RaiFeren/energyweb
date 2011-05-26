@@ -86,7 +86,7 @@ TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-    '/var/local/energy/templates',
+    '/var/local/energyweb/templates',
 )
 
 INSTALLED_APPS = (
@@ -123,11 +123,11 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 # function date_trunc.  See:
 # http://www.postgresql.org/docs/8.4/interactive/functions-datetime.html
 
-MON_PID_FILE_TEMPL = '/var/local/energy/run/energymon.%d.pid'
-MON_LOG_FILE_TEMPL = '/var/local/energy/log/energymon.%d.log'
+MON_PID_FILE_TEMPL = '/var/local/energyweb/run/energymon.%d.pid'
+MON_LOG_FILE_TEMPL = '/var/local/energyweb/log/energymon.%d.log'
 
-FAKER_PID_FILE_TEMPL = '/var/local/energy/run/energyfaker.%d.pid'
-FAKER_LOG_FILE_TEMPL = '/var/local/energy/log/energyfaker.%d.log'
+FAKER_PID_FILE_TEMPL = '/var/local/energyweb/run/energyfaker.%d.pid'
+FAKER_LOG_FILE_TEMPL = '/var/local/energyweb/log/energyfaker.%d.log'
 
 FAKER_SLEEP_VARIATION = 0.1
 
