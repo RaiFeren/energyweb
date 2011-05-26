@@ -18,8 +18,8 @@ urlpatterns = patterns('',
 
     # Uncomment the following two lines so that the Django development
     # server will serve static files (js, css) for you.
-    (r'^static/(?P<path>.*)$', 'django.views.static.serve', 
-     {'document_root': settings.MEDIA_ROOT}),
+    #(r'^static/(?P<path>.*)$', 'django.views.static.serve', 
+    # {'document_root': settings.MEDIA_ROOT}),
 
     # Example:
     # (r'^energyweb/', include('energyweb.foo.urls')),
