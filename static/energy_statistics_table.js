@@ -6,7 +6,7 @@ $(function ()
   // Theoretically data_url should be defined.
   alert("data_url is: " + data_url);
 
-    $('td.nameatwood').click(function() {
+    $('#nameatwood').click(function() {
 	alert('You clicked on the name atwood');
     });
 
