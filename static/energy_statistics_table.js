@@ -90,4 +90,4 @@ $(function ()
     // Start getting data!
     refreshdata();
 
-})();
+});
