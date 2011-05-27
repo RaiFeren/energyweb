@@ -71,12 +71,41 @@ $(function () {
             }
         };
         $.plot($('#graph'), series, graph_opts);
+        $.writeOutput(series);
+    }
+
+    // For writing data to a table under the graph. 
+    // HACK solution to 'how do I download data?'
+    function writeOutput(data) {
+        var outputTable = ['<table>'];
+        var row = ['<tr><td>Time']
+        for (var i=0; i<data[0]['data'].length; i++){
+            row.push(data[0]['data'][i][0]); // add x values
+        }
+        outputTable.push( row.join('</td><td>'), '</td></tr>');
+
+        for (var i=0; i<data.length; i++) {
+            var row = [data[i]['label']];
+            for (var j=0; j<data[i]['data'].length; j++) {
+                row.push(data[i]['data'][j][1]); // add only y value
+            }
+            outputTable.push('<tr><td>', row.join('</td><td>'), '</td></tr>');
+        }
+        // insert table to html
+        $('#outputDiv').append(outputTable.join(''));
     }
     
+    function displayData() {
+        $('#outputDiv').show();
+    }
+
     // Initially, show a loading animation instead of the graph
     $('#graph').append(
         '<img class="loading" src="' + MEDIA_URL + 'loading.gif" />');
+    $('#outputDiv').hide()
     // It is expected that data_url was defined previously (before
     // loading this file).
     $.getJSON(data_url, getdata_json_cb);
+
+
 });
