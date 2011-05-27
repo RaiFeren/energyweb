@@ -1,9 +1,11 @@
 # Django settings for energyweb project.
 
-DEBUG = True
+DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
+    ('Beryl Egerter', 'beryl_egerter@hmc.edu'),
+    ('Rai Feren', 'rai_feren@hmc.edu')
     # ('Your Name', 'your_email@domain.com'),
 )
 
@@ -15,7 +17,7 @@ DATABASES = {
         'NAME': 'energy',                      # Or path to database file if using sqlite3.
         'USER': 'energy',                      # Not used with sqlite3.
         'PASSWORD': 'energy',                  # Not used with sqlite3.
-        'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
+        'HOST': 'localhost',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     }
 }
@@ -55,12 +57,12 @@ MEDIA_ROOT = '/var/local/energyweb/static/'
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
-MEDIA_URL = 'http://localhost:8000/static/'
+MEDIA_URL = "/static/"
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
 # Examples: "http://foo.com/media/", "/media/".
-ADMIN_MEDIA_PREFIX = '/media/'
+ADMIN_MEDIA_PREFIX = '/static/'
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = '=no!u@xf*45*z(48uo$^a(aw1jw*t23n2om^f+as#dc1tf1jml'
