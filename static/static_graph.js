@@ -9,7 +9,7 @@ $(function () {
         return val + " kW";
     }
     
-// For writing data to a table under the graph. 
+    // For writing data to a table under the graph. 
     // HACK solution to 'how do I download data?'
     function writeOutput(data) {
         alert('Writing Output!');
@@ -93,17 +93,19 @@ $(function () {
             }
         };
         $.plot($('#graph'), series, graph_opts);
-        $.writeOutput(series);
+        writeOutput(series);
     }
     
-    function displayData() {
-        $('#outputDiv').show();
-    }
-
     // Initially, show a loading animation instead of the graph
     $('#graph').append(
         '<img class="loading" src="' + MEDIA_URL + 'loading.gif" />');
     $('#outputDiv').hide()
+
+    // Make it so data appears when click on the button.
+    $('#getData').onClick(function() {
+        $('#outputDiv').show();
+    });
+
     // It is expected that data_url was defined previously (before
     // loading this file).
     $.getJSON(data_url, getdata_json_cb);
