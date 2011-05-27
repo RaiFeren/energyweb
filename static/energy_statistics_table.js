@@ -1,49 +1,91 @@
 $(function () 
 {
-  var first_time = true;
-  alert("This function ran!");
+    var debug = true;
+    var first_time = true;
+    alert("This function ran!");
 
-  // Theoretically data_url should be defined.
-  alert("data_url is: " + data_url);
+    // Theoretically data_url should be defined.
+    alert("data_url is: " + data_url);
 
-    $('#nameatwood').click(function() {
-	alert('You clicked on the name atwood');
-    });
-  var colorid = $("#trhead");
-  colorid.css("background-color", "#E42020");
-
-  function refreshdata_json_cb(data) 
-  {
-
-    // When this function is first called, it is expected that 
-    // data_url was defined previously (before loading this file).
-    data_url = data.data_url;
-    alert("we have a data_url which is: " + data_url);
-    // Given new data from the server, update the table
-
-    // Given new data from the server, update the table
-
-    // TODO: what if somehow we get no results and it's not the 
-    // first time?
-    if (first_time && data.no_results) 
+    // Take in new data from the server and update the table.
+    function refreshdata_json_cb(data) 
     {
-      alert("we received no data :(");
-      return; // TODO: tell the user what happened?
-    }
-    
-    if (first_time) {
-        first_time = false;
-    }
-    
-    setTimeout(refreshdata, 10000);
-  }
+	if (first_time && data.no_results)
+	{
+	    alert("No data received :(");
+	    return;
+	}
 
-  function refreshdata() 
-  {
-    $.getJSON(data_url, refreshdata_json_cb);
-  }
+	// We expect that data_url actually exists -_-
+	data_url = data.data_url;
 
-  // Start getting data!
-  refreshdata();
+	// TODO: what is this here for?
+	desired_first_record = data.desired_first_record;
+
+	// TODO: what are all of these variables for?
+	var series_opts = [];
+	var series = [];
+	var missed_week_average,
+	    missed_month_average,
+	    sensor_id,
+       	    group name,
+	    group_week_average,
+	    group_month_average;
+
+	for (var i=0; i < sensor_groups.length; i++)
+	{
+	    group_week_average = 0;
+	    group_month_average = 0;
+	    missed_week_average = false;
+	    missed_month_average = false;
+	    group_name = sensor_groups[i][1];
+
+	    for (var j=0; j < sensor_groups[i][3].length; j++)
+	    {
+		sensor_id = sensor_groups[i][3][j][0];
+
+		// Add sensor's average to the sensor group's average.
+		if (sensor_id in data.week_averages)
+		{
+		    group_week_average += data.week_averages[sensor_id];
+		}
+		if (sensor_id in data.month_averages)
+		{
+		    group_month_average += data.month_averages[sensor_id];
+		}
+	    }
+
+	    // Update the averages in the table for the sensor group.
+	    // id for placement should be: week{buildingname}
+	    if (! missed_week_average)
+	    {
+		$('#week' + group_name).empty();
+		$('#week' + group_name).append( rnd( group_week_average ) );
+	    }
+	    // id for placement should be: month{buildingname}
+	    if (! missed_month_average)
+	    {
+		$('#month' + group_name).empty();
+		$('#month' + group_name).append( rnd( group_month_average) );
+	    }
+	}
+	
+	if (first_time) 
+	{
+	    first_time = false;
+	}
+
+	setTimeout(refreshdata, 10000);
+    }
+
+    // Get data from server and pass it to the table builder function.
+    function refreshdata() 
+    {
+	alert("In refreshdata()");
+	$.getJSON(data_url, refreshdata_json_cb);
+    }
+
+    // Start getting data!
+    refreshdata();
 
 });
