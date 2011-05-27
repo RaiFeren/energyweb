@@ -7,7 +7,6 @@
     var MEDIA_URL = "{{ MEDIA_URL }}";
     var data_url = "{{ data_url }}";
     var sensor_group_length = "{{ sensor_groups|length }}";
-    // alert("Num of sensor groups is: " + sensor_group_length); // debug
 </script>
 <script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}dynamic_graph.js"></script>
 {% endblock %}
@@ -16,7 +15,7 @@
 <table class="center">
   <tr>
     <td><div id="graph"></div></td>
-    <td><div id="choices">Show:</div></td>
+    <td><div id="choices"></div></td>
   </tr>
 </table>
 {% endblock %}

@@ -39,13 +39,10 @@ $(function () {
 
         var series_opts = [];
         var series = [];
-        var missed_week_average, 
-            missed_month_average, 
-            sensor_id,
+        var sensor_id,
             group_id,
-            group_week_average, 
-            group_month_average, 
             graph_opts;
+
         // Used to mark which lines to plot
         var choice_container =$("#choices");
         var chosen_lines = {};
@@ -57,24 +54,31 @@ $(function () {
             // remove the graph's loading animation
             $('#graph').empty();
 
-            // Creates table for listing off dorms
+            // Creates table for listing off Buildings
+            choice_container.append('Show Buildings:<br/>');
             for (var i=0; i < sensor_groups.length; i++) {
+
+                var build_id = sensor_groups[i][0];
+                var build_name = sensor_groups[i][1];
+                var build_color = sensor_groups[i][2];
+
                 choice_container.append('<table><td><div id="colorBox'
-                                        + sensor_groups[i][0]
+                                        + build_id
                                         + '">&nbsp;</div></td>'
                                         + '<td><input type="checkbox" name="' 
-                                        + sensor_groups[i][0] // Sensor group #
+                                        + build_id
                                         + '" checked="checked" id="id' 
-                                        + sensor_groups[i][0]
+                                        + build_id
                                         + '">'
                                         + '<label for "id' 
-                                        + sensor_groups[i][0]
+                                        + build_id
                                         + '">'
-                                        + sensor_groups[i][1] // Building Name
+                                        + build_name
                                         + '</label></td></table>');
-                colorid = "colorBox" + sensor_groups[i][0];
-                linecolor = "#" + sensor_groups[i][2];
+                var colorid = "colorBox" + build_id;
+                var linecolor = "#" + build_color;
                 $(colorid).css("background-color", linecolor);
+                $(colorid.css("width", 25);
             }
         }
         
