@@ -75,17 +75,17 @@ $(function () {
                                         + '">'
                                         + build_name
                                         + '</label></td></table>');
-                var colorid = "colorBox" + build_id;
+                var colorid = $("#colorBox" + build_id);
                 var linecolor = "#" + build_color;
-                $(colorid).css("background-color", linecolor);
-                $(colorid.css("width", 25);
+                colorid.css("background-color", linecolor);
+                colorid.css("width", 25);
             }
         }
         
         // Update which lines we want to plot. Must happen each update
         choice_container.find("input:checked").each(function () {
             var group_number = $(this).attr("name");
-            chosen_lines[group_number]=''; // dummy so can use in function
+            chosen_lines[group_number]=''; // dummy so can use the in function
         });
 
         for (var i=0; i < sensor_groups.length; i++) {
