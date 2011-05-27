@@ -102,7 +102,7 @@ $(function () {
     $('#outputDiv').hide()
 
     // Make it so data appears when click on the button.
-    $('#getData').onClick(function() {
+    $('#getData').click(function() {
         $('#outputDiv').show();
     });
 
