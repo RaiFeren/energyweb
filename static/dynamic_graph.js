@@ -79,6 +79,10 @@ $(function () {
                 colorid.css("background-color", linecolor);
                 colorid.css("width", 25);
             }
+	    // Make it so checkboxes cause a refresh of the graph.
+	    $(':checkbox').click(function() {
+		refreshdata();
+	    });
         }
         
         // Update which lines we want to plot. Must happen each update
@@ -179,6 +183,5 @@ $(function () {
         '<img class="loading" src="' + MEDIA_URL + 'loading.gif" />');
     mainloop();
 
-    // Make it so checkboxes cause a refresh of the graph.
-    $(':checkbox').click(refreshdata());
+    
 });
