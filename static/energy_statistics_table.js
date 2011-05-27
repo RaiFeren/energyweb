@@ -9,6 +9,8 @@ $(function ()
     $('#nameatwood').click(function() {
 	alert('You clicked on the name atwood');
     });
+  var colorid = $("#trhead");
+  colorid.css("background-color", "#E42020");
 
   function refreshdata_json_cb(data) 
   {
