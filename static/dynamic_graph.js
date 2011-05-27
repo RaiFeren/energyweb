@@ -138,7 +138,7 @@ $(function () {
                 points: {show: false}
             },
             legend: {
-                show: true,
+                show: false, // Set to true if want it back...
                 position: 'ne',
                 backgroundOpacity: 0.6,
                 noColumns: sensor_groups.length
