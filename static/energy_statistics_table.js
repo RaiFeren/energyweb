@@ -1,3 +1,5 @@
+alert("this alert is in the external javascript file.");
+
 $(function () 
 {
     var debug = true;
