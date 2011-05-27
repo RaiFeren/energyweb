@@ -27,10 +27,10 @@
   <tbody>
     {% for sg in sensor_groups %}
       <tr id="row{{ sg.1 }}">
-	<td "name{{ sg.1 }}">{{ sg.1 }}</td>
-	<td "curr{{ sg.1 }}">currpowerhere</td>
-	<td "week{{ sg.1 }}">weekpowerhere</td>
-	<td "month{{ sg.1 }}">monthpowerhere</td>
+	<td id="name{{ sg.1 }}">{{ sg.1 }}</td>
+	<td id="curr{{ sg.1 }}">currpowerhere</td>
+	<td id="week{{ sg.1 }}">weekpowerhere</td>
+	<td id="month{{ sg.1 }}">monthpowerhere</td>
       </tr>
     {% endfor %}
       
