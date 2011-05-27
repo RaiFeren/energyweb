@@ -30,7 +30,7 @@ $(function ()
 	var missed_week_average,
 	    missed_month_average,
 	    sensor_id,
-       	    group name,
+       	    group_name,
 	    group_week_average,
 	    group_month_average;
 
