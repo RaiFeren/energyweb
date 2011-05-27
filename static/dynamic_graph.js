@@ -67,14 +67,13 @@ $(function () {
                                         + '">&nbsp;</div></td>'
                                         + '<td><input type="checkbox" name="' 
                                         + build_id
-                                        + '" checked="checked" id="id' 
-                                        + build_id
-                                        + '">'
+                                        + '" checked="checked" id="selector">'
                                         + '<label for "id' 
                                         + build_id
                                         + '">'
                                         + build_name
                                         + '</label></td></table>');
+
                 var colorid = $("#colorBox" + build_id);
                 var linecolor = "#" + build_color;
                 colorid.css("background-color", linecolor);
@@ -163,15 +162,23 @@ $(function () {
             first_time = false;
         }
     
-        setTimeout(refreshdata, 10000);
     }
     
     function refreshdata() {
+        // Calls built in functions to get JSON data then pass it to a parsing function
         $.getJSON(data_url, refreshdata_json_cb);
+    }
+
+    function mainloop() {
+        refreshdata()
+        setTimeout(mainloop, 10000);
     }
 
     // Initially, show a loading animation instead of the graph
     $('#graph').append(
         '<img class="loading" src="' + MEDIA_URL + 'loading.gif" />');
-    refreshdata();
+    mainloop();
+
+    // Make it so checkboxes cause a refresh of the graph.
+    $(':checkbox').click(refreshdata());
 });
