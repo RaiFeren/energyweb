@@ -159,13 +159,15 @@ def data_interface(request):
     '''
     A view returning the HTML for the dynamic table.
     (This table holds curr. use and avg of past week/month)
+    TODO: Make this call it's own function so it doesn't
+    download extraneous data.
     '''
     junk=str(calendar.timegm(datetime.datetime.now().timetuple()))
     start_dt = datetime.datetime.now() - datetime.timedelta(0, 3600*3, 0)
     data = str(int(calendar.timegm(start_dt.timetuple()) * 1000))
     return render_to_response('graph/data_interface.html', 
         {'sensor_groups': _get_sensor_groups()[0],
-         'data_url': reverse('energyweb.graph.views.data_interface_data', 
+         'data_url': reverse('energyweb.graph.views.dynamic_graph_data', 
                              kwargs={'data': data}) + '?junk=' + junk},
         context_instance=RequestContext(request))
     
