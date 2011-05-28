@@ -13,7 +13,8 @@ $(function () {
     // HACK solution to 'how do I download data?'
     function writeOutput(data) {
         var outputTable = ['<table>'];
-        var row = ['<tr><td>Time']
+
+        var row = ['<tr><td>Time'];
         for (var i=0; i<data.length; i++){
             row.push(data[i]['label']); // add Names of buildings
         }
@@ -22,12 +23,15 @@ $(function () {
         // loop through all times in range.
         for (var j=0; i<data[0]['data'].length; j++) {
             var row = [data[0]['data'][j][0]]; // grab the time
+
             // loop through all buildings
             for (var i=0; i<data.length; j) {
                 row.push(data[i]['data'][j][1]); // add y value for each building
             }
             outputTable.push('<tr><td>', row.join('</td><td>'), '</td></tr>');
         }
+        outputTable.push('</table>');
+
         // insert table to html
         $('#outputDiv').append(outputTable.join(''));
     }
@@ -102,9 +106,9 @@ $(function () {
         '<img class="loading" src="' + MEDIA_URL + 'loading.gif" />');
     $('#outputDiv').hide()
 
-    // Make it so data appears when click on the button.
+    // Make it so data toggles visibility when click on the button.
     $('#getData').click(function() {
-        $('#outputDiv').show();
+        $('#outputDiv').toggle();
     });
 
     // It is expected that data_url was defined previously (before
