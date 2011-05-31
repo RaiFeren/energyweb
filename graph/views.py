@@ -8,7 +8,7 @@ from django import forms
 from django.db.models import Avg, Max, Min, Count
 from energyweb.graph.models import SensorGroup, SensorReading, Sensor, \
                                    PowerAverage, SRProfile
-import calendar, datetime, simplejson
+import calendar, datetime, simplejson, time
 
 
 # If a full graph has this many points or fewer, show the individual
@@ -535,7 +535,7 @@ def download(request, start, end, res):
         while r is not None:
             # Remember that the JavaScript client takes (and
             # gives) UTC timestamps in ms
-            x = int(calendar.timegm(per.timetuple()) * 1000)
+            x = per.timetuple()
             data += '<Row><Cell><Data ss:Type="String">' + \
                     str(x) + '</Data></Cell>'
             for sg in sensor_groups:
@@ -572,6 +572,73 @@ def download(request, start, end, res):
     return HttpResponse(data,
                         mimetype='application/xml')
 
+def download_csv(request, start, end, res):
+    '''
+    A view returning the XML data points of the static graph.
+    Called when someone hits the button on the static graph page.
+    '''
+    from django.db import connection, transaction
+    cur = connection.cursor() # Allows for SQL queries
+
+    # Start writing the xml output
+    data = ''
+    start_dt = datetime.datetime.utcfromtimestamp(int(start))
+    end_dt = datetime.datetime.utcfromtimestamp(int(end))
+    per_incr = PowerAverage.AVERAGE_TYPE_TIMEDELTAS[res]
+
+    (sensor_groups, sensor_ids, sensor_ids_by_group) = _get_sensor_groups()
+
+    # Write down the column headings
+    data += 'Time,'
+    for building in sensor_groups:
+        data += building[1] + ','
+    data = data[:-1] + '\n' #slice off last comma because it will be extraneous.
+
+    # Run Search to get data
+    PowerAverage.graph_data_execute(cur, res, start_dt, end_dt)
+
+    # Crazy loop to put things in table format.
+
+    r = cur.fetchone() # Retrieves results as r
+    
+    if r: # Don't let this happen if r is none 'cause will segfault
+        per = r[2]
+
+        # At the end of each outer loop, we increment per (the current
+        # ten-second period of time we're considering) by ten seconds.
+        while r is not None:
+            # Remember that the JavaScript client takes (and
+            # gives) UTC timestamps in ms
+            x = per.timetuple()
+            data += str(x) + ','
+            for sg in sensor_groups:
+                y = 0
+                for sid in sensor_ids_by_group[sg[0]]:
+                    # If this sensor has a reading for the current per,
+                    # update y.  There are three ways the sensor might
+                    # not have such a reading:
+                    # 1. r is None, i.e. there are no more readings at
+                    #    all
+                    # 2. r is not None and r[2] > per, i.e. there are 
+                    #    more readings but not for this per
+                    # 3. r is not None and r[2] <= per and r[1] != s[0],
+                    #    i.e. there are more readings for this per,
+                    #    but none for this sensor
+                    if r is not None and r[2] <= per and r[1] == sid:
+                        # None implies signal was lost and should be preserved
+                        if y is not None:
+                            y += float(r[0])
+                        r = cur.fetchone() # Go to the next data point
+                    else:
+                        y = None
+
+                data += str(y) + ','
+            per += per_incr
+            data = data[:-1] + '\n'
+
+    # Send the csv to be posted
+    return HttpResponse(data,
+                        mimetype='application/csv')
 
 def mon_status_data(request):
     junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
