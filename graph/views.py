@@ -496,12 +496,9 @@ def download(request, start, end, res):
     data = '<?xml version="1.0" encoding="UTF-8"?>'
     data += '<!-- Magic Incantation to get Excel to open file -->' +\
 	'<Workbook ' + \
-        'xmlns:c="urn:schemas-microsoft-com:office:component:spreadsheet" ' + \
+        'xmlns="urn:schemas-microsoft-com:office:spreadsheet" ' + \
         'xmlns:html="http://www.w3.org/TR/REC-html40" ' + \
         'xmlns:o="urn:schemas-microsoft-com:office:office" ' + \
-        'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ' + \
-        'xmlns="urn:schemas-microsoft-com:office:spreadsheet" ' + \
-        'xmlns:x2="http://schemas.microsoft.com/office/excel/2003/xml" ' + \
         'xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" ' + \
         'xmlns:x="urn:schemas-microsoft-com:office:excel">'
 
@@ -521,7 +518,7 @@ def download(request, start, end, res):
     for building in sensor_groups:
         data += '<Cell><Data ss:Type="String">' + \
                  building[1] + '</Data></Cell>'
-    data += '</Row'>
+    data += '</Row>'
 
     # Run Search to get data
     PowerAverage.graph_data_execute(cur, res, start_dt, end_dt)
