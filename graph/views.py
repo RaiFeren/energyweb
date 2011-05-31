@@ -484,6 +484,97 @@ def static_graph_data(request, start, end, res):
                         mimetype='application/json')
 
 
+def download(request, start, end, res):
+    '''
+    A view returning the XML data points of the static graph.
+    Called when someone hits the button on the static graph page.
+    '''
+    from django.db import connection, transaction
+    cur = connection.cursor() # Allows for SQL queries
+
+    # Start writing the xml output
+    data = '<?xml version="1.0" encoding="UTF-8"?>'
+    data += '<!-- Magic Incantation to get Excel to open file -->
+	<Workbook
+        xmlns:c="urn:schemas-microsoft-com:office:component:spreadsheet"
+        xmlns:html="http://www.w3.org/TR/REC-html40"
+        xmlns:o="urn:schemas-microsoft-com:office:office"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+        xmlns:x2="http://schemas.microsoft.com/office/excel/2003/xml"
+        xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+        xmlns:x="urn:schemas-microsoft-com:office:excel">'
+
+    data += '<ss:Worksheet ss:Name="Data"><Table>'
+
+    start_dt = datetime.datetime.utcfromtimestamp(int(start))
+    end_dt = datetime.datetime.utcfromtimestamp(int(end))
+    per_incr = PowerAverage.AVERAGE_TYPE_TIMEDELTAS[res]
+
+    (sensor_groups, sensor_ids, sensor_ids_by_group) = _get_sensor_groups()
+
+    # Declare how many columns the table has.
+    data += '<Column ss:Span="' + sensor_groups.length() + '"/>'
+
+    # Write down the column headings
+    data += '<Row>'
+    for building in sensor_groups:
+        data += '<Cell><Data ss:Type="String">' + \
+                 building[1] + '</Data></Cell>'
+    data += '</Row'>
+
+    # Run Search to get data
+    PowerAverage.graph_data_execute(cur, res, start_dt, end_dt)
+
+    # Crazy loop to put things in table format.
+
+    r = cur.fetchone() # Retrieves results as r
+    
+    if r: # Don't let this happen if r is none 'cause will segfault
+        per = r[2]
+
+        # At the end of each outer loop, we increment per (the current
+        # ten-second period of time we're considering) by ten seconds.
+        while r is not None:
+            # Remember that the JavaScript client takes (and
+            # gives) UTC timestamps in ms
+            x = int(calendar.timegm(per.timetuple()) * 1000)
+            data += '<Row><Cell><Data ss:Type="String">' + \
+                    x + '</Data></Cell>'
+            for sg in sensor_groups:
+                y = 0
+                for sid in sensor_ids_by_group[sg[0]]:
+                    # If this sensor has a reading for the current per,
+                    # update y.  There are three ways the sensor might
+                    # not have such a reading:
+                    # 1. r is None, i.e. there are no more readings at
+                    #    all
+                    # 2. r is not None and r[2] > per, i.e. there are 
+                    #    more readings but not for this per
+                    # 3. r is not None and r[2] <= per and r[1] != s[0],
+                    #    i.e. there are more readings for this per,
+                    #    but none for this sensor
+                    if r is not None and r[2] <= per and r[1] == sid:
+                        # None implies signal was lost and should be preserved
+                        if y is not None:
+                            y += float(r[0])
+                        r = cur.fetchone() # Go to the next data point
+                    else:
+                        y = None
+
+                data += '<Cell><Data ss:Type="Number">' + y + '</Data></Cell>'
+            per += per_incr
+            data += '</Row>'
+
+
+    # Close the data table
+    data += '</Table></ss:Worksheet></Workbook>'
+
+    # Send the xml to be posted
+    return HttpResponse(data,
+                        mimetype='application/xml')
+
+
 def mon_status_data(request):
     junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
     (sensor_groups, sensor_ids, sensor_ids_by_group) = _get_sensor_groups()
