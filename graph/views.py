@@ -514,14 +514,14 @@ def download(request, start, end, res):
     (sensor_groups, sensor_ids, sensor_ids_by_group) = _get_sensor_groups()
 
     # Declare how many columns the table has.
-    data += '<Column ss:Span="' + sensor_groups.length() + '"/>'
+    data += '<Column ss:Span="' + str(len(sensor_groups)) + '"/>'
 
     # Write down the column headings
     data += '<Row>'
     for building in sensor_groups:
         data += '<Cell><Data ss:Type="String">' + \
                  building[1] + '</Data></Cell>'
-    data += '</Row'>
+    data += '</Row>'
 
     # Run Search to get data
     PowerAverage.graph_data_execute(cur, res, start_dt, end_dt)
@@ -540,7 +540,7 @@ def download(request, start, end, res):
             # gives) UTC timestamps in ms
             x = int(calendar.timegm(per.timetuple()) * 1000)
             data += '<Row><Cell><Data ss:Type="String">' + \
-                    x + '</Data></Cell>'
+                    str(x) + '</Data></Cell>'
             for sg in sensor_groups:
                 y = 0
                 for sid in sensor_ids_by_group[sg[0]]:
@@ -562,7 +562,8 @@ def download(request, start, end, res):
                     else:
                         y = None
 
-                data += '<Cell><Data ss:Type="Number">' + y + '</Data></Cell>'
+                data += '<Cell><Data ss:Type="Number">' + str(y) +\
+                    '</Data></Cell>'
             per += per_incr
             data += '</Row>'
 
