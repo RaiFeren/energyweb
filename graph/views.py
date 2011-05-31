@@ -8,7 +8,7 @@ from django import forms
 from django.db.models import Avg, Max, Min, Count
 from energyweb.graph.models import SensorGroup, SensorReading, Sensor, \
                                    PowerAverage, SRProfile
-import calendar, datetime, simplejson
+import calendar, datetime, simplejson, time
 
 
 # If a full graph has this many points or fewer, show the individual
@@ -535,9 +535,9 @@ def download(request, start, end, res):
         while r is not None:
             # Remember that the JavaScript client takes (and
             # gives) UTC timestamps in ms
-            x = int(calendar.timegm(per.timetuple()) * 1000)
+            x = per.timetuple()
             data += '<Row><Cell><Data ss:Type="String">' + \
-                    str(x) + '</Data></Cell>'
+                time.strftime("%a, %d %b %Y %H:%M:%S",x) + '</Data></Cell>'
             for sg in sensor_groups:
                 y = 0
                 for sid in sensor_ids_by_group[sg[0]]:
