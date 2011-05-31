@@ -610,7 +610,7 @@ def download_csv(request, start, end, res):
             # Remember that the JavaScript client takes (and
             # gives) UTC timestamps in ms
             x = per.timetuple()
-            data += str(x) + ','
+            data += time.strftime("%a, %d %b %Y %H:%M:%S",x) + ','
             for sg in sensor_groups:
                 y = 0
                 for sid in sensor_ids_by_group[sg[0]]:
