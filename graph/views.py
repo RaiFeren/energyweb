@@ -537,7 +537,7 @@ def download(request, start, end, res):
             # gives) UTC timestamps in ms
             x = per.timetuple()
             data += '<Row><Cell><Data ss:Type="String">' + \
-                    str(x) + '</Data></Cell>'
+                time.strftime("%a, %d %b %Y %H:%M:%S",x) + '</Data></Cell>'
             for sg in sensor_groups:
                 y = 0
                 for sid in sensor_ids_by_group[sg[0]]:
