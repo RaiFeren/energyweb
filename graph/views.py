@@ -208,7 +208,8 @@ def statistics_table_data(request, data):
     month_averages = week_and_month_averages['month']
 
     # Get current data
-    PowerAverage.graph_data_execute(cur, 'second*10', datetime.datetime.now())
+    now = datetime.datetime.now() - datetime.timedelta(0,0,20)
+    PowerAverage.graph_data_execute(cur, 'second*10', now)
 
     # sg_xy_pairs = dict([[sg[0], []] for sg in sensor_groups])
     current_values = {}
