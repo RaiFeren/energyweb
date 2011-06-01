@@ -18,7 +18,12 @@ $(function ()
 
     function rnd(x) {
         // (Used to format numbers in the table)
-        return x.toFixed(2);
+        if (x) {
+            return x.toFixed(2);
+        }
+        else {
+            return x;
+        }
     }
 
     // Interprets data from the server and updates the table

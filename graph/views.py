@@ -207,8 +207,8 @@ def statistics_table_data(request, data):
     week_averages = week_and_month_averages['week']
     month_averages = week_and_month_averages['month']
 
-    # Get current data
-    now = datetime.datetime.now() - datetime.timedelta(0,20,0)
+    # Get current data. Loop through data to make sure we have something
+    now = datetime.datetime.now() - datetime.timedelta(0,40,0)
     PowerAverage.graph_data_execute(cur, 'second*10', now)
 
     # sg_xy_pairs = dict([[sg[0], []] for sg in sensor_groups])
