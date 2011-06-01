@@ -246,6 +246,7 @@ def statistics_table_data(request, data):
                     else:
                         y = None
                 current_values[sg[0]] = y
+            per += per_incr
     
         junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
         data_url = reverse('energyweb.graph.views.statistics_table_data', 
