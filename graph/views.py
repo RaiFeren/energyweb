@@ -167,14 +167,14 @@ def data_interface(request):
     data = str(int(calendar.timegm(start_dt.timetuple()) * 1000))
     return render_to_response('graph/data_interface.html', 
         {'sensor_groups': _get_sensor_groups()[0],
-         'data_url': reverse('energyweb.graph.views.dynamic_graph_data', 
+         'data_url': reverse('energyweb.graph.views.statistics_table_data', 
                              kwargs={'data': data}) + '?junk=' + junk},
         context_instance=RequestContext(request))
     
 
-def data_interface_data(request, data):
+def statistics_table_data(request, data):
     '''
-    A view returning the JSON data used to populate the dynamic graph.
+    A view returning the JSON data used to populate the averages table.
     '''
     from django.db import connection, transaction
     cur = connection.cursor()
@@ -202,19 +202,59 @@ def data_interface_data(request, data):
             if not week_and_month_averages[average_type].has_key(sensor_id):
                 # We didn't find an average for this sensor; set the entry
                 # to None.
-                week_and_month_averages[average_type][sensor_id] = None
+                week_and_month_averages[average_type][sensor_id] = None        
 
     week_averages = week_and_month_averages['week']
     month_averages = week_and_month_averages['month']
+
+    # Get current data
+    PowerAverage.graph_data_execute(cur, 'second*10', datetime.datetime.now())
+
+    # sg_xy_pairs = dict([[sg[0], []] for sg in sensor_groups])
+    current_values = {}
+    r = cur.fetchone()
+    if r is None:
+        d = {'no_results': True,
+             'week_averages': week_and_month_averages['week'],
+             'month_averages': week_and_month_averages['month']}
+    else:
+        per = r[2]
+        per_incr = datetime.timedelta(0, 10, 0)
     
-    junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
-    data_url = reverse('energyweb.graph.views.data_interface_data', 
-                       kwargs={'data': str(last_record)}) + '?junk=' + junk
-    d = {'no_results': False,
-         'week_averages': week_and_month_averages['week'],
-         'month_averages': week_and_month_averages['month'],
-         'sensor_groups': sensor_groups,
-         'data_url': data_url}
+        while r is not None:
+            for sg in sensor_groups:
+                y = 0
+                for sid in sensor_ids_by_group[sg[0]]:
+                    # If this sensor has a reading for the current per,
+                    # update y.  There are three ways the sensor might
+                    # not have such a reading:
+                    # 1. r is None, i.e. there are no more readings at
+                    #    all
+                    # 2. r is not None and r[2] > per, i.e. there are 
+                    #    more readings but not for this per
+                    # 3. r is not None and r[2] <= per and r[1] != s[0],
+                    #    i.e. there are more readings for this per,
+                    #    but none for this sensor
+                    if r is not None and r[2] <= per and r[1] == sid:
+                        # If y is None, leave it as such.   Else, add
+                        # this sensor reading to y.  Afterwards, in
+                        # either case, fetch a new row.
+                        if y is not None:
+                            y += float(r[0])
+                        r = cur.fetchone()
+                    else:
+                        y = None
+                current_values[sg[0]] = y
+    
+        junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
+        data_url = reverse('energyweb.graph.views.statistics_table_data', 
+                           kwargs={'data': str(last_record)}) + '?junk=' + junk
+        d = {'no_results': False,
+             'cur_values': current_values,
+             'week_averages': week_and_month_averages['week'],
+             'month_averages': week_and_month_averages['month'],
+             'sensor_groups': sensor_groups,
+             'data_url': data_url}
 
     json_serializer = serializers.get_serializer("json")()
     return HttpResponse(simplejson.dumps(d),

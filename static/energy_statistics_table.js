@@ -2,14 +2,9 @@
 
 $(function () 
 {
-    var debug = true;
     var first_time = true;
     var desired_first_record = null;
     var sensor_groups = null;
-    //alert("This function ran!");
-
-    // Theoretically data_url should be defined by views.py
-    //alert("data_url is: " + data_url);
 
     function array_index_of(ar, x) {
         // (IE doesn't have Array.indexOf)
@@ -31,7 +26,7 @@ $(function ()
     {
 	if (first_time && data.no_results)
 	{
-	    alert("No data received :(");
+	    alert("No data received. Check connection to sensors.");
 	    return;
 	}
 
@@ -46,6 +41,7 @@ $(function ()
 	    missed_month_average,
 	    sensor_id,
        	    group_name,
+            group_current,
 	    group_week_average,
 	    group_month_average;
 
@@ -56,6 +52,7 @@ $(function ()
 
 	for (var i=0; i < sensor_groups.length; i++)
 	{
+            group_current = 0;
 	    group_week_average = 0;
 	    group_month_average = 0;
 	    missed_week_average = false;
@@ -66,7 +63,7 @@ $(function ()
 	    {
 		sensor_id = sensor_groups[i][3][j][0];
 
-		// Add sensor's average to the sensor group's average.
+		// Add sensor's average to the sensor group's average.                
 		if (sensor_id in data.week_averages)
 		{
 		    group_week_average += data.week_averages[sensor_id];
@@ -76,6 +73,10 @@ $(function ()
 		    group_month_average += data.month_averages[sensor_id];
 		}
 	    }
+
+            // get the current values
+            $('#curr' + group_name).empty();
+            $('#curr' + group_name).append( rnd(data.cur_values[group_name]) );
 
 	    // Update the averages in the table for the sensor group.
 	    // id for placement should be: week{buildingname}

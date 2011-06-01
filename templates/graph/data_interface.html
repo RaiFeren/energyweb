@@ -7,9 +7,6 @@
     var MEDIA_URL = "{{ MEDIA_URL }}";
     var data_url = "{{ data_url }}";
     var sensor_group_length = "{{ sensor_groups|length }}";
-    //alert("Num of sensor groups: " + {{ sensor_groups|length }});
-    //alert("Num of sensors: " + {{ sensors|length }});
-    // alert("Length of random list should be 4 and is: " + {{ numberList|length }});
 </script>
 <script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}energy_statistics_table.js"></script>
 {% endblock %}
@@ -37,7 +34,7 @@
 </table>
 
 
-
+<!-- Old Table!
 <table class="center" id="energystats">
     <colgroup id="colgroupstats">
     <col id="leftthcol" />
@@ -107,5 +104,6 @@
         </tr>
     </tbody>
 </table>
+-->
 
 {% endblock %}
