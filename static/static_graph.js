@@ -110,7 +110,7 @@ $(function () {
     $('#getData').click(function() {
         // $('#outputDiv').toggle(); // Old Version
         var path_name = 'static/' + start + '/to/' + end + '/minute/data.csv';
-        document.location.href=path_name; // New Version
+        location.href=path_name; // New Version
     });
 
     // It is expected that data_url was defined previously (before
