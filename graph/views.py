@@ -221,8 +221,9 @@ def statistics_table_data(request, data):
     else:
         per = r[2]
         per_incr = datetime.timedelta(0, 10, 0)
-    
+        # Increment the time period for 10 second intervals each loop
         while r is not None:
+            x = int(calendar.timegm(per.timetuple())*1000)
             for sg in sensor_groups:
                 y = 0
                 for sid in sensor_ids_by_group[sg[0]]:
@@ -247,7 +248,7 @@ def statistics_table_data(request, data):
                         y = None
                 current_values[sg[0]] = y
             per += per_incr
-    
+        last_record = x
         junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
         data_url = reverse('energyweb.graph.views.statistics_table_data', 
                            kwargs={'data': str(last_record)}) + '?junk=' + junk
