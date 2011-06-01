@@ -1,4 +1,4 @@
-alert("this alert is in the external javascript file.");
+//alert("this alert is in the external javascript file.");
 
 $(function () 
 {
@@ -9,7 +9,7 @@ $(function ()
     //alert("This function ran!");
 
     // Theoretically data_url should be defined by views.py
-    alert("data_url is: " + data_url);
+    //alert("data_url is: " + data_url);
 
     function array_index_of(ar, x) {
         // (IE doesn't have Array.indexOf)
@@ -37,15 +37,17 @@ $(function ()
         // used in the graph, not really here.
 	desired_first_record = data.desired_first_record;
 
-	// TODO: what are all of these variables for?
-	var series_opts = [];
-	var series = [];
 	var missed_week_average,
 	    missed_month_average,
 	    sensor_id,
        	    group_name,
 	    group_week_average,
 	    group_month_average;
+
+        // get the sensor groups
+        if (first_time) {
+            sensor_groups = data.sensor_groups;
+        }
 
 	for (var i=0; i < sensor_groups.length; i++)
 	{
@@ -96,7 +98,7 @@ $(function ()
     // Get data from server and pass it to the table builder function.
     function refreshdata() 
     {
-	alert("In refreshdata()");
+	//alert("In refreshdata()");
 	$.getJSON(data_url, refreshdata_json_cb);
     }
 
