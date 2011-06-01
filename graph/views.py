@@ -181,9 +181,9 @@ def statistics_table_data(request, data):
 
     (sensor_groups, sensor_ids, sensor_ids_by_group) = _get_sensor_groups()
 
-    week_and_month_averages = dict(week={}, month={})
+    all_averages = dict(minute={},week={}, month={})
 
-    for average_type in ('week', 'month'):
+    for average_type in ('minute','week', 'month'):
         trunc_reading_time = None
         for average in PowerAverage.objects.filter(average_type=average_type
             ).order_by('-trunc_reading_time')[:len(sensor_ids)]:
@@ -196,16 +196,17 @@ def statistics_table_data(request, data):
                 # every sensor for this time period.  If this is the case,
                 # some of the results will be for an earlier time period and
                 # have an earlier trunc_reading_time .
-                week_and_month_averages[average_type][average.sensor_id] \
+                all_averages[average_type][average.sensor_id] \
                     = average.watts / 1000.0
         for sensor_id in sensor_ids:
-            if not week_and_month_averages[average_type].has_key(sensor_id):
+            if not all_averages[average_type].has_key(sensor_id):
                 # We didn't find an average for this sensor; set the entry
                 # to None.
-                week_and_month_averages[average_type][sensor_id] = None        
+                all_averages[average_type][sensor_id] = None        
 
-    week_averages = week_and_month_averages['week']
-    month_averages = week_and_month_averages['month']
+    min_averages = all_averages['minute']
+    week_averages = all_averages['week']
+    month_averages = all_averages['month']
 
     # Get current data. Loop through data to make sure we have something
     now = datetime.datetime.now() - datetime.timedelta(0,40,0)
@@ -216,8 +217,9 @@ def statistics_table_data(request, data):
     r = cur.fetchone()
     if r is None:
         d = {'no_results': True,
-             'week_averages': week_and_month_averages['week'],
-             'month_averages': week_and_month_averages['month']}
+             'min_averages': all_averages['minute'],
+             'week_averages': all_averages['week'],
+             'month_averages': all_averages['month']}
     else:
         per = r[2]
         per_incr = datetime.timedelta(0, 10, 0)
@@ -254,8 +256,9 @@ def statistics_table_data(request, data):
                            kwargs={'data': str(last_record)}) + '?junk=' + junk
         d = {'no_results': False,
              'cur_values': current_values,
-             'week_averages': week_and_month_averages['week'],
-             'month_averages': week_and_month_averages['month'],
+             'min_averages': all_averages['minute'],
+             'week_averages': all_averages['week'],
+             'month_averages': all_averages['month'],
              'sensor_groups': sensor_groups,
              'data_url': data_url}
 
@@ -312,6 +315,7 @@ def dynamic_graph_data(request, data):
                 # to None.
                 week_and_month_averages[average_type][sensor_id] = None
 
+    min_averages = week_and_month_averages['minute']
     week_averages = week_and_month_averages['week']
     month_averages = week_and_month_averages['month']
 

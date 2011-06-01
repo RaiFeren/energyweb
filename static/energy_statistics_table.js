@@ -42,7 +42,8 @@ $(function ()
         // used in the graph, not really here.
 	desired_first_record = data.desired_first_record;
 
-	var missed_week_average,
+	var missed_min_average,
+            missed_week_average,
 	    missed_month_average,
 	    sensor_id,
        	    group_name,
@@ -60,6 +61,7 @@ $(function ()
             group_current = 0;
 	    group_week_average = 0;
 	    group_month_average = 0;
+            missed_min_average = false;
 	    missed_week_average = false;
 	    missed_month_average = false;
 	    group_name = sensor_groups[i][1];
@@ -68,7 +70,11 @@ $(function ()
 	    {
 		sensor_id = sensor_groups[i][3][j][0];
 
-		// Add sensor's average to the sensor group's average.                
+		// Add sensor's average to the sensor group's average. 
+                if (sensor_id in data.min_averages)
+                {
+                    group_current += data.min_averages[sensor_id];
+                }
 		if (sensor_id in data.week_averages)
 		{
 		    group_week_average += data.week_averages[sensor_id];
@@ -78,12 +84,14 @@ $(function ()
 		    group_month_average += data.month_averages[sensor_id];
 		}
 	    }
-
-            // get the current values
-            $('#curr' + group_name).empty();
-            $('#curr' + group_name).append( rnd(data.cur_values[group_name]) );
-
+                        
 	    // Update the averages in the table for the sensor group.
+	    // id for placement should be: curr{buildingname}
+            if (! missed_min_average)
+            {
+                $('#curr' + group_name).empty();
+                $('#curr' + group_name).append( rnd(data.group_current) );
+            }
 	    // id for placement should be: week{buildingname}
 	    if (! missed_week_average)
 	    {
