@@ -8,33 +8,6 @@ $(function () {
         // Workaround to get units on the y axis
         return val + " kW";
     }
-    
-    // For writing data to a table under the graph. 
-    // HACK solution to 'how do I download data?'
-    function writeOutput(data) {
-        var outputTable = ['<table>'];
-
-        var row = ['<tr><td>Time'];
-        for (var i=0; i<data.length; i++){
-            row.push(data[i]['label']); // add Names of buildings
-        }
-        outputTable.push( row.join('</td><td>'), '</td></tr>');
-
-        // loop through all times in range.
-        for (var j=0; i<data[0]['data'].length; j++) {
-            var row = [data[0]['data'][j][0]]; // grab the time
-
-            // loop through all buildings
-            for (var i=0; i<data.length; j) {
-                row.push(data[i]['data'][j][1]); // add y value for each building
-            }
-            outputTable.push('<tr><td>', row.join('</td><td>'), '</td></tr>');
-        }
-        outputTable.push('</table>');
-
-        // insert table to html
-        $('#outputDiv').append(outputTable.join(''));
-    }
 
     function getdata_json_cb(data) {
         // Given data from the server, update the graph.
@@ -52,7 +25,9 @@ $(function () {
         sensor_groups = data.sensor_groups;
 
         // When data is received, remove the graph's loading animation
+        // and show the download link
         $('#graph').empty();
+        $('#download').show();
     
         for (var i=0; i < sensor_groups.length; i++) {
             group_id = sensor_groups[i][0];
@@ -98,20 +73,13 @@ $(function () {
             }
         };
         $.plot($('#graph'), series, graph_opts);
-        writeOutput(series);
     }
     
-    // Initially, show a loading animation instead of the graph
+    // Initially, show a loading animation instead of the graph 
+    // and hide the download link.
     $('#graph').append(
         '<img class="loading" src="' + MEDIA_URL + 'loading.gif" />');
-    $('#outputDiv').hide()
-
-    // Make it so data toggles visibility when click on the button.
-    $('#getData').click(function() {
-        // $('#outputDiv').toggle(); // Old Version
-        var path_name = 'static/' + start + '/to/' + end + '/minute/data.csv';
-        location.href=path_name; // New Version
-    });
+    $('#download').hide();
 
     // It is expected that data_url was defined previously (before
     // loading this file).

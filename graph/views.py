@@ -389,10 +389,16 @@ def static_graph(request):
                                        'end': str(int_end), 
                                        'res': res}) + '?junk=' + junk
 
+            download_url = reverse('energyweb.graph.views.download_csv',
+                               kwargs={'start': str(int_start), 
+                                       'end': str(int_end), 
+                                       'res': res}) + '?junk=' + junk
+
             return render_to_response('graph/static_graph.html', 
                 {'start': js_start,
                  'end': js_end,
                  'data_url': data_url,
+                 'download_url': download_url,
                  'form': form,
                  'form_action': reverse('energyweb.graph.views.static_graph'),
                  'res': res},
@@ -574,14 +580,16 @@ def download(request, start, end, res):
 
 def download_csv(request, start, end, res):
     '''
-    A view returning the XML data points of the static graph.
+    A view returning the CSV data points of the static graph.
     Called when someone hits the button on the static graph page.
+    Used for users to download data.
     '''
     from django.db import connection, transaction
     cur = connection.cursor() # Allows for SQL queries
 
-    # Start writing the xml output
+    # Start writing the csv output
     data = ''
+    
     start_dt = datetime.datetime.utcfromtimestamp(int(start))
     end_dt = datetime.datetime.utcfromtimestamp(int(end))
     per_incr = PowerAverage.AVERAGE_TYPE_TIMEDELTAS[res]
@@ -607,9 +615,8 @@ def download_csv(request, start, end, res):
         # At the end of each outer loop, we increment per (the current
         # ten-second period of time we're considering) by ten seconds.
         while r is not None:
-            # Remember that the JavaScript client takes (and
-            # gives) UTC timestamps in ms
             x = per.timetuple()
+            # Formats time like 'Mon 30 May 2011 22:17:00'
             data += time.strftime("%a %d %b %Y %H:%M:%S",x) + ','
             for sg in sensor_groups:
                 y = 0

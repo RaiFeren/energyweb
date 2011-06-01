@@ -12,8 +12,10 @@
 {% endblock %}
 
 {% block content %}
+
 <div id="graph"></div>
-<button id="getData"> Download Data </button> <a href="{{data_url}}">Download Data</a>
-<div id="outputDiv"></div>
+
+<div id="download"><a href="{{download_url}}">Download Data</a></div>
+
 {{ block.super }}
 {% endblock %}
