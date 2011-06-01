@@ -90,7 +90,7 @@ $(function ()
             if (! missed_min_average)
             {
                 $('#curr' + group_name).empty();
-                $('#curr' + group_name).append( rnd(data.group_current) );
+                $('#curr' + group_name).append( rnd(group_current) );
             }
 	    // id for placement should be: week{buildingname}
 	    if (! missed_week_average)

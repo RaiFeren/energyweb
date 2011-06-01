@@ -315,7 +315,6 @@ def dynamic_graph_data(request, data):
                 # to None.
                 week_and_month_averages[average_type][sensor_id] = None
 
-    min_averages = week_and_month_averages['minute']
     week_averages = week_and_month_averages['week']
     month_averages = week_and_month_averages['month']
 

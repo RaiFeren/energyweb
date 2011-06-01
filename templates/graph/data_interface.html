@@ -16,7 +16,7 @@
   <thead>
     <tr id="trhead">
       <th>Dorm</th>
-      <th>Current Use (kW)</th>
+      <th>Average This Minute (kW)</th>
       <th>Average Since Monday (kW)</th>
       <th>Average This Month (kW)</th>
     </tr>
@@ -25,7 +25,7 @@
     {% for sg in sensor_groups %}
       <tr id="row{{ sg.1 }}">
 	<td id="name{{ sg.1 }}">{{ sg.1 }}</td>
-	<td id="curr{{ sg.1 }}">currpowerhere</td>
+	<td id="curr{{ sg.1 }}">minutepowerhere</td>
 	<td id="week{{ sg.1 }}">weekpowerhere</td>
 	<td id="month{{ sg.1 }}">monthpowerhere</td>
       </tr>
