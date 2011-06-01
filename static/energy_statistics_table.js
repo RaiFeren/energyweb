@@ -21,6 +21,11 @@ $(function ()
         return -1;
     }
 
+    function rnd(x) {
+        // (Used to format numbers in the table)
+        return x.toFixed(2);
+    }
+
     // Interprets data from the server and updates the table
     function refreshdata_json_cb(data) 
     {
