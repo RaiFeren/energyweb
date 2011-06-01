@@ -4,12 +4,24 @@ $(function ()
 {
     var debug = true;
     var first_time = true;
-    alert("This function ran!");
+    var desired_first_record = null;
+    var sensor_groups = null;
+    //alert("This function ran!");
 
-    // Theoretically data_url should be defined.
+    // Theoretically data_url should be defined by views.py
     alert("data_url is: " + data_url);
 
-    // Take in new data from the server and update the table.
+    function array_index_of(ar, x) {
+        // (IE doesn't have Array.indexOf)
+        for (var i=0; i < ar.length; i++) {
+            if (ar[i] == x) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    // Interprets data from the server and updates the table
     function refreshdata_json_cb(data) 
     {
 	if (first_time && data.no_results)
@@ -18,10 +30,11 @@ $(function ()
 	    return;
 	}
 
-	// We expect that data_url actually exists -_-
+        // data_url gives the json dump of data transferred from database
 	data_url = data.data_url;
 
-	// TODO: what is this here for?
+	// defines where the start of data is
+        // used in the graph, not really here.
 	desired_first_record = data.desired_first_record;
 
 	// TODO: what are all of these variables for?
