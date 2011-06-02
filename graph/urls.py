@@ -10,12 +10,14 @@ urlpatterns = patterns('energyweb.graph.views',
     (r'^$', 'dynamic_graph'), # home page -- Dynamic graph
     (r'^(?P<data>\d+)/data.json$', 'dynamic_graph_data'), # data dump for it
     (r'^(?P<data>\d+)/averages_data.json$', 'statistics_table_data'),
-    (r'^interface/$', 'data_interface'),
+    (r'^detail/$','detail_graphs'), # details page -- for building views
+    (r'^detail/(?P<data>\d+)/data.json$','detail_graphs_data'),
+    (r'^interface/$', 'data_interface'), # Energy Statistics Table
     (r'^interface/(?P<data>\d+)/data.json$', 'statistics_table_data'),
-    (r'^static/$', 'static_graph'),
+    (r'^static/$', 'static_graph'), # Custom Graph -- For user defined time ranges
     (r'^static/(?P<start>\d+)/to/(?P<end>\d+)/(?P<res>[a-z]+(\*10)?)/data.json$', 'static_graph_data'),
     (r'^static/(?P<start>\d+)/to/(?P<end>\d+)/(?P<res>[a-z]+(\*10)?)/data.csv$', 'download_csv'),
-    (r'^status/$', 'mon_status'),
+    (r'^status/$', 'mon_status'), # Status Page, for telling if the sensors work
     (r'^status/data.json$', 'mon_status_data'),
 )
 

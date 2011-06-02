@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Energy Usage at Mudd{% endblock %}
+
+{% block morehead %}
+<!--
+<script language="javascript" type="text/javascript">
+    var MEDIA_URL = "{{ MEDIA_URL }}";
+    var data_url = "{{ data_url }}";
+    var sensor_group_length = "{{ sensor_groups|length }}";
+</script>
+<script language="javascript" type="text/javascript"
+src="{{ MEDIA_URL }}detail_graphs.js"></script>
+-->
+{% endblock %}
+
+{% block contents %}
+
+<table class="center">
+  <tr>
+    <td><div id="selector"</div></td>
+  </tr>
+  <tr>
+    <td><div id="graph"></div></td>
+    <td><div id="choices"></div></td>
+  </tr>
+  
+</table>
+
+{% endblock %}
