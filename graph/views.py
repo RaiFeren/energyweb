@@ -619,8 +619,8 @@ def detail_graphs(request, building):
 
     return render_to_response('graph/detail_graphs.html', 
         {'data_url': reverse('energyweb.graph.views.detail_graphs_data', 
-                             kwargs={'building': building,
-                                     'mode':'cycle', 
+                             kwargs={'building': str(building),
+                                     'mode':'cycle',
                                      'resolution':'day', # MAGIC! Needs to change
                                      'start_time':data}) + '?junk=' + junk},
         context_instance=RequestContext(request))
@@ -724,12 +724,12 @@ def detail_graphs_data(request, building, mode, resolution, start_time):
     
         junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
         data_url = reverse('energyweb.graph.views.detail_graphs_data', 
-                             kwargs={'building': building,
-                                     'mode':'cycle', 
-                                     'resolution':'day', # MAGIC! Needs to change
-                                     'start_time':str(last_record)}
-                           +'?junk=' + junk
-
+                           kwargs={'building': building,
+                                   'mode':'cycle', 
+                                   'resolution':'day', # MAGIC! Needs to change
+                                   'start_time':str(last_record)}) + \
+                                   '?junk=' + junk
+                           
         d = {'no_results': False,
              'xy_pairs': xy_pairs,
              'sensor_groups': sensor_groups,
