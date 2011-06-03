@@ -660,7 +660,7 @@ def detail_graphs_data(request, building, mode, resolution, start_time):
     start_dt = datetime.datetime.utcfromtimestamp(int(start_time) / 1000)
                    
     PowerAverage.graph_data_execute(cur,
-                                    resolution_deltas[res_type[resolution]],
+                                    res_type[resolution],
                                     start_dt)
 
     # Also note, above, that if data was supplied then we selected
@@ -676,7 +676,8 @@ def detail_graphs_data(request, building, mode, resolution, start_time):
 
     # dictionary has keys of total and then the sensor ids
     xy_pairs = {'total':[]}
-    for sensor_id in sensor_ids_by_group[building]:
+    print sensor_ids_by_group
+    for sensor_id in sensor_ids_by_group[int(str(building))]:
         xy_pairs[sensor_id] = []
     
     r = cur.fetchone()
@@ -693,7 +694,7 @@ def detail_graphs_data(request, building, mode, resolution, start_time):
             # gives) UTC timestamps in ms
             x = int(calendar.timegm(per.timetuple()) * 1000)
             xy_pairs['total'].append([x,0])
-            for sid in sensor_ids_by_group[building]:
+            for sid in sensor_ids_by_group[int(str(building))]:
                 y = 0
                 # If this sensor has a reading for the current per,
                 # update y.  There are three ways the sensor might
@@ -711,11 +712,12 @@ def detail_graphs_data(request, building, mode, resolution, start_time):
                     # either case, fetch a new row.
                     if y is not None:
                         y += float(r[0])
+                        # increment total here!
+                        xy_pairs['total'][-1][1] += y
                     r = cur.fetchone()
                 else:
                     y = None
                 xy_pairs[sid].append((x, y))
-                xy_pairs['total'][-1][1] += float(y) # Increment the total
             per += per_incr
     
         last_record = x
