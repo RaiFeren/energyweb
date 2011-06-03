@@ -14,4 +14,6 @@ def nav_urls(request):
             'static_graph_url': reverse('energyweb.graph.views.static_graph'),
             'mon_status_url': reverse('energyweb.graph.views.mon_status'),
             'data_interface_url': reverse('energyweb.graph.views.data_interface')
-            'detail_url': reverse('energyweb.graph.views.detail_graphs')}
+            'detail_url': reverse('energyweb.graph.views.detail_graphs' ,
+                                  kwargs={'building':str(1)}), # default Atwood
+            }

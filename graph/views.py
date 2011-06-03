@@ -411,6 +411,7 @@ def static_graph(request):
         and 'res' in request.GET):
 
         _get = request.GET.copy()
+        # *_0 gives date, *_1 gives time in 12 hr w/ AM or PM
         for field in ('start_0', 'start_1', 'end_0', 'end_1'):
             if field in ('start_1', 'end_1'):
                 # Allow e.g. pm or p.m. instead of PM
@@ -535,95 +536,6 @@ def static_graph_data(request, start, end, res):
     return HttpResponse(simplejson.dumps(d),
                         mimetype='application/json')
 
-
-def download(request, start, end, res):
-    '''
-    A view returning the XML data points of the static graph.
-    Called when someone hits the button on the static graph page.
-    '''
-    from django.db import connection, transaction
-    cur = connection.cursor() # Allows for SQL queries
-
-    # Start writing the xml output
-    data = '<?xml version="1.0" encoding="UTF-8"?>'
-    data += '<!-- Magic Incantation to get Excel to open file -->' +\
-	'<Workbook ' + \
-        'xmlns="urn:schemas-microsoft-com:office:spreadsheet" ' + \
-        'xmlns:html="http://www.w3.org/TR/REC-html40" ' + \
-        'xmlns:o="urn:schemas-microsoft-com:office:office" ' + \
-        'xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" ' + \
-        'xmlns:x="urn:schemas-microsoft-com:office:excel">'
-
-    data += '<ss:Worksheet ss:Name="Data"><Table>'
-
-    start_dt = datetime.datetime.utcfromtimestamp(int(start))
-    end_dt = datetime.datetime.utcfromtimestamp(int(end))
-    per_incr = PowerAverage.AVERAGE_TYPE_TIMEDELTAS[res]
-
-    (sensor_groups, sensor_ids, sensor_ids_by_group) = _get_sensor_groups()
-
-    # Declare how many columns the table has.
-    data += '<Column ss:Span="' + str(len(sensor_groups)) + '"/>'
-
-    # Write down the column headings
-    data += '<Row>'
-    for building in sensor_groups:
-        data += '<Cell><Data ss:Type="String">' + \
-                 building[1] + '</Data></Cell>'
-    data += '</Row>'
-
-    # Run Search to get data
-    PowerAverage.graph_data_execute(cur, res, start_dt, end_dt)
-
-    # Crazy loop to put things in table format.
-
-    r = cur.fetchone() # Retrieves results as r
-    
-    if r: # Don't let this happen if r is none 'cause will segfault
-        per = r[2]
-
-        # At the end of each outer loop, we increment per (the current
-        # ten-second period of time we're considering) by ten seconds.
-        while r is not None:
-            # Remember that the JavaScript client takes (and
-            # gives) UTC timestamps in ms
-            x = per.timetuple()
-            data += '<Row><Cell><Data ss:Type="String">' + \
-                time.strftime("%a, %d %b %Y %H:%M:%S",x) + '</Data></Cell>'
-            for sg in sensor_groups:
-                y = 0
-                for sid in sensor_ids_by_group[sg[0]]:
-                    # If this sensor has a reading for the current per,
-                    # update y.  There are three ways the sensor might
-                    # not have such a reading:
-                    # 1. r is None, i.e. there are no more readings at
-                    #    all
-                    # 2. r is not None and r[2] > per, i.e. there are 
-                    #    more readings but not for this per
-                    # 3. r is not None and r[2] <= per and r[1] != s[0],
-                    #    i.e. there are more readings for this per,
-                    #    but none for this sensor
-                    if r is not None and r[2] <= per and r[1] == sid:
-                        # None implies signal was lost and should be preserved
-                        if y is not None:
-                            y += float(r[0])
-                        r = cur.fetchone() # Go to the next data point
-                    else:
-                        y = None
-
-                data += '<Cell><Data ss:Type="Number">' + str(y) +\
-                    '</Data></Cell>'
-            per += per_incr
-            data += '</Row>'
-
-
-    # Close the data table
-    data += '</Table></ss:Worksheet></Workbook>'
-
-    # Send the xml to be posted
-    return HttpResponse(data,
-                        mimetype='application/xml')
-
 def download_csv(request, start, end, res):
     '''
     A view returning the CSV data points of the static graph.
@@ -693,66 +605,63 @@ def download_csv(request, start, end, res):
     return HttpResponse(data,
                         mimetype='application/csv')
 
-def detail_graphs(request):
+def detail_graphs(request, building):
     '''
-    A view returning the HTML for the dynamic (home-page) graph.
+    A view returning the HTML for the Detailed Building graph.
     (This graph represents the last three hours and updates
     automatically.)
     '''
     junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
-    start_dt = datetime.datetime.now() - datetime.timedelta(0, 3600*3, 0)
+    start_dt = datetime.datetime.now() - datetime.timedelta(1, 0, 0) # 1 day
     data = str(int(calendar.timegm(start_dt.timetuple()) * 1000))
+
+    # TODO: Change such that mode and resolution are change-able by users.
+
     return render_to_response('graph/detail_graphs.html', 
-        {'sensor_groups': _get_sensor_groups()[0],
-         'data_url': reverse('energyweb.graph.views.detail_graphs_data', 
-                             kwargs={'data': data}) + '?junk=' + junk},
+        {'data_url': reverse('energyweb.graph.views.detail_graphs_data', 
+                             kwargs={'building': building,
+                                     'mode':'cycle', 
+                                     'resolution':'day', # MAGIC! Needs to change
+                                     'start_time':data}) + '?junk=' + junk},
         context_instance=RequestContext(request))
 
 
-def detail_graphs_data(request, data):
+def detail_graphs_data(request, building, mode, resolution, start_time):
     '''
-    A view returning the JSON data used to populate the dynamic graph.
+    A view returning the JSON data used to populate the Detailed graph.
     '''
     from django.db import connection, transaction
     cur = connection.cursor()
 
+    res_type = {
+        'day':'minute*10',
+        'week':'hour',
+        'month':'hour',
+        'year':'day',
+        }
+
+    # TODO: Do we want this to be a global somewhere? Would be nice.
+    resolution_deltas = {
+        'year':datetime.timedelta(365,0,0), # TODO: do we care about leap?
+        'month':datetime.timedelta(30,0,0), # TODO: make less of a hack number
+        'week':datetime.timedelta(7,0,0),
+        'day':datetime.timedelta(1,0,0),
+        'hour':datetime.timedelta(0,3600,0),
+        'minute*10':datetime.timedelta(0,600,0),
+        }
+
     (sensor_groups, sensor_ids, sensor_ids_by_group) = _get_sensor_groups()
-
-    week_and_month_averages = dict(week={}, month={})
-
-    for average_type in ('week', 'month'):
-        trunc_reading_time = None
-        for average in PowerAverage.objects.filter(average_type=average_type
-            ).order_by('-trunc_reading_time')[:len(sensor_ids)]:
-
-            if trunc_reading_time is None:
-                trunc_reading_time = average.trunc_reading_time
-            if average.trunc_reading_time == trunc_reading_time:
-                # Note that we limited the query by the number of sensors in
-                # the database.  However, there may not be an average for
-                # every sensor for this time period.  If this is the case,
-                # some of the results will be for an earlier time period and
-                # have an earlier trunc_reading_time .
-                week_and_month_averages[average_type][average.sensor_id] \
-                    = average.watts / 1000.0
-        for sensor_id in sensor_ids:
-            if not week_and_month_averages[average_type].has_key(sensor_id):
-                # We didn't find an average for this sensor; set the entry
-                # to None.
-                week_and_month_averages[average_type][sensor_id] = None
-
-    week_averages = week_and_month_averages['week']
-    month_averages = week_and_month_averages['month']
 
     # If the client has supplied data (a string of digits in the
     # URL---representing UTC seconds since the epoch), then we only
     # consider data since (and including) that timestamp.
 
-    # The max is here just in case a client accidentally calls this
-    # view with a weeks-old timestamp...
-    start_dt = max(datetime.datetime.utcfromtimestamp(int(data) / 1000),
-                   datetime.datetime.now() - datetime.timedelta(0, 3600*3, 0))
-    PowerAverage.graph_data_execute(cur, 'second*10', start_dt)
+    # NOTE: Removed the max... Might be a bad idea. We'll see.
+    start_dt = datetime.datetime.utcfromtimestamp(int(start_time) / 1000)
+                   
+    PowerAverage.graph_data_execute(cur,
+                                    resolution_deltas[res_type[resolution]],
+                                    start_dt)
 
     # Also note, above, that if data was supplied then we selected
     # everything since the provided timestamp's truncated date,
@@ -765,15 +674,17 @@ def detail_graphs_data(request, data):
     # Now organize the query in a format amenable to the 
     # (javascript) client.  (The grapher wants (x, y) pairs.)
 
-    sg_xy_pairs = dict([[sg[0], []] for sg in sensor_groups])
+    # dictionary has keys of total and then the sensor ids
+    xy_pairs = {'total':[]}
+    for sensor_id in sensor_ids_by_group[building]:
+        xy_pairs[sensor_id] = []
+    
     r = cur.fetchone()
     if r is None:
-        d = {'no_results': True,
-             'week_averages': week_and_month_averages['week'],
-             'month_averages': week_and_month_averages['month']}
+        d = {'no_results': True,}
     else:
         per = r[2]
-        per_incr = datetime.timedelta(0, 10, 0)
+        per_incr = resolution_deltas[res_type[resolution]]
     
         # At the end of each outer loop, we increment per (the current
         # ten-second period of time we're considering) by ten seconds.
@@ -781,29 +692,30 @@ def detail_graphs_data(request, data):
             # Remember that the JavaScript client takes (and
             # gives) UTC timestamps in ms
             x = int(calendar.timegm(per.timetuple()) * 1000)
-            for sg in sensor_groups:
+            xy_pairs['total'].append([x,0])
+            for sid in sensor_ids_by_group[building]:
                 y = 0
-                for sid in sensor_ids_by_group[sg[0]]:
-                    # If this sensor has a reading for the current per,
-                    # update y.  There are three ways the sensor might
-                    # not have such a reading:
-                    # 1. r is None, i.e. there are no more readings at
-                    #    all
-                    # 2. r is not None and r[2] > per, i.e. there are 
-                    #    more readings but not for this per
-                    # 3. r is not None and r[2] <= per and r[1] != s[0],
-                    #    i.e. there are more readings for this per,
-                    #    but none for this sensor
-                    if r is not None and r[2] <= per and r[1] == sid:
-                        # If y is None, leave it as such.   Else, add
-                        # this sensor reading to y.  Afterwards, in
-                        # either case, fetch a new row.
-                        if y is not None:
-                            y += float(r[0])
-                        r = cur.fetchone()
-                    else:
-                        y = None
-                sg_xy_pairs[sg[0]].append((x, y))
+                # If this sensor has a reading for the current per,
+                # update y.  There are three ways the sensor might
+                # not have such a reading:
+                # 1. r is None, i.e. there are no more readings at
+                #    all
+                # 2. r is not None and r[2] > per, i.e. there are 
+                #    more readings but not for this per
+                # 3. r is not None and r[2] <= per and r[1] != s[0],
+                #    i.e. there are more readings for this per,
+                #    but none for this sensor
+                if r is not None and r[2] <= per and r[1] == sid:
+                    # If y is None, leave it as such.   Else, add
+                    # this sensor reading to y.  Afterwards, in
+                    # either case, fetch a new row.
+                    if y is not None:
+                        y += float(r[0])
+                    r = cur.fetchone()
+                else:
+                    y = None
+                xy_pairs[sid].append((x, y))
+                xy_pairs['total'][-1][1] += float(y) # Increment the total
             per += per_incr
     
         last_record = x
@@ -811,15 +723,18 @@ def detail_graphs_data(request, data):
         desired_first_record = x - 1000*3600*3 + 1000*10
     
         junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
-        data_url = reverse('energyweb.graph.views.dynamic_graph_data', 
-                           kwargs={'data': str(last_record)}) + '?junk=' + junk
+        data_url = reverse('energyweb.graph.views.detail_graphs_data', 
+                             kwargs={'building': building,
+                                     'mode':'cycle', 
+                                     'resolution':'day', # MAGIC! Needs to change
+                                     'start_time':str(last_record)}
+                           +'?junk=' + junk
+
         d = {'no_results': False,
-             'sg_xy_pairs': sg_xy_pairs,
+             'xy_pairs': xy_pairs,
+             'sensor_groups': sensor_groups,
              'desired_first_record':
                  desired_first_record,
-             'week_averages': week_and_month_averages['week'],
-             'month_averages': week_and_month_averages['month'],
-             'sensor_groups': sensor_groups,
              'data_url': data_url}
 
     json_serializer = serializers.get_serializer("json")()

@@ -18,11 +18,40 @@ src="{{ MEDIA_URL }}detail_graphs.js"></script>
 
 <table class="center">
   <tr>
-    <td><div id="selector"</div></td>
+    <td><div id="selector">
+      <!-- The table below is hardcoded such that
+      the buildings are in the same order as they would be
+      on a map. This means more work for us when making a new
+      building, but less work for users to go "oh, where is this
+      building?" as they shouldn't need to even read the names -->
+      <table id="buildingSelector">
+        <tr>
+          <td id="select7"> South </td>
+          <td id="select5"> North </td>
+          <td> &nbsp; <!-- LAC? --> </td>
+          <td id="select6"> Sontag </td>
+          <td id="select4"> Linde </td>
+        </tr>
+        <tr>
+          <td id="select8"> West </td>
+          <td id="select3"> East </td>
+          <td> &nbsp; </td>
+          <td id="select1"> Atwood </td>
+          <td id="select2"> Case </td>
+        </tr>
+      </table>
+    </div></td>
   </tr>
+  <tr> <td> <div id="heading"></div> </td> </tr>
   <tr>
     <td><div id="graph"></div></td>
-    <td><div id="choices"></div></td>
+    <td><div id="settings">
+      <table id="settings_table">
+        <tr><td id="mode_type"></td></tr>
+        <tr><td id="mode_settings"</td></tr>
+        <tr><td id="download"> Download Data </td></tr>
+      </table>
+    </div></td>
   </tr>
   
 </table>
