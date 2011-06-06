@@ -56,18 +56,32 @@ class StaticGraphForm(forms.Form):
            for res_choice in RES_LIST]
     )
 
+    class DateInputForm(forms.SplitDateTimeField):
+        """ Used to define start and end dates """
+        def __init__(self):
+            super(DateForm,self).__init__(
+                input_date_formats=DATE_INPUT_FORMATS,
+                input_time_formats=TIME_INPUT_FORMATS,
+                widget=forms.SplitDateTimeWidget(attrs={'size': DT_INPUT_SIZE},
+                                                 date_format=DATE_FORMAT,
+                                                 time_format=TIME_FORMAT))
 
-    start = forms.SplitDateTimeField(input_date_formats=DATE_INPUT_FORMATS,
-        input_time_formats=TIME_INPUT_FORMATS,
-        widget=forms.SplitDateTimeWidget(attrs={'size': DT_INPUT_SIZE},
-                                         date_format=DATE_FORMAT,
-                                         time_format=TIME_FORMAT))
+    start = DateInputForm()
+    end = DateInputForm()
 
-    end = forms.SplitDateTimeField(input_date_formats=DATE_INPUT_FORMATS,
-        input_time_formats=TIME_INPUT_FORMATS,
-        widget=forms.SplitDateTimeWidget(attrs={'size': DT_INPUT_SIZE},
-                                         date_format=DATE_FORMAT,
-                                         time_format=TIME_FORMAT))
+    # OLD CODE
+    
+    #start = forms.SplitDateTimeField(input_date_formats=DATE_INPUT_FORMATS,
+    #    input_time_formats=TIME_INPUT_FORMATS,
+    #    widget=forms.SplitDateTimeWidget(attrs={'size': DT_INPUT_SIZE},
+    #                                     date_format=DATE_FORMAT,
+    #                                     time_format=TIME_FORMAT))
+
+    #end = forms.SplitDateTimeField(input_date_formats=DATE_INPUT_FORMATS,
+    #    input_time_formats=TIME_INPUT_FORMATS,
+    #    widget=forms.SplitDateTimeWidget(attrs={'size': DT_INPUT_SIZE},
+    #                                     date_format=DATE_FORMAT,
+    #                                     time_format=TIME_FORMAT))
 
     res = forms.ChoiceField(label='Resolution', choices=RES_CHOICES)
 
@@ -87,30 +101,37 @@ class StaticGraphForm(forms.Form):
                                         'constitute a valid range.')
 
         delta = cleaned_data['end'] - cleaned_data['start']
+
+        # Check that the defined resolution isn't going to be too fine
+        # and cause too many data points
         if cleaned_data['res'] in self.RES_LIST:
             per_incr = PowerAverage.AVERAGE_TYPE_TIMEDELTAS[
                 cleaned_data['res']]
             max_points = ((delta.days * 3600 * 24 + delta.seconds) 
                 / float(per_incr.days * 3600 * 24 + per_incr.seconds))
+
             if _graph_max_points(cleaned_data['start'], 
                                  cleaned_data['end'], 
                                  cleaned_data['res']) > self.GRAPH_MAX_POINTS:
                 raise forms.ValidationError('Too many points in graph '
                                             '(resolution too fine).')
             cleaned_data['computed_res'] = cleaned_data['res']
+            
+        # Typically called if auto is used
         else:
             if delta.days > 7*52*3: # 3 years
                 cleaned_data['computed_res'] = 'week'
             elif delta.days > 7*8: # 8 weeks
                 cleaned_data['computed_res'] = 'day'
-            elif delta.days > 6:
+            elif delta.days > 6: # 1-7 weeks
                 cleaned_data['computed_res'] = 'hour'
-            elif delta.days > 0:
+            elif delta.days > 0: # 1-7 days
                 cleaned_data['computed_res'] = 'minute*10'
             elif delta.seconds > 3600*3: # 3 hours
                 cleaned_data['computed_res'] = 'minute'
             else:
                 cleaned_data['computed_res'] = 'second*10'
+                
         return cleaned_data
 
 
@@ -129,18 +150,23 @@ def _get_sensor_groups():
       -keys: sensor group ids (building ids)
       -values: all sensors belonging to that building
     '''
+    # get the sensors from the database
+    # They must be ordered so that we can put them into groups.
     sensors = Sensor.objects.select_related().order_by('sensor_group__pk')
 
     sensor_groups = []
     sensor_ids = []
     sensor_ids_by_group = {}
-    sg_id = None
+    sg_id = None # Keep track of last seen id for grouping purposes
 
     for sensor in sensors:
+        # Mark all seen sensors
         sensor_ids.append(sensor.pk)
+        # We've had this group before, so add it to the list
         if sg_id == sensor.sensor_group.pk:
             sensor_groups[-1][3].append([sensor.pk, sensor.name])
             sensor_ids_by_group[sg_id].append(sensor.pk)
+        # Start a new sensor group
         else:
             sg_id = sensor.sensor_group.pk
             sensor_groups.append([
@@ -152,39 +178,50 @@ def _get_sensor_groups():
                          ]
                      ])
             sensor_ids_by_group[sg_id] = [sensor.pk]
+            
     return (sensor_groups, sensor_ids, sensor_ids_by_group)
 
+def _generate_start_data(startOffset):
+    '''
+    Returns a formated date for use as HTML.
+    This allows for passing of start dates to data gathering functions.
+    '''
+    junk=str(calendar.timegm(datetime.datetime.now().timetuple()))
+    start_dt = datetime.datetime.now() - startOffset
+    data = str(int(calendar.timegm(start_dt.timetuple()) * 1000))
+    return (data,junk)
 
 def data_interface(request):
     '''
     A view returning the HTML for the dynamic table.
-    (This table holds curr. use and avg of past week/month)
-    TODO: Make this call it's own function so it doesn't
-    download extraneous data.
+    This table holds curr. use and avg of past week/month.
     '''
-    junk=str(calendar.timegm(datetime.datetime.now().timetuple()))
-    start_dt = datetime.datetime.now() - datetime.timedelta(0, 3600*3, 0)
-    data = str(int(calendar.timegm(start_dt.timetuple()) * 1000))
+    # Get data from three hours ago until now.
+    (data, junk) = _generate_start_data( datetime.timedelta(0,3600*3,0) )
+
     return render_to_response('graph/data_interface.html', 
         {'sensor_groups': _get_sensor_groups()[0],
          'data_url': reverse('energyweb.graph.views.statistics_table_data', 
                              kwargs={'data': data}) + '?junk=' + junk},
         context_instance=RequestContext(request))
-    
 
-def statistics_table_data(request, data):
+def _get_averages(sensor_ids):
     '''
-    A view returning the JSON data used to populate the averages table.
+    Obtains minute, week, and month averages over those
+    last cycles for certain sensors.
+    sensor_ids must be a list of sensors.
     '''
-    from django.db import connection, transaction
-    cur = connection.cursor()
 
-    (sensor_groups, sensor_ids, sensor_ids_by_group) = _get_sensor_groups()
-
-    all_averages = dict(minute={},week={}, month={})
+    all_averages = {
+        'minute':{},
+        'week':{},
+        'month':{}
+        }
 
     for average_type in ('minute','week', 'month'):
+
         trunc_reading_time = None
+
         for average in PowerAverage.objects.filter(average_type=average_type
             ).order_by('-trunc_reading_time')[:len(sensor_ids)]:
 
@@ -204,23 +241,36 @@ def statistics_table_data(request, data):
                 # to None.
                 all_averages[average_type][sensor_id] = None        
 
-    min_averages = all_averages['minute']
-    week_averages = all_averages['week']
-    month_averages = all_averages['month']
+    return all_averages
+
+
+def statistics_table_data(request, data):
+    '''
+    A view returning the JSON data used to populate the averages table.
+    '''
+    from django.db import connection, transaction
+    cur = connection.cursor()
+
+    (sensor_groups, sensor_ids, sensor_ids_by_group) = _get_sensor_groups()
+
+    all_averages = _get_averages(sensor_ids)
+
+    # Create the final return dictionary with initial values
+    d = {
+        'no_results': True,
+        'min_averages': all_averages['minute'],
+        'week_averages': all_averages['week'],
+        'month_averages': all_averages['month'],
+        'sensor_groups': sensor_groups,
+        }
 
     # Get current data. Loop through data to make sure we have something
     now = datetime.datetime.now() - datetime.timedelta(0,40,0)
     PowerAverage.graph_data_execute(cur, 'second*10', now)
 
-    # sg_xy_pairs = dict([[sg[0], []] for sg in sensor_groups])
     current_values = {}
     r = cur.fetchone()
-    if r is None:
-        d = {'no_results': True,
-             'min_averages': all_averages['minute'],
-             'week_averages': all_averages['week'],
-             'month_averages': all_averages['month']}
-    else:
+    if r:
         per = r[2]
         per_incr = datetime.timedelta(0, 10, 0)
         # Increment the time period for 10 second intervals each loop
@@ -254,14 +304,12 @@ def statistics_table_data(request, data):
         junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
         data_url = reverse('energyweb.graph.views.statistics_table_data', 
                            kwargs={'data': str(last_record)}) + '?junk=' + junk
-        d = {'no_results': False,
-             'cur_values': current_values,
-             'min_averages': all_averages['minute'],
-             'week_averages': all_averages['week'],
-             'month_averages': all_averages['month'],
-             'sensor_groups': sensor_groups,
-             'data_url': data_url}
-
+        # update with our results
+        d['no_results'] = False
+        d['cur_values'] = current_values
+        d['data_url'] = data_url
+             
+    # Use json to transfer the data from Python to Javascript
     json_serializer = serializers.get_serializer("json")()
     return HttpResponse(simplejson.dumps(d),
                         mimetype='application/json')
@@ -273,9 +321,9 @@ def dynamic_graph(request):
     (This graph represents the last three hours and updates
     automatically.)
     '''
-    junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
-    start_dt = datetime.datetime.now() - datetime.timedelta(0, 3600*3, 0)
-    data = str(int(calendar.timegm(start_dt.timetuple()) * 1000))
+    # Get all data from last three hours until now
+    (data, junk) = _generate_start_data( datetime.timedelta(0,3600*3,0) )
+
     return render_to_response('graph/dynamic_graph.html', 
         {'sensor_groups': _get_sensor_groups()[0],
          'data_url': reverse('energyweb.graph.views.dynamic_graph_data', 
@@ -291,32 +339,6 @@ def dynamic_graph_data(request, data):
     cur = connection.cursor()
 
     (sensor_groups, sensor_ids, sensor_ids_by_group) = _get_sensor_groups()
-
-    week_and_month_averages = dict(week={}, month={})
-
-    for average_type in ('week', 'month'):
-        trunc_reading_time = None
-        for average in PowerAverage.objects.filter(average_type=average_type
-            ).order_by('-trunc_reading_time')[:len(sensor_ids)]:
-
-            if trunc_reading_time is None:
-                trunc_reading_time = average.trunc_reading_time
-            if average.trunc_reading_time == trunc_reading_time:
-                # Note that we limited the query by the number of sensors in
-                # the database.  However, there may not be an average for
-                # every sensor for this time period.  If this is the case,
-                # some of the results will be for an earlier time period and
-                # have an earlier trunc_reading_time .
-                week_and_month_averages[average_type][average.sensor_id] \
-                    = average.watts / 1000.0
-        for sensor_id in sensor_ids:
-            if not week_and_month_averages[average_type].has_key(sensor_id):
-                # We didn't find an average for this sensor; set the entry
-                # to None.
-                week_and_month_averages[average_type][sensor_id] = None
-
-    week_averages = week_and_month_averages['week']
-    month_averages = week_and_month_averages['month']
 
     # If the client has supplied data (a string of digits in the
     # URL---representing UTC seconds since the epoch), then we only
@@ -342,9 +364,7 @@ def dynamic_graph_data(request, data):
     sg_xy_pairs = dict([[sg[0], []] for sg in sensor_groups])
     r = cur.fetchone()
     if r is None:
-        d = {'no_results': True,
-             'week_averages': week_and_month_averages['week'],
-             'month_averages': week_and_month_averages['month']}
+        d = {'no_results': True}
     else:
         per = r[2]
         per_incr = datetime.timedelta(0, 10, 0)
@@ -391,8 +411,6 @@ def dynamic_graph_data(request, data):
              'sg_xy_pairs': sg_xy_pairs,
              'desired_first_record':
                  desired_first_record,
-             'week_averages': week_and_month_averages['week'],
-             'month_averages': week_and_month_averages['month'],
              'sensor_groups': sensor_groups,
              'data_url': data_url}
 
@@ -400,63 +418,36 @@ def dynamic_graph_data(request, data):
     return HttpResponse(simplejson.dumps(d),
                         mimetype='application/json')
 
+def _request_valid(request):
+    return request.method == 'GET' 
+        and 'start_0' in request.GET 
+        and 'end_0' in request.GET 
+        and 'res' in request.GET
+
+def _clean_input(get):
+    # *_0 gives date, *_1 gives time in 12 hr w/ AM or PM
+    for field in ('start_0', 'start_1', 'end_0', 'end_1'):
+        if field in ('start_1', 'end_1'):
+            # Allow e.g. pm or p.m. instead of PM
+            get[field] = get[field].upper().replace('.', '')
+        # Allow surrounding whitespace
+        get[field] = get[field].strip()
+    return get
 
 def static_graph(request):
     '''
     A view returning the HTML for the static (custom-time-period) graph.
+    Several return possibilities:
+       1) Did not input data yet
+       2) Input invalid data
+       3) Input valid data
+    They only get a graph back if they have input valid data!
     '''
-    if (request.method == 'GET' 
-        and 'start_0' in request.GET 
-        and 'end_0' in request.GET 
-        and 'res' in request.GET):
-
-        _get = request.GET.copy()
-        # *_0 gives date, *_1 gives time in 12 hr w/ AM or PM
-        for field in ('start_0', 'start_1', 'end_0', 'end_1'):
-            if field in ('start_1', 'end_1'):
-                # Allow e.g. pm or p.m. instead of PM
-                _get[field] = _get[field].upper().replace('.', '')
-            # Allow surrounding whitespace
-            _get[field] = _get[field].strip()
-
-        form = StaticGraphForm(_get)
-        if form.is_valid():
-            start = form.cleaned_data['start']
-            end = form.cleaned_data['end']
-            res = form.cleaned_data['computed_res']
-
-            int_start = int(calendar.timegm(start.timetuple()))
-            int_end = int(calendar.timegm(end.timetuple()))
-            js_start = int_start * 1000
-            js_end = int_end * 1000
-            junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
-
-            data_url = reverse('energyweb.graph.views.static_graph_data',
-                               kwargs={'start': str(int_start), 
-                                       'end': str(int_end), 
-                                       'res': res}) + '?junk=' + junk
-
-            download_url = reverse('energyweb.graph.views.download_csv',
-                               kwargs={'start': str(int_start), 
-                                       'end': str(int_end), 
-                                       'res': res}) + '?junk=' + junk
-
-            return render_to_response('graph/static_graph.html', 
-                {'start': js_start,
-                 'end': js_end,
-                 'data_url': data_url,
-                 'download_url': download_url,
-                 'form': form,
-                 'form_action': reverse('energyweb.graph.views.static_graph'),
-                 'res': res},
-                context_instance=RequestContext(request))
-
-        return render_to_response('graph/static_graph_form.html',
-            {'form_action': reverse('energyweb.graph.views.static_graph'),
-             'form': form},
-            context_instance=RequestContext(request))
-
-    else:
+    
+    def _show_only_form():
+        '''
+        Refuse to show them a graph until they give you good parameters
+        '''
         now = datetime.datetime.now()
         one_day_ago = now - datetime.timedelta(1)
         form = StaticGraphForm(initial={
@@ -467,6 +458,49 @@ def static_graph(request):
             {'form_action': reverse('energyweb.graph.views.static_graph'),
              'form': form},
             context_instance=RequestContext(request))
+
+    if not _request_valid(request):
+        return _show_only_form()
+    
+    _get = _clean_input(request.GET.copy())
+    form = StaticGraphForm(_get)
+
+    if not form.is_valid():
+        return _show_only_form()
+
+    # The following functions are for setting the 
+    start = form.cleaned_data['start']
+    end = form.cleaned_data['end']
+    res = form.cleaned_data['computed_res']
+    
+    # js_* is in the format for the Flot plotting package.
+    int_start = int(calendar.timegm(start.timetuple()))
+    int_end = int(calendar.timegm(end.timetuple()))
+    js_start = int_start * 1000
+    js_end = int_end * 1000
+    junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
+    keyword_args = {'start': str(int_start), 
+                    'end': str(int_end), 
+                    'res': res}
+    
+    # generate the URLs for data dumps
+    data_url = reverse('energyweb.graph.views.static_graph_data',
+                       kwargs=keyword_args) + '?junk=' + junk
+    
+    download_url = reverse('energyweb.graph.views.download_csv',
+                           kwargs=keyword_args) + '?junk=' + junk
+
+    final_args = {'start': js_start,
+                  'end': js_end,
+                  'data_url': data_url,
+                  'download_url': download_url,
+                  'form': form,
+                  'form_action': reverse('energyweb.graph.views.static_graph'),
+                  'res': res}
+    
+    return render_to_response('graph/static_graph.html', 
+                              final_args,
+                              context_instance=RequestContext(request))
 
 
 def static_graph_data(request, start, end, res):
@@ -611,9 +645,8 @@ def detail_graphs(request, building):
     (This graph represents the last three hours and updates
     automatically.)
     '''
-    junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
-    start_dt = datetime.datetime.now() - datetime.timedelta(1, 0, 0) # 1 day
-    data = str(int(calendar.timegm(start_dt.timetuple()) * 1000))
+    # TODO: Should not be magic.
+    (data, junk) = _generate_start_data( datetime.timedelta(1,0,0) )
 
     # TODO: Change such that mode and resolution are change-able by users.
 
@@ -652,6 +685,13 @@ def detail_graphs_data(request, building, mode, resolution, start_time):
 
     (sensor_groups, sensor_ids, sensor_ids_by_group) = _get_sensor_groups()
 
+    # Because transferring non-strings over gets annoying,
+    # this is how we'll get buildings
+    cur_building = None
+    for sg in sensor_groups:
+        if sg[1] == building: # check if identical names
+            cur_building = sg
+
     # If the client has supplied data (a string of digits in the
     # URL---representing UTC seconds since the epoch), then we only
     # consider data since (and including) that timestamp.
@@ -676,8 +716,7 @@ def detail_graphs_data(request, building, mode, resolution, start_time):
 
     # dictionary has keys of total and then the sensor ids
     xy_pairs = {'total':[]}
-    print sensor_ids_by_group
-    for sensor_id in sensor_ids_by_group[int(str(building))]:
+    for sensor_id in sensor_ids_by_group[cur_building[0]]:
         xy_pairs[sensor_id] = []
     
     r = cur.fetchone()
@@ -694,7 +733,7 @@ def detail_graphs_data(request, building, mode, resolution, start_time):
             # gives) UTC timestamps in ms
             x = int(calendar.timegm(per.timetuple()) * 1000)
             xy_pairs['total'].append([x,0])
-            for sid in sensor_ids_by_group[int(str(building))]:
+            for sid in sensor_ids_by_group[cur_building[0]]:
                 y = 0
                 # If this sensor has a reading for the current per,
                 # update y.  There are three ways the sensor might
@@ -733,8 +772,9 @@ def detail_graphs_data(request, building, mode, resolution, start_time):
                                    '?junk=' + junk
                            
         d = {'no_results': False,
+             'building': building,
+             'building_color':cur_building[2],
              'xy_pairs': xy_pairs,
-             'sensor_groups': sensor_groups,
              'desired_first_record':
                  desired_first_record,
              'data_url': data_url}
