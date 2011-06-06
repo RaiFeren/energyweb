@@ -418,22 +418,6 @@ def dynamic_graph_data(request, data):
     return HttpResponse(simplejson.dumps(d),
                         mimetype='application/json')
 
-def _request_valid(request):
-    return request.method == 'GET' 
-        and 'start_0' in request.GET 
-        and 'end_0' in request.GET 
-        and 'res' in request.GET
-
-def _clean_input(get):
-    # *_0 gives date, *_1 gives time in 12 hr w/ AM or PM
-    for field in ('start_0', 'start_1', 'end_0', 'end_1'):
-        if field in ('start_1', 'end_1'):
-            # Allow e.g. pm or p.m. instead of PM
-            get[field] = get[field].upper().replace('.', '')
-        # Allow surrounding whitespace
-        get[field] = get[field].strip()
-    return get
-
 def static_graph(request):
     '''
     A view returning the HTML for the static (custom-time-period) graph.
@@ -443,6 +427,22 @@ def static_graph(request):
        3) Input valid data
     They only get a graph back if they have input valid data!
     '''
+
+    def _request_valid(request):
+        return request.method == 'GET' \
+               and 'start_0' in request.GET \
+               and 'end_0' in request.GET \
+               and 'res' in request.GET
+    
+    def _clean_input(get):
+        # *_0 gives date, *_1 gives time in 12 hr w/ AM or PM
+        for field in ('start_0', 'start_1', 'end_0', 'end_1'):
+            if field in ('start_1', 'end_1'):
+                # Allow e.g. pm or p.m. instead of PM
+                get[field] = get[field].upper().replace('.', '')
+                # Allow surrounding whitespace
+            get[field] = get[field].strip()
+        return get
     
     def _show_only_form():
         '''
@@ -458,17 +458,20 @@ def static_graph(request):
             {'form_action': reverse('energyweb.graph.views.static_graph'),
              'form': form},
             context_instance=RequestContext(request))
+    # BEGIN Case 1
 
     if not _request_valid(request):
         return _show_only_form()
+    # BEGIN Case 2
     
     _get = _clean_input(request.GET.copy())
     form = StaticGraphForm(_get)
 
     if not form.is_valid():
         return _show_only_form()
+    # We've passed the checks, now can display the graph!
 
-    # The following functions are for setting the 
+    # The following functions are for setting the various arguments
     start = form.cleaned_data['start']
     end = form.cleaned_data['end']
     res = form.cleaned_data['computed_res']
