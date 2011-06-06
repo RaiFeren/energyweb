@@ -1,0 +1,129 @@
+INSTALL.txt
+
+This text file documents the process of installation and setup that occurred during 
+Summer 2011 when Beryl Egerter and Rai Feren set up a new machine for the 
+energy web project.
+
+----------------------------------------------------------------------
+ORDER OF INSTALLATION 
+      (see the Packages section for more specific information on
+      dependencies - this is the order _we_ installed in, not
+      necessarily the order you _must_ install in) 
+----------------------------------------------------------------------
+
+*Ubuntu Server 11.04, 64-bit
+    -Python 
+    -Apache
+*lynx
+*django
+*PostgreSQL
+*python-dev, python module
+*libpq-dev, python module
+*psycopg2
+*Aquamacs emacs
+*apache2-dev
+*apache2-mod-wsgi
+*htop
+
+
+----------------------------------------------------------------------
+PACKAGES DOWNLOADED AND INSTALLED
+----------------------------------------------------------------------
+
+To install via Ubuntu's package manager, type at the command line
+   sudo apt-get install PACKAGE_NAME
+
+apache2
+    - Priority: HIGH - You need this to run a server.
+    - Finding it: Should be automatically found and installed during
+                        Ubuntu Server installation.
+    - Installation: See above. Read SETUP.txt for setup instructions.
+    - Dependencies: Ubuntu.
+**********
+apache2-dev
+    - Priority: HIGH - apache2-mod-wsgi needs this to work.
+    - Finding it: Use apt-get to retrieve and install.
+    - Installation: See above.
+    - Dependencies: Apache2
+**********
+apache2-mod-wsgi
+    - Priority: HIGH - You need this to get django and Apache to interact.
+    - Finding it: We used apt-get to retrieve and install, but had to add a 
+                        mirror to the debian files.
+    - Installation: See above. Additionally, this installation put Python 2.6
+                          onto the server, but did not overwrite Python 2.7 as our
+                          preferred Python.
+    - Dependencies: Apache2, apache2-dev
+**********
+django
+    - Priority: HIGH - This is the frame of your web server.
+    - Finding it: Use lynx to find on the internet.
+    - Installation: Follow instructions on website. Do not try to configure
+                           until you have installed everything else you plan on 
+                           using for your web server (PostgreSQL, psycopg2...)
+    - Dependencies: Python, Ubuntu, lynx(optional)
+**********
+emacs
+    - Priority: Low - This is a nice text editor to have that isn't nano.
+    - Finding it: Use apt-get to retrieve and install.
+    - Installation: See above.
+    - Dependencies: Ubuntu
+**********
+htop
+    - Priority: Medium - It's a nice utility that lets you see the breakdown of
+                    what processes are using what resources, but not
+                    necessary for functionality.
+    - Finding it: Use apt-get to retrieve and install.
+    - Installation: See above.
+    - Dependencies: Ubuntu
+**********
+libpq-dev
+    - Priority: High - psycopg2 requires this python module.
+    - Finding it: Use apt-get to retrieve and install.
+    - Installation: See above.
+    - Dependencies: Python
+**********
+lynx
+    - Priority: Low - Lets you browse the web and download packages, but
+                    probably an unnecessary utility.
+    - Finding it: Use apt-get to retrieve and install.
+    - Installation: See above.
+    - Dependencies: Ubuntu
+**********
+PostgreSQL
+    - Priority: HIGH - You need this to have a database.
+    - Finding it: You should be given an optional install message when
+                         installing Ubuntu Server.
+    - Installation: Despite what Ubuntu says, you will have to install this
+                           later on its own.
+    - Dependencies: Ubuntu
+**********
+psycopg2
+    - Priority: High - creates an interface between PostgreSQL and Python.
+    - Finding it: You can use lynx to download it off the internet.
+    - Installation: Follow instructions given by the site where you found the
+                           package.
+    - Dependencies: Python, python-dev, libpq-dev, lynx(optional)
+**********
+Python 2.7
+    - Priority: HIGH - most of the code for the server is in Python.
+    - Finding it: No need.
+    - Installation: Auto-installs during ubuntu installation.
+    - Dependencies: Ubuntu Server
+**********
+python-dev
+    - Priority: High - psycopg2 requires this python module.
+    - Finding it:  Use apt-get to retrieve and install.
+    - Installation: See above. 
+    - Dependencies: Python
+**********
+Ubuntu Server 11.04, 64-bit
+    - Priority: HIGH - many of the packages you will want are practically
+                    impossible to find using a non-Linux operating system.
+    - Finding it: On a different machine downloaded from the internet, 
+       then transferred to server on a cd.
+    - Installation: Will give you options to install some other packages.
+    - Dependencies: A computer.
+
+
+
