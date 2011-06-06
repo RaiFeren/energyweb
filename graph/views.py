@@ -56,32 +56,20 @@ class StaticGraphForm(forms.Form):
            for res_choice in RES_LIST]
     )
 
-    class DateInputForm(forms.SplitDateTimeField):
-        """ Used to define start and end dates """
-        def __init__(self):
-            super(DateForm,self).__init__(
-                input_date_formats=DATE_INPUT_FORMATS,
-                input_time_formats=TIME_INPUT_FORMATS,
-                widget=forms.SplitDateTimeWidget(attrs={'size': DT_INPUT_SIZE},
-                                                 date_format=DATE_FORMAT,
-                                                 time_format=TIME_FORMAT))
-
-    start = DateInputForm()
-    end = DateInputForm()
 
     # OLD CODE
     
-    #start = forms.SplitDateTimeField(input_date_formats=DATE_INPUT_FORMATS,
-    #    input_time_formats=TIME_INPUT_FORMATS,
-    #    widget=forms.SplitDateTimeWidget(attrs={'size': DT_INPUT_SIZE},
-    #                                     date_format=DATE_FORMAT,
-    #                                     time_format=TIME_FORMAT))
+    start = forms.SplitDateTimeField(input_date_formats=DATE_INPUT_FORMATS,
+                                     input_time_formats=TIME_INPUT_FORMATS,
+                                     widget=forms.SplitDateTimeWidget(attrs={'size': DT_INPUT_SIZE},
+                                                                      date_format=DATE_FORMAT,
+                                                                      time_format=TIME_FORMAT))
 
-    #end = forms.SplitDateTimeField(input_date_formats=DATE_INPUT_FORMATS,
-    #    input_time_formats=TIME_INPUT_FORMATS,
-    #    widget=forms.SplitDateTimeWidget(attrs={'size': DT_INPUT_SIZE},
-    #                                     date_format=DATE_FORMAT,
-    #                                     time_format=TIME_FORMAT))
+    end = forms.SplitDateTimeField(input_date_formats=DATE_INPUT_FORMATS,
+        input_time_formats=TIME_INPUT_FORMATS,
+        widget=forms.SplitDateTimeWidget(attrs={'size': DT_INPUT_SIZE},
+                                         date_format=DATE_FORMAT,
+                                         time_format=TIME_FORMAT))
 
     res = forms.ChoiceField(label='Resolution', choices=RES_CHOICES)
 
@@ -419,10 +407,10 @@ def dynamic_graph_data(request, data):
                         mimetype='application/json')
 
 def _request_valid(request):
-    return request.method == 'GET' 
-        and 'start_0' in request.GET 
-        and 'end_0' in request.GET 
-        and 'res' in request.GET
+    return request.method == 'GET' and \
+        'start_0' in request.GET and \
+        'end_0' in request.GET and \
+        'res' in request.GET
 
 def _clean_input(get):
     # *_0 gives date, *_1 gives time in 12 hr w/ AM or PM
