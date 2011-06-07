@@ -537,6 +537,10 @@ def download_csv(request, start, end, res):
     A view returning the CSV data points of the static graph.
     Called when someone hits the button on the static graph page.
     Used for users to download data.
+    This does not utilize _make_data_dump because the csv files
+    use a significantly different structuring than the list of points.
+    Thus while the algorithm is effectively the same,
+    how it stores data differs.
     '''
     from django.db import connection, transaction
     cur = connection.cursor() # Allows for SQL queries
@@ -628,7 +632,7 @@ def detail_graphs_data(request, building, mode, resolution, start_time):
     from django.db import connection, transaction
     cur = connection.cursor()
 
-    res_type = {
+    res_convert = {
         'day':'minute*10',
         'week':'hour',
         'month':'hour',
@@ -662,7 +666,7 @@ def detail_graphs_data(request, building, mode, resolution, start_time):
     start_dt = datetime.datetime.utcfromtimestamp(int(start_time) / 1000)
                    
     PowerAverage.graph_data_execute(cur,
-                                    res_type[resolution],
+                                    res_convert[resolution],
                                     start_dt)
 
     # Also note, above, that if data was supplied then we selected
@@ -686,10 +690,8 @@ def detail_graphs_data(request, building, mode, resolution, start_time):
         d = {'no_results': True,}
     else:
         per = r[2]
-        per_incr = resolution_deltas[res_type[resolution]]
+        per_incr = resolution_deltas[res_convert[resolution]]
     
-        # At the end of each outer loop, we increment per (the current
-        # ten-second period of time we're considering) by ten seconds.
         while r is not None:
             # Remember that the JavaScript client takes (and
             # gives) UTC timestamps in ms
@@ -718,7 +720,7 @@ def detail_graphs_data(request, building, mode, resolution, start_time):
                     r = cur.fetchone()
                 else:
                     y = None
-                xy_pairs[sid].append((x, y))
+                xy_pairs[sid].append( [x, y] )
             per += per_incr
     
         last_record = x
@@ -728,8 +730,8 @@ def detail_graphs_data(request, building, mode, resolution, start_time):
         junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
         data_url = reverse('energyweb.graph.views.detail_graphs_data', 
                            kwargs={'building': building,
-                                   'mode':'cycle', 
-                                   'resolution':'day', # MAGIC! Needs to change
+                                   'mode':'cycle', # MAGIC!
+                                   'resolution':resolution,
                                    'start_time':str(last_record)}) + \
                                    '?junk=' + junk
                            
