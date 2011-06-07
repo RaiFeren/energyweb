@@ -204,12 +204,12 @@ table#monstatus
 
 /* tablesorter css */
 table.tablesorter {
-	font-family:arial;
-	background-color: #CDCDCD;
-	margin:auto;
-	font-size: 8pt;
-	width: 100%;
-	text-align: left;
+    font-family:arial;
+    background-color: #CDCDCD;
+    margin:auto;
+    font-size: 8pt;
+    width:600px;
+    text-align: center;
 }
 table.tablesorter thead tr th, table.tablesorter tfoot tr th {
 	background-color: #e6EEEE;
