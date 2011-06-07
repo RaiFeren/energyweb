@@ -249,8 +249,10 @@ def _make_data_dump(start, end=None, res='second*10'):
     (sensor_groups, sensor_ids, sensor_ids_by_group) = _get_sensor_groups()
 
     start_dt = datetime.datetime.utcfromtimestamp(int(start))
-    if end_dt:
+    if end:
         end_dt = datetime.datetime.utcfromtimestamp(int(end))
+    else:
+        end_dt = None
     per_incr = PowerAverage.AVERAGE_TYPE_TIMEDELTAS[res]
     
     PowerAverage.graph_data_execute(cur, res, start_dt, end_dt)
@@ -416,7 +418,9 @@ def dynamic_graph_data(request, data):
     start = max( datetime.datetime.utcfromtimestamp(int(int(data)/1000)) ,
                  max_time )
     # Grab the dump of xy pairs
-    data_dump = _make_data_dump(start,None,'second*10')
+    data_dump = _make_data_dump( calendar.timegm(start.timetuple()) ,
+                                None,
+                                'second*10')
 
     # Create the URL to get more data
     junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
@@ -426,7 +430,7 @@ def dynamic_graph_data(request, data):
     data_dump['data_url'] = data_url
     
     json_serializer = serializers.get_serializer("json")()
-    return HttpResponse(simplejson.dumps(d),
+    return HttpResponse(simplejson.dumps(data_dump),
                         mimetype='application/json')
 
 def static_graph(request):
