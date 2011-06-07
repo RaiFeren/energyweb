@@ -12,7 +12,8 @@ $(function () {
     function getdata_json_cb(data) {
         // Given data from the server, update the graph.
         if (data.no_results) {
-            return; // TODO: tell the user what happened?
+	    alert("No data received. Check connection to sensors.");
+            return;
         }
     
         var series_opts = [];

@@ -28,7 +28,8 @@ $(function () {
         // TODO: what if somehow we get no results and it's not the 
         // first time?
         if (first_time && data.no_results) {
-            return; // TODO: tell the user what happened?
+            alert("No data received. Check connection to sensors.");
+            return;
         }
 
         // When this function is first called, it is expected that 
