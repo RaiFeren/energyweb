@@ -412,10 +412,9 @@ def dynamic_graph_data(request, data):
     '''
     # Set the maximum possible start time to three hours ago
     # to prevent excessive drawing of data
-    start = max(int(data/1000),
-                int(calendar.timegm(
-                    datetime.datetime.now()-datetime.timedelta(0,3600*3,0)
-                    )))
+    max_time = datetime.datetime.now() - datetime.timedelta(0,3600*3,0)
+    start = max( datetime.datetime.utcfromtimestamp(int(int(data)/1000)) ,
+                 max_time )
     # Grab the dump of xy pairs
     data_dump = _make_data_dump(start,None,'second*10')
 
