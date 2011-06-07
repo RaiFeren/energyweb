@@ -206,7 +206,7 @@ table#monstatus
 table.tablesorter {
 	font-family:arial;
 	background-color: #CDCDCD;
-	margin:10px 0pt 15px;
+	margin:auto;
 	font-size: 8pt;
 	width: 100%;
 	text-align: left;
