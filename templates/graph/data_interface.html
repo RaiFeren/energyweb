@@ -3,6 +3,7 @@
 {% block title %}Energy Usage at Mudd{% endblock %}
 
 {% block morehead %}
+<script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}jquery.tablesorter.min.js"></script>
 <script language="javascript" type="text/javascript">
     var MEDIA_URL = "{{ MEDIA_URL }}";
     var data_url = "{{ data_url }}";
@@ -12,7 +13,7 @@
 {% endblock %}
 
 {% block content %}
-<table class="center" id="energystats">
+<table class="tablesorter" id="energystats">
   <thead>
     <tr id="trhead">
       <th>Dorm</th>

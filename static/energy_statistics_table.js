@@ -111,6 +111,7 @@ $(function ()
 	    first_time = false;
 	}
 
+        $("#energystats").tablesorter(); 
 	setTimeout(refreshdata, 10000);
     }
 
