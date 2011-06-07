@@ -55,15 +55,12 @@ class StaticGraphForm(forms.Form):
         + [(res_choice, PowerAverage.AVERAGE_TYPE_DESCRIPTIONS[res_choice])
            for res_choice in RES_LIST]
     )
-
-
-    # OLD CODE
     
     start = forms.SplitDateTimeField(input_date_formats=DATE_INPUT_FORMATS,
-                                     input_time_formats=TIME_INPUT_FORMATS,
-                                     widget=forms.SplitDateTimeWidget(attrs={'size': DT_INPUT_SIZE},
-                                                                      date_format=DATE_FORMAT,
-                                                                      time_format=TIME_FORMAT))
+                input_time_formats=TIME_INPUT_FORMATS,
+                widget=forms.SplitDateTimeWidget(attrs={'size': DT_INPUT_SIZE},
+                                                 date_format=DATE_FORMAT,
+                                                 time_format=TIME_FORMAT))
 
     end = forms.SplitDateTimeField(input_date_formats=DATE_INPUT_FORMATS,
         input_time_formats=TIME_INPUT_FORMATS,
@@ -231,6 +228,96 @@ def _get_averages(sensor_ids):
 
     return all_averages
 
+def _make_data_dump(start, end=None, res='second*10'):
+    '''
+    Creates a dictionary of data.
+    Dictionary always includes
+       sg_xy_pairs:
+           Graph points in [x,y] for each building
+       sensor_groups:
+           List of the sensor groups as given by _get_sensor_groups
+       (The next two are only used by dynamic graphs)
+       desired_first_record:
+           Tells what data point should be used to refresh the graph
+       last_record:
+           Tells where the graph stops
+    If failed to make the data dictionary, will simply return None.   
+    '''
+    from django.db import connection, transaction
+    cur = connection.cursor()
+
+    (sensor_groups, sensor_ids, sensor_ids_by_group) = _get_sensor_groups()
+
+    start_dt = datetime.datetime.utcfromtimestamp(int(start))
+    if end_dt:
+        end_dt = datetime.datetime.utcfromtimestamp(int(end))
+    per_incr = PowerAverage.AVERAGE_TYPE_TIMEDELTAS[res]
+    
+    PowerAverage.graph_data_execute(cur, res, start_dt, end_dt)
+
+    # Also note, above, that if data was supplied then we selected
+    # everything since the provided timestamp's truncated date,
+    # including that date.  We will always provide the client with
+    # a new copy of the latest record he received last time, since
+    # that last record may have changed (more sensors may have
+    # submitted measurements and added to it).  The second to
+    # latest and older records, however, will never change.
+
+    # Now organize the query in a format amenable to the 
+    # (javascript) client.  (The grapher wants (x, y) pairs.)
+
+    sg_xy_pairs = dict([[sg[0], []] for sg in sensor_groups])
+    r = cur.fetchone()
+    if r is None:
+        d = {'no_results':True,
+             'sensor_groups':sensor_groups}
+        return d
+    else:
+        per = r[2]
+    
+        # At the end of each outer loop, we increment per (the current
+        # ten-second period of time we're considering) by ten seconds.
+        while r is not None:
+            # Remember that the JavaScript client takes (and
+            # gives) UTC timestamps in ms
+            x = int(calendar.timegm(per.timetuple()) * 1000)
+            for sg in sensor_groups:
+                y = 0
+                for sid in sensor_ids_by_group[sg[0]]:
+                    # If this sensor has a reading for the current per,
+                    # update y.  There are three ways the sensor might
+                    # not have such a reading:
+                    # 1. r is None, i.e. there are no more readings at
+                    #    all
+                    # 2. r is not None and r[2] > per, i.e. there are 
+                    #    more readings but not for this per
+                    # 3. r is not None and r[2] <= per and r[1] != s[0],
+                    #    i.e. there are more readings for this per,
+                    #    but none for this sensor
+                    if r is not None and r[2] <= per and r[1] == sid:
+                        # If y is None, leave it as such.   Else, add
+                        # this sensor reading to y.  Afterwards, in
+                        # either case, fetch a new row.
+                        if y is not None:
+                            y += float(r[0])
+                        r = cur.fetchone()
+                    else:
+                        y = None
+                sg_xy_pairs[sg[0]].append((x, y))
+            per += per_incr
+    
+        last_record = x
+        # desired_first_record lags by (3:00:00 - 0:00:10) = 2:59:50
+        desired_first_record = x - 1000*3600*3 + 1000*10
+    
+        d = {'no_results': False,
+             'sg_xy_pairs': sg_xy_pairs,
+             'desired_first_record':
+                 desired_first_record,
+             'sensor_groups': sensor_groups,
+             'last_record':last_record}
+        
+    return d
 
 def statistics_table_data(request, data):
     '''
@@ -323,85 +410,22 @@ def dynamic_graph_data(request, data):
     '''
     A view returning the JSON data used to populate the dynamic graph.
     '''
-    from django.db import connection, transaction
-    cur = connection.cursor()
+    # Set the maximum possible start time to three hours ago
+    # to prevent excessive drawing of data
+    start = max(int(data/1000),
+                int(calendar.timegm(
+                    datetime.datetime.now()-datetime.timedelta(0,3600*3,0)
+                    )))
+    # Grab the dump of xy pairs
+    data_dump = _make_data_dump(start,None,'second*10')
 
-    (sensor_groups, sensor_ids, sensor_ids_by_group) = _get_sensor_groups()
-
-    # If the client has supplied data (a string of digits in the
-    # URL---representing UTC seconds since the epoch), then we only
-    # consider data since (and including) that timestamp.
-
-    # The max is here just in case a client accidentally calls this
-    # view with a weeks-old timestamp...
-    start_dt = max(datetime.datetime.utcfromtimestamp(int(data) / 1000),
-                   datetime.datetime.now() - datetime.timedelta(0, 3600*3, 0))
-    PowerAverage.graph_data_execute(cur, 'second*10', start_dt)
-
-    # Also note, above, that if data was supplied then we selected
-    # everything since the provided timestamp's truncated date,
-    # including that date.  We will always provide the client with
-    # a new copy of the latest record he received last time, since
-    # that last record may have changed (more sensors may have
-    # submitted measurements and added to it).  The second to
-    # latest and older records, however, will never change.
-
-    # Now organize the query in a format amenable to the 
-    # (javascript) client.  (The grapher wants (x, y) pairs.)
-
-    sg_xy_pairs = dict([[sg[0], []] for sg in sensor_groups])
-    r = cur.fetchone()
-    if r is None:
-        d = {'no_results': True}
-    else:
-        per = r[2]
-        per_incr = datetime.timedelta(0, 10, 0)
+    # Create the URL to get more data
+    junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
+    data_url = reverse('energyweb.graph.views.dynamic_graph_data', 
+                           kwargs={'data': str(data_dump['last_record'])}) +\
+                           '?junk=' + junk
+    data_dump['data_url'] = data_url
     
-        # At the end of each outer loop, we increment per (the current
-        # ten-second period of time we're considering) by ten seconds.
-        while r is not None:
-            # Remember that the JavaScript client takes (and
-            # gives) UTC timestamps in ms
-            x = int(calendar.timegm(per.timetuple()) * 1000)
-            for sg in sensor_groups:
-                y = 0
-                for sid in sensor_ids_by_group[sg[0]]:
-                    # If this sensor has a reading for the current per,
-                    # update y.  There are three ways the sensor might
-                    # not have such a reading:
-                    # 1. r is None, i.e. there are no more readings at
-                    #    all
-                    # 2. r is not None and r[2] > per, i.e. there are 
-                    #    more readings but not for this per
-                    # 3. r is not None and r[2] <= per and r[1] != s[0],
-                    #    i.e. there are more readings for this per,
-                    #    but none for this sensor
-                    if r is not None and r[2] <= per and r[1] == sid:
-                        # If y is None, leave it as such.   Else, add
-                        # this sensor reading to y.  Afterwards, in
-                        # either case, fetch a new row.
-                        if y is not None:
-                            y += float(r[0])
-                        r = cur.fetchone()
-                    else:
-                        y = None
-                sg_xy_pairs[sg[0]].append((x, y))
-            per += per_incr
-    
-        last_record = x
-        # desired_first_record lags by (3:00:00 - 0:00:10) = 2:59:50
-        desired_first_record = x - 1000*3600*3 + 1000*10
-    
-        junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
-        data_url = reverse('energyweb.graph.views.dynamic_graph_data', 
-                           kwargs={'data': str(last_record)}) + '?junk=' + junk
-        d = {'no_results': False,
-             'sg_xy_pairs': sg_xy_pairs,
-             'desired_first_record':
-                 desired_first_record,
-             'sensor_groups': sensor_groups,
-             'data_url': data_url}
-
     json_serializer = serializers.get_serializer("json")()
     return HttpResponse(simplejson.dumps(d),
                         mimetype='application/json')
@@ -498,67 +522,11 @@ def static_graph_data(request, start, end, res):
     '''
     A view returning the JSON data used to populate the static graph.
     '''
-    from django.db import connection, transaction
-    cur = connection.cursor()
-
-    start_dt = datetime.datetime.utcfromtimestamp(int(start))
-    end_dt = datetime.datetime.utcfromtimestamp(int(end))
-    per_incr = PowerAverage.AVERAGE_TYPE_TIMEDELTAS[res]
-
-    (sensor_groups, sensor_ids, sensor_ids_by_group) = _get_sensor_groups()
-
-    PowerAverage.graph_data_execute(cur, res, start_dt, end_dt)
-
-    # Now organize the query in a format amenable to the 
-    # (javascript) client.  (The grapher wants (x, y) pairs.)
-
-    sg_xy_pairs = dict([[sg[0], []] for sg in sensor_groups])
-    r = cur.fetchone()
-    if r is None:
-        d = {'no_results': True,
-             'sensor_groups': sensor_groups}
-    else:
-        per = r[2]
-
-        # At the end of each outer loop, we increment per (the current
-        # ten-second period of time we're considering) by ten seconds.
-        while r is not None:
-            # Remember that the JavaScript client takes (and
-            # gives) UTC timestamps in ms
-            x = int(calendar.timegm(per.timetuple()) * 1000)
-            for sg in sensor_groups:
-                y = 0
-                for sid in sensor_ids_by_group[sg[0]]:
-                    # If this sensor has a reading for the current per,
-                    # update y.  There are three ways the sensor might
-                    # not have such a reading:
-                    # 1. r is None, i.e. there are no more readings at
-                    #    all
-                    # 2. r is not None and r[2] > per, i.e. there are 
-                    #    more readings but not for this per
-                    # 3. r is not None and r[2] <= per and r[1] != s[0],
-                    #    i.e. there are more readings for this per,
-                    #    but none for this sensor
-                    if r is not None and r[2] <= per and r[1] == sid:
-                        # If y is None, leave it as such.   Else, add
-                        # this sensor reading to y.  Afterwards, in
-                        # either case, fetch a new row.
-                        if y is not None:
-                            y += float(r[0])
-                        r = cur.fetchone()
-                    else:
-                        y = None
-                sg_xy_pairs[sg[0]].append((x, y))
-            per += per_incr
     
-        d = {'no_results': False,
-             'sg_xy_pairs': sg_xy_pairs,
-             'show_points': _graph_max_points(start_dt, end_dt, res) 
-                            <= GRAPH_SHOW_POINTS_THRESHOLD,
-             'sensor_groups': sensor_groups}
-
+    data_dump = _make_data_dump(start, end, res)
+    
     json_serializer = serializers.get_serializer("json")()
-    return HttpResponse(simplejson.dumps(d),
+    return HttpResponse(simplejson.dumps(data_dump),
                         mimetype='application/json')
 
 def download_csv(request, start, end, res):
