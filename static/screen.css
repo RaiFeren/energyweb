@@ -26,29 +26,6 @@ img.loading
     display: block;
 }
 
-/* graph and legend css */
-div#graph
-{
-    margin-left: auto;
-    margin-right: auto;
-    margin-bottom: 40px;
-    height: 500px;
-    width: 985px;
-}
-
-div#graph *
-{
-    font-size: 16px;
-    color: black;
-    font-family: sans-serif;
-}
-
-div#choices
-{
-    width:130px;
-}
-/* END graph and legend css */
-
 /* Navigation and Powered by css */
 ul#navbar
 {
@@ -79,33 +56,7 @@ table.center
     margin: auto;
 }
 
-/* Energy Statistics Table css */
-table#energystats
-{
-    border-collapse: collapse;
-    text-align: center;
-    font-size: 16px;
-    font-family: sans-serif;
-    border: 2px solid #bbbbbb;
-}
 
-#energystats tbody tr td
-{
-    font-weight: normal;
-    border-top: 2px solid #bbbbbb;
-    border-bottom: 1px solid #d0d0d0;
-}
-
-#energystats .gray
-{
-    background-color:#D3D3D3;
-}
-
-.even
-{
-    background-color: #05F90C;
-}
-/* END Energy Statistics Table css */
 
 /* Static Graph form table css */
 table#static-graph-form
@@ -165,44 +116,3 @@ table#monstatus
     border-bottom: none;
 }
 /* END Sensor Status Table css */
-
-/* tablesorter css */
-table.tablesorter {
-    font-family:arial;
-    background-color: #CDCDCD;
-    margin:auto;
-    font-size: 8pt;
-    width:600px;
-    text-align: center;
-}
-table.tablesorter thead tr th, table.tablesorter tfoot tr th {
-	background-color: #e6EEEE;
-	border: 1px solid #FFF;
-	font-size: 8pt;
-	padding: 4px;
-}
-table.tablesorter thead tr .header {
-	background-image: url(bg.gif);
-	background-repeat: no-repeat;
-	background-position: center right;
-	cursor: pointer;
-}
-table.tablesorter tbody td {
-	color: #3D3D3D;
-	padding: 4px;
-	background-color: #FFF;
-	vertical-align: top;
-}
-table.tablesorter tbody tr.odd td {
-	background-color:#F0F0F6;
-}
-table.tablesorter thead tr .headerSortUp {
-	background-image: url(asc.gif);
-}
-table.tablesorter thead tr .headerSortDown {
-	background-image: url(desc.gif);
-}
-table.tablesorter thead tr .headerSortDown, table.tablesorter thead tr .headerSortUp {
-background-color: #8dbdd8;
-}
-/* END tablesorter css */
