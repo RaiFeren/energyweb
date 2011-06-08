@@ -1,0 +1,18 @@
+/* Static Graph form css */
+table#static-graph-form
+{
+    margin: auto;
+    text-align: left;
+}
+
+table#static-graph-form ul.errorlist
+{
+    margin: 0px;
+    padding: 0px;
+}
+
+table#static-graph-form ul.errorlist li
+{
+    list-style-type: none;
+    color: #990000;
+}
