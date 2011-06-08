@@ -1,0 +1,22 @@
+/* graph and legend css */
+div#graph
+{
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 40px;
+    height: 500px;
+    width: 985px;
+}
+
+div#graph *
+{
+    font-size: 16px;
+    color: black;
+    font-family: sans-serif;
+}
+
+div#choices
+{
+    width:130px;
+}
+/* END graph and legend css */
