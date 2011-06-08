@@ -45,7 +45,7 @@ div#graph *
 
 div#choices
 {
-    width:200px;
+    width:130px;
 }
 /* END graph and legend css */
 
@@ -94,6 +94,11 @@ table#energystats
     font-weight: normal;
     border-top: 2px solid #bbbbbb;
     border-bottom: 1px solid #d0d0d0;
+}
+
+#energystats .gray
+{
+    background-color:#D3D3D3;
 }
 /* END Energy Statistics Table css */
 
