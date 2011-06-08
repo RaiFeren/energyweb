@@ -15,5 +15,29 @@ def nav_urls(request):
             'mon_status_url': reverse('energyweb.graph.views.mon_status'),
             'data_interface_url': reverse('energyweb.graph.views.data_interface'),
             'detail_url': reverse('energyweb.graph.views.detail_graphs' ,
-                                  kwargs={'building':str(1)}), # default Atwood
+                                  kwargs={'building':'atwood'}),
             }
+
+def detail_views_urls(request):
+    '''
+    Return URLs used in generating detail views page
+    '''
+    from django.core.urlresolvers import reverse
+    return {
+        'atwood_url': reverse('energyweb.graph.views.detail_graphs' ,
+                              kwargs={'building':'atwood'}),
+        'case_url': reverse('energyweb.graph.views.detail_graphs' ,
+                              kwargs={'building':'case'}),
+        'sontag_url': reverse('energyweb.graph.views.detail_graphs' ,
+                              kwargs={'building':'sontag'}),
+        'linde_url': reverse('energyweb.graph.views.detail_graphs' ,
+                              kwargs={'building':'linde'}),
+        'east_url': reverse('energyweb.graph.views.detail_graphs' ,
+                              kwargs={'building':'east'}),
+        'north_url': reverse('energyweb.graph.views.detail_graphs' ,
+                              kwargs={'building':'north'}),
+        'west_url': reverse('energyweb.graph.views.detail_graphs' ,
+                              kwargs={'building':'west'}),
+        'south_url': reverse('energyweb.graph.views.detail_graphs' ,
+                              kwargs={'building':'south'}),
+        }

@@ -24,20 +24,20 @@ src="{{ MEDIA_URL }}detail_graphs.js"></script>
       on a map. This means more work for us when making a new
       building, but less work for users to go "oh, where is this
       building?" as they shouldn't need to even read the names -->
-      <table id="buildingSelector">
+      <table id="buildingSelector" class="center">
         <tr>
-          <td id="select7"> South </td>
-          <td id="select5"> North </td>
+          <td id="select7"> <a href="{{south_url}}"> South </a> </td>
+          <td id="select5"> <a href="{{north_url}}"> North </a> </td>
           <td> &nbsp; <!-- LAC? --> </td>
-          <td id="select6"> Sontag </td>
-          <td id="select4"> Linde </td>
+          <td id="select6"> <a href="{{sontag_url}}"> Sontag </a> </td>
+          <td id="select4"> <a href="{{linde_url}}"> Linde </a> </td>
         </tr>
         <tr>
-          <td id="select8"> West </td>
-          <td id="select3"> East </td>
+          <td id="select8"> <a href="{{west_url}}"> West </a> </td>
+          <td id="select3"> <a href="{{east_url}}"> East </a> </td>
           <td> &nbsp; </td>
-          <td id="select1"> Atwood </td>
-          <td id="select2"> Case </td>
+          <td id="select1"> <a href="{{atwood_url}}"> Atwood </a> </td>
+          <td id="select2"> <a href="{{case_url}}"> Case </a> </td>
         </tr>
       </table>
     </div></td>
@@ -47,10 +47,52 @@ src="{{ MEDIA_URL }}detail_graphs.js"></script>
     <td><div id="graph"></div></td>
     <td><div id="settings">
       <table id="settings_table">
-        <tr><td id="mode_type"></td></tr>
-        <tr><td id="mode_settings"</td></tr>
-        <tr><td id="download"> Download Data </td></tr>
+        <tr><td id="mode_type">
+	    <form action="">
+	      <select name="mode">
+		<option value="cycle" selected="selected">Cycle View</option>
+	      </select>
+	    </form>
+	</td></tr>
+        <tr><td id="mode_settings">
+	    View By:
+	    <form action="">
+	      <select name="period">
+		<option value="day" selected="selected">Day</option>
+		<option value="week">Week</option>
+		<option value="month">Month</option>
+		<option value="year">Year</option>
+	      </select>
+	    </form>
+	</td></tr>
+        <tr><td id="download"> 
+	    <a href="{{data_url}}"> Download Data</a>
+	</td></tr>
       </table>
+    </div></td>
+  </tr>
+  <tr>
+    <td><div id="statistics_table">
+	<table class="tablesorter" id="energystats">
+	  <thead>
+	    <tr id="trhead">
+	      <th>Dorm</th>
+	      <th>Average This Minute (kW)</th>
+	      <th>Average Since Monday (kW)</th>
+	      <th>Average This Month (kW)</th>
+	    </tr>
+	  </thead>
+	  <tbody>
+	    {% for sg in sensor_groups %}
+	    <tr id="row{{ sg.1 }}">
+	      <td id="name{{ sg.1 }}">{{ sg.1 }}</td>
+	      <td id="curr{{ sg.1 }}">minutepowerhere</td>
+	      <td id="week{{ sg.1 }}">weekpowerhere</td>
+	      <td id="month{{ sg.1 }}">monthpowerhere</td>
+	    </tr>
+	    {% endfor %}
+	    
+	</table>
     </div></td>
   </tr>
   

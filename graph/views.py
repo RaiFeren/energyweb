@@ -422,12 +422,14 @@ def dynamic_graph_data(request, data):
                                 None,
                                 'second*10')
 
-    # Create the URL to get more data
-    junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
-    data_url = reverse('energyweb.graph.views.dynamic_graph_data', 
-                           kwargs={'data': str(data_dump['last_record'])}) +\
-                           '?junk=' + junk
-    data_dump['data_url'] = data_url
+    if not data_dump['no_results']:
+        # Create the URL to get more data
+        junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
+        data_url = reverse('energyweb.graph.views.dynamic_graph_data', \
+                               kwargs={'data': \
+                                           str(data_dump['last_record'])}) +\
+                                           '?junk=' + junk
+        data_dump['data_url'] = data_url
     
     json_serializer = serializers.get_serializer("json")()
     return HttpResponse(simplejson.dumps(data_dump),
@@ -611,14 +613,14 @@ def detail_graphs(request, building):
     (This graph represents the last three hours and updates
     automatically.)
     '''
-    # TODO: Should not be magic.
+    # TODO: Should not be magic. Should be determined by users
     (data, junk) = _generate_start_data( datetime.timedelta(1,0,0) )
 
     # TODO: Change such that mode and resolution are change-able by users.
 
     return render_to_response('graph/detail_graphs.html', 
         {'data_url': reverse('energyweb.graph.views.detail_graphs_data', 
-                             kwargs={'building': str(building),
+                             kwargs={'building': building,
                                      'mode':'cycle',
                                      'resolution':'day', # MAGIC! Needs to change
                                      'start_time':data}) + '?junk=' + junk},
@@ -651,11 +653,13 @@ def detail_graphs_data(request, building, mode, resolution, start_time):
 
     (sensor_groups, sensor_ids, sensor_ids_by_group) = _get_sensor_groups()
 
+    all_averages = _get_averages(sensor_ids)
+
     # Because transferring non-strings over gets annoying,
     # this is how we'll get buildings
     cur_building = None
     for sg in sensor_groups:
-        if sg[1] == building: # check if identical names
+        if sg[1].lower() == str(building): # check if identical names
             cur_building = sg
 
     # If the client has supplied data (a string of digits in the
@@ -686,6 +690,7 @@ def detail_graphs_data(request, building, mode, resolution, start_time):
         xy_pairs[sensor_id] = []
     
     r = cur.fetchone()
+    d = {'no_results':False}
     if r is None:
         d = {'no_results': True,}
     else:
@@ -697,30 +702,32 @@ def detail_graphs_data(request, building, mode, resolution, start_time):
             # gives) UTC timestamps in ms
             x = int(calendar.timegm(per.timetuple()) * 1000)
             xy_pairs['total'].append([x,0])
-            for sid in sensor_ids_by_group[cur_building[0]]:
-                y = 0
-                # If this sensor has a reading for the current per,
-                # update y.  There are three ways the sensor might
-                # not have such a reading:
-                # 1. r is None, i.e. there are no more readings at
-                #    all
-                # 2. r is not None and r[2] > per, i.e. there are 
-                #    more readings but not for this per
-                # 3. r is not None and r[2] <= per and r[1] != s[0],
-                #    i.e. there are more readings for this per,
-                #    but none for this sensor
-                if r is not None and r[2] <= per and r[1] == sid:
-                    # If y is None, leave it as such.   Else, add
-                    # this sensor reading to y.  Afterwards, in
-                    # either case, fetch a new row.
-                    if y is not None:
-                        y += float(r[0])
-                        # increment total here!
-                        xy_pairs['total'][-1][1] += y
-                    r = cur.fetchone()
-                else:
-                    y = None
-                xy_pairs[sid].append( [x, y] )
+            for sg in sensor_groups:
+                for sid in sensor_ids_by_group[sg[0]]:
+                    y = 0
+                    # If this sensor has a reading for the current per,
+                    # update y.  There are three ways the sensor might
+                    # not have such a reading:
+                    # 1. r is None, i.e. there are no more readings at
+                    #    all
+                    # 2. r is not None and r[2] > per, i.e. there are 
+                    #    more readings but not for this per
+                    # 3. r is not None and r[2] <= per and r[1] != s[0],
+                    #    i.e. there are more readings for this per,
+                    #    but none for this sensor
+                    if r is not None and r[2] <= per and r[1] == sid:
+                        # If y is None, leave it as such.   Else, add
+                        # this sensor reading to y.  Afterwards, in
+                        # either case, fetch a new row.
+                        if y is not None and sid in xy_pairs.keys():
+                            y += float(r[0])
+                            # increment total here!
+                            xy_pairs['total'][-1][1] += y
+                        r = cur.fetchone()
+                    else:
+                        y = None
+                    if sid in xy_pairs.keys():
+                        xy_pairs[sid].append( [x, y] )
             per += per_incr
     
         last_record = x
@@ -728,20 +735,24 @@ def detail_graphs_data(request, building, mode, resolution, start_time):
         desired_first_record = x - 1000*3600*3 + 1000*10
     
         junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
-        data_url = reverse('energyweb.graph.views.detail_graphs_data', 
-                           kwargs={'building': building,
-                                   'mode':'cycle', # MAGIC!
-                                   'resolution':resolution,
-                                   'start_time':str(last_record)}) + \
-                                   '?junk=' + junk
-                           
+        data_url = reverse('energyweb.graph.views.detail_graphs_data',
+                           kwargs={ 'building': building, \
+                                        'mode':'cycle', \
+                                    'resolution':resolution, \
+                                        'start_time':str(last_record)
+                                    }) + '?junk=' + junk
+        
         d = {'no_results': False,
-             'building': building,
+             'building': building.capitalize(),
              'building_color':cur_building[2],
              'xy_pairs': xy_pairs,
              'desired_first_record':
                  desired_first_record,
-             'data_url': data_url}
+             'data_url': data_url,
+             'min_averages': all_averages['minute'],
+             'week_averages': all_averages['week'],
+             'month_averages': all_averages['month'],
+             }
 
     json_serializer = serializers.get_serializer("json")()
     return HttpResponse(simplejson.dumps(d),
