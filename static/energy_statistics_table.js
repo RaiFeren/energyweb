@@ -54,6 +54,7 @@ $(function ()
         // get the sensor groups
         if (first_time) {
             sensor_groups = data.sensor_groups;
+            $('tr:nth-child(2n+1)').addClass('even');
         }
 
 	for (var i=0; i < sensor_groups.length; i++)
