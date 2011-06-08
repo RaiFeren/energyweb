@@ -1,23 +1,18 @@
+/* generic overall css */
 *
 {
     font-size: 16px;
     font-family: sans-serif;
 }
 
+/* generic overall css */
 div#content
 {
     max-width: 985px;
     margin: auto;
 }
 
-h2.center
-{
-    text-align: center;
-    font-size: 16px;
-    font-weight: normal;
-    font-family: sans-serif;
-}
-
+/* Image loading css */
 img.loading
 {
     padding-top: 200px;
@@ -26,7 +21,13 @@ img.loading
     display: block;
 }
 
-/* Navigation and Powered by css */
+/* Center all tables by default */
+table.center 
+{
+    margin: auto;
+}
+
+/* START Navigation css */
 ul#navbar
 {
     text-align: center;
@@ -37,7 +38,9 @@ ul#navbar li
     display: inline;
     list-style-type: none;
 }
+/* END Navigation css */
 
+/* START Powered by css */
 p#poweredby
 {
     text-align: center;
@@ -45,74 +48,12 @@ p#poweredby
     font-family: sans-serif;
 }
 
+/* For some reason, getting rid of either of these
+   font-size: 14px;
+   causes the font to increase...
+*/
 p#poweredby *
 {
     font-size: 14px;
 }
-/* END Navigation and Powered by css */
-
-table.center 
-{
-    margin: auto;
-}
-
-
-
-/* Static Graph form table css */
-table#static-graph-form
-{
-    margin: auto;
-    text-align: left;
-}
-
-table#static-graph-form ul.errorlist
-{
-    margin: 0px;
-    padding: 0px;
-}
-
-table#static-graph-form ul.errorlist li
-{
-    list-style-type: none;
-    color: #990000;
-}
-/* END Static Graph form table css */
-
-/* Sensor Status Table css */
-table#monstatus
-{
-    border-collapse: collapse;
-    text-align: center;
-    font-size: 16px;
-    font-family: sans-serif;
-}
-
-#monstatus tbody tr td, th
-{
-    padding-left: 12px;
-    padding-right: 12px;
-    padding-bottom: 2px;
-    padding-top: 2px;
-}
-
-#monstatus tbody tr td
-{
-    font-weight: normal;
-}
-
-#monstatus tbody tr th
-{
-    font-weight: normal;
-    border-bottom: 1px solid black;
-}
-
-#monstatus tbody tr td.sensorcol, th.sensorcol
-{
-    text-align: left;
-}
-
-#monstatus tbody tr#toprow th
-{
-    border-bottom: none;
-}
-/* END Sensor Status Table css */
+/* END Powered by css */
