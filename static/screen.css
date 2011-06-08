@@ -100,6 +100,11 @@ table#energystats
 {
     background-color:#D3D3D3;
 }
+
+.even
+{
+    background-color: #05F90C;
+}
 /* END Energy Statistics Table css */
 
 /* Static Graph form table css */
