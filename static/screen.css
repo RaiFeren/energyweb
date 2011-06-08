@@ -10,6 +10,14 @@ div#content
     margin: auto;
 }
 
+h2.center
+{
+    text-align: center;
+    font-size: 16px;
+    font-weight: normal;
+    font-family: sans-serif;
+}
+
 img.loading
 {
     padding-top: 200px;
@@ -18,6 +26,7 @@ img.loading
     display: block;
 }
 
+/* graph and legend css */
 div#graph
 {
     margin-left: auto;
@@ -34,114 +43,13 @@ div#graph *
     font-family: sans-serif;
 }
 
-h2.center
+div#choices
 {
-    text-align: center;
-    font-size: 16px;
-    font-weight: normal;
-    font-family: sans-serif;
+    width:200px;
 }
+/* END graph and legend css */
 
-table.center 
-{
-    margin: auto;
-}
-
-table#energystats
-{
-    border-collapse: collapse;
-    text-align: center;
-    font-size: 16px;
-    font-family: sans-serif;
-    border: 2px solid #bbbbbb;
-}
-
-#energystats #colgroupstats col.col1
-{
-    width: 65px;
-    border: 1px solid #d0d0d0;
-}
-
-#energystats #colgroupstats col.col2
-{
-    width: 65px;
-    border: 1px solid #d0d0d0;
-}
-
-#energystats #colgroupstats col.col3
-{
-    width: 65px;
-    border: 1px solid #d0d0d0;
-}
-
-#energystats tbody tr td, th
-{
-    padding-top: 4px;
-    padding-bottom: 4px;
-    padding-left: 4px;
-    padding-right: 4px;
-    vertical-align: top;
-}
-
-#energystats tbody tr td
-{
-    font-weight: normal;
-}
-
-#energystats tbody tr th
-{
-    font-weight: normal;
-}
-
-#energystats tbody #trheadsub th
-{
-    font-weight: normal;
-    border-top: 1px solid #d0d0d0;
-    border-bottom: 2px solid #bbbbbb;
-}
-
-#energystats tbody #trweek *
-{
-    border-top: 2px solid #bbbbbb;
-    border-bottom: 1px solid #d0d0d0;
-}
-
-#energystats tbody #trmonth *
-{
-    border-top: 1px solid #d0d0d0;
-    border-bottom: 1px solid #d0d0d0;
-}
-
-#energystats colgroup col#leftthcol
-{
-    border-right: 2px solid #bbbbbb;
-    border-left: 2px solid #bbbbbb;
-    width: 130px;
-}
-
-#energystats tbody tr th.leftth
-{
-    border: 1px solid #d0d0d0;
-}
-
-table#static-graph-form
-{
-    margin: auto;
-    text-align: left;
-}
-
-table#static-graph-form ul.errorlist
-{
-    margin: 0px;
-    padding: 0px;
-}
-
-table#static-graph-form ul.errorlist li
-{
-    list-style-type: none;
-    color: #990000;
-}
-
+/* Navigation and Powered by css */
 ul#navbar
 {
     text-align: center;
@@ -164,7 +72,52 @@ p#poweredby *
 {
     font-size: 14px;
 }
+/* END Navigation and Powered by css */
 
+table.center 
+{
+    margin: auto;
+}
+
+/* Energy Statistics Table css */
+table#energystats
+{
+    border-collapse: collapse;
+    text-align: center;
+    font-size: 16px;
+    font-family: sans-serif;
+    border: 2px solid #bbbbbb;
+}
+
+#energystats tbody tr td
+{
+    font-weight: normal;
+    border-top: 2px solid #bbbbbb;
+    border-bottom: 1px solid #d0d0d0;
+}
+/* END Energy Statistics Table css */
+
+/* Static Graph form table css */
+table#static-graph-form
+{
+    margin: auto;
+    text-align: left;
+}
+
+table#static-graph-form ul.errorlist
+{
+    margin: 0px;
+    padding: 0px;
+}
+
+table#static-graph-form ul.errorlist li
+{
+    list-style-type: none;
+    color: #990000;
+}
+/* END Static Graph form table css */
+
+/* Sensor Status Table css */
 table#monstatus
 {
     border-collapse: collapse;
@@ -201,6 +154,7 @@ table#monstatus
 {
     border-bottom: none;
 }
+/* END Sensor Status Table css */
 
 /* tablesorter css */
 table.tablesorter {
@@ -241,3 +195,4 @@ table.tablesorter thead tr .headerSortDown {
 table.tablesorter thead tr .headerSortDown, table.tablesorter thead tr .headerSortUp {
 background-color: #8dbdd8;
 }
+/* END tablesorter css */
