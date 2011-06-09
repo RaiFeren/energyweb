@@ -151,9 +151,13 @@ $(function () {
             // remove the graph's loading animation
             $('#graph').empty();
 	    options.append('<input type = "checkbox" name="'
-			   + 'showSensors" checked="checked" id="selector">'
+			   + 'showSensors" checked="checked" id="showSensors">'
 			   + '<label for "showSensors">'
 			   + 'Show by Sensors' +'</label>');
+
+	    $(':checkbox').click(function() {
+		refreshdata();
+	    });
         }
 
 	// Iterate through each sensor with data points
@@ -188,13 +192,19 @@ $(function () {
 	});
 
 	$.each(xy_pairs, function(sensor_name, data_points) {
-
-	    if ($('#showSensors').attr('checked') || 
-		sensor_name == 'total') {
-//		alert('Adding ' + sensor_name);
+	    if (sensor_name =='total') {
 		series.push({
 		    data: data_points,
 		    label: data.building + ' ' + sensor_name,
+		    color: '#' + data.building_color,
+		});
+	    } else if ($('#showSensors').is(':checked')) {
+		series.push({
+		    data: data_points,
+		    label: data.building + ' ' + sensor_name,
+		    //points: {
+			//symbol: 'diamond',
+		    //},
 		});
 	    }
 	});

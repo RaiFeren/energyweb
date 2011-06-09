@@ -731,8 +731,8 @@ def detail_graphs_data(request, building, mode, resolution, start_time):
             per += per_incr
     
         last_record = x
-        # desired_first_record lags by (3:00:00 - 0:00:10) = 2:59:50
-        desired_first_record = x - 1000*3600*3 + 1000*10
+        # desired_first_record lags by 10 seconds from our initial time
+        desired_first_record = x - 1000*3600*24 + 1000*10
     
         junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
         data_url = reverse('energyweb.graph.views.detail_graphs_data',

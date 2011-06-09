@@ -57,11 +57,10 @@ $(function () {
 
             // Creates table for listing off Buildings
             choice_container.append('Show Buildings:<br/>');
-            for (var i=0; i < sensor_groups.length; i++) {
-
-                var build_id = sensor_groups[i][0];
-                var build_name = sensor_groups[i][1];
-                var build_color = sensor_groups[i][2];
+	    $.each(sensor_groups, function() {
+		var build_id = this[0];
+                var build_name = this[1];
+                var build_color = this[2];
 
                 choice_container.append('<table><td><div id="colorBox'
                                         + build_id
@@ -79,7 +78,7 @@ $(function () {
                 var linecolor = "#" + build_color;
                 colorid.css("background-color", linecolor);
                 colorid.css("width", 25);
-            }
+	    });
 	    // Make it so checkboxes cause a refresh of the graph.
 	    $(':checkbox').click(function() {
 		refreshdata();
@@ -92,8 +91,8 @@ $(function () {
             chosen_lines[group_number]=''; // dummy so can use the in function
         });
 
-        for (var i=0; i < sensor_groups.length; i++) {
-            group_id = sensor_groups[i][0];
+	$.each(sensor_groups,function(index,cur_group) {
+	    group_id = cur_group[0];
     
             if (first_time) {
                 sg_xy_pairs[group_id] = data.sg_xy_pairs[group_id];
@@ -127,11 +126,12 @@ $(function () {
             if (group_id in chosen_lines) {
                 series.push({
                     data: sg_xy_pairs[group_id],
-                    label: sensor_groups[i][1],
-                    color: '#' + sensor_groups[i][2]
+                    label: cur_group[1],
+                    color: '#' + cur_group[2]
                 });
             }
-        }
+	});
+
         // Finally, make the graph
         graph_opts = {
             series: {
@@ -161,6 +161,7 @@ $(function () {
                 backgroundColor: { colors: ['#dbefff', '#ffffff']}
             }
         };
+
         $.plot($('#graph'), series, graph_opts);
     
         if (first_time) {
