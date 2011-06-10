@@ -20,7 +20,12 @@ urlpatterns = patterns('energyweb.graph.views',
     (r'^status/$', 'mon_status'), # Status Page, for telling if the sensors work
     (r'^status/data.json$', 'mon_status_data'),
 )
-
+'''
+# Admin site:
+urlpatters += patterns('',
+    (r'^admin/', include(admin.site.urls)),
+)
+'''
 if settings.DEBUG:
     # Add views for HTML-wrappings of the JSON data views.
     urlpatterns += patterns('energyweb.graph.views',
