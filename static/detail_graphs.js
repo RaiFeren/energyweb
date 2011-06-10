@@ -40,10 +40,6 @@ $(function () {
         // data_url gives the json dump of data transferred from database
 	data_url = data.data_url;
 
-	// defines where the start of data is
-        // used in the graph, not really here.
-	desired_first_record = data.desired_first_record;
-
 	var missed_min_average,
             missed_week_average,
 	    missed_month_average,
@@ -58,63 +54,27 @@ $(function () {
             sensor_groups = data.sensor_groups;
         }
 
-	for (var i=0; i < sensor_groups.length; i++)
-	{
-            group_current = 0;
-	    group_week_average = 0;
-	    group_month_average = 0;
-            missed_min_average = false;
-	    missed_week_average = false;
-	    missed_month_average = false;
-	    group_name = sensor_groups[i][1];
+	var table = $('#energystats')
 
-	    for (var j=0; j < sensor_groups[i][3].length; j++)
-	    {
-		sensor_id = sensor_groups[i][3][j][0];
+	$.each(data.averages, function(sensor,values) {
+	    // Make the row
+	    if (first_time) {
+		table.append('<tr id="'+sensor+'">'+
+			     '<td id="name'+sensor+'">'+
+			     data.building + ' ' + sensor +
+			     '</td><td id="minute'+sensor+'"></td>' +
+			     '<td id="week'+sensor+'"></td>' +
+			     '<td id="month'+sensor+'"></td></tr>');
+	    }
 
-		// Add sensor's average to the sensor group's average. 
-                if (sensor_id in data.min_averages)
-                {
-                    group_current += data.min_averages[sensor_id];
-                }
-		if (sensor_id in data.week_averages)
-		{
-		    group_week_average += data.week_averages[sensor_id];
-		}
-		if (sensor_id in data.month_averages)
-		{
-		    group_month_average += data.month_averages[sensor_id];
-		}
-	    }
-                        
-	    // Update the averages in the table for the sensor group.
-	    // id for placement should be: curr{buildingname}
-            if (! missed_min_average)
-            {
-                $('#curr' + group_name).empty();
-                $('#curr' + group_name).append( rnd(group_current) );
-            }
-	    // id for placement should be: week{buildingname}
-	    if (! missed_week_average)
-	    {
-		$('#week' + group_name).empty();
-		$('#week' + group_name).append( rnd( group_week_average ) );
-	    }
-	    // id for placement should be: month{buildingname}
-	    if (! missed_month_average)
-	    {
-		$('#month' + group_name).empty();
-		$('#month' + group_name).append( rnd( group_month_average) );
-	    }
-	}
-	
-	if (first_time) 
-	{
-	    first_time = false;
-	}
+	    $.each(values, function(average_type,average_value) {
+		$('#'+average_type+sensor).empty();
+		$('#'+average_type+sensor).append( rnd(average_value) );
+	    });
 
-        $("#energystats").tablesorter(); 
-	setTimeout(refreshdata, 10000);
+	});
+
+        // $("#energystats").tablesorter(); 
     }
     
 
@@ -129,6 +89,8 @@ $(function () {
 	    alert('No data! Check connection to sensors.');
             return;
         }
+
+	update_table(data);
 
         // When this function is first called, it is expected that 
         // data_url was defined previously (before loading this file).

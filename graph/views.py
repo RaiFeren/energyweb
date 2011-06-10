@@ -653,14 +653,22 @@ def detail_graphs_data(request, building, mode, resolution, start_time):
 
     (sensor_groups, sensor_ids, sensor_ids_by_group) = _get_sensor_groups()
 
-    all_averages = _get_averages(sensor_ids)
-
     # Because transferring non-strings over gets annoying,
     # this is how we'll get buildings
     cur_building = None
     for sg in sensor_groups:
         if sg[1].lower() == str(building): # check if identical names
             cur_building = sg
+
+    average_data = {}
+    all_averages = _get_averages(sensor_ids)
+    for sid in sensor_ids_by_group[cur_building[0]]:
+        average_data[sid] = {}
+        for average_type in all_averages.keys():
+            average_data[sid][average_type] = \
+                all_averages[average_type][sid]
+
+
 
     # If the client has supplied data (a string of digits in the
     # URL---representing UTC seconds since the epoch), then we only
@@ -749,12 +757,14 @@ def detail_graphs_data(request, building, mode, resolution, start_time):
              'building': building.capitalize(),
              'building_color':cur_building[2],
              'xy_pairs': xy_pairs,
+             'sensors': xy_pairs.keys(),
              'desired_first_record':
                  desired_first_record,
              'data_url': data_url,
              'min_averages': all_averages['minute'],
              'week_averages': all_averages['week'],
              'month_averages': all_averages['month'],
+             'averages': average_data,
              }
 
     json_serializer = serializers.get_serializer("json")()
@@ -788,12 +798,23 @@ def mon_status_data(request):
 
 
 def mon_status(request):
-    junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
-    return render_to_response('graph/mon_status.html',
-        {'sensor_groups': _get_sensor_groups()[0],
-         'data_url': reverse('energyweb.graph.views.mon_status_data')
-                             + '?junk=' + junk},
-        context_instance=RequestContext(request))
+    username = request.POST['username']
+    password = request.POST['password']
+    user = authenticate(username=username, password=password)
+    if user is not None:
+        if user.is_active:
+            login(request, user)
+            junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
+            return render_to_response('graph/mon_status.html',
+                {'sensor_groups': _get_sensor_groups()[0],
+                 'data_url': reverse('energyweb.graph.views.mon_status_data')
+                                     + '?junk=' + junk},
+                context_instance=RequestContext(request))
+        else:
+            return render_to_response('forbidden.html')
+    else:
+        return render_to_response('forbidden.html')
+
 
 
 if settings.DEBUG:
