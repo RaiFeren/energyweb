@@ -607,7 +607,7 @@ def download_csv(request, start, end, res):
     return HttpResponse(data,
                         mimetype='application/csv')
 
-def detail_graphs(request, building):
+def detail_graphs(request, building, res):
     '''
     A view returning the HTML for the Detailed Building graph.
     (This graph represents the last three hours and updates
@@ -622,8 +622,22 @@ def detail_graphs(request, building):
         {'data_url': reverse('energyweb.graph.views.detail_graphs_data', 
                              kwargs={'building': building,
                                      'mode':'cycle',
-                                     'resolution':'day', # MAGIC! Needs to change
-                                     'start_time':data}) + '?junk=' + junk},
+                                     'resolution':res,
+                                     'start_time':data}) + '?junk=' + junk,
+         'day_url': reverse('energyweb.graph.views.detail_graphs',
+                            kwargs={'building':building,
+                                    'res':'day'}),
+         'week_url':reverse('energyweb.graph.views.detail_graphs',
+                            kwargs={'building':building,
+                                    'res':'week'}),
+         'month_url':reverse('energyweb.graph.views.detail_graphs',
+                            kwargs={'building':building,
+                                    'res':'month'}),
+         'year_url':reverse('energyweb.graph.views.detail_graphs',
+                            kwargs={'building':building,
+                                    'res':'year'}),
+         'graph_title': building.capitalize() + ' viewed over a ' + res,
+         },
         context_instance=RequestContext(request))
 
 

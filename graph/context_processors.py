@@ -15,7 +15,7 @@ def nav_urls(request):
             'mon_status_url': reverse('energyweb.graph.views.mon_status'),
             'data_interface_url': reverse('energyweb.graph.views.data_interface'),
             'detail_url': reverse('energyweb.graph.views.detail_graphs' ,
-                                  kwargs={'building':'atwood'}),
+                                  kwargs={'building':'atwood','res':'day'}),
             }
 
 def detail_views_urls(request):
@@ -25,19 +25,19 @@ def detail_views_urls(request):
     from django.core.urlresolvers import reverse
     return {
         'atwood_url': reverse('energyweb.graph.views.detail_graphs' ,
-                              kwargs={'building':'atwood'}),
+                              kwargs={'building':'atwood','res':'day'}),
         'case_url': reverse('energyweb.graph.views.detail_graphs' ,
-                              kwargs={'building':'case'}),
+                              kwargs={'building':'case','res':'day'}),
         'sontag_url': reverse('energyweb.graph.views.detail_graphs' ,
-                              kwargs={'building':'sontag'}),
+                              kwargs={'building':'sontag','res':'day'}),
         'linde_url': reverse('energyweb.graph.views.detail_graphs' ,
-                              kwargs={'building':'linde'}),
+                              kwargs={'building':'linde','res':'day'}),
         'east_url': reverse('energyweb.graph.views.detail_graphs' ,
-                              kwargs={'building':'east'}),
+                              kwargs={'building':'east','res':'day'}),
         'north_url': reverse('energyweb.graph.views.detail_graphs' ,
-                              kwargs={'building':'north'}),
+                              kwargs={'building':'north','res':'day'}),
         'west_url': reverse('energyweb.graph.views.detail_graphs' ,
-                              kwargs={'building':'west'}),
+                              kwargs={'building':'west','res':'day'}),
         'south_url': reverse('energyweb.graph.views.detail_graphs' ,
-                              kwargs={'building':'south'}),
+                              kwargs={'building':'south','res':'day'}),
         }

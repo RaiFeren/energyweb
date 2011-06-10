@@ -43,7 +43,9 @@ src="{{ MEDIA_URL }}detail_graphs.js"></script>
       </table>
     </div></td>
   </tr>
-  <tr> <td> <div id="heading"></div> </td> </tr>
+  <tr> <td> <div id="heading">
+	<h2 class="center">{{ graph_title }}</h2>
+  </div> </td> </tr>
   <tr>
     <td><div id="graph"></div></td>
     <td><div id="settings">
@@ -60,11 +62,13 @@ src="{{ MEDIA_URL }}detail_graphs.js"></script>
         <tr><td id="mode_settings">
 	    View By:
 	    <form action="">
-	      <select name="period">
-		<option value="day" selected="selected">Day</option>
-		<option value="week">Week</option>
-		<option value="month">Month</option>
-		<option value="year">Year</option>
+	      <select name="period"
+		      OnChange="location.href=period.options[selectedIndex].value">
+		<option value="" selected="selected">Select Resolution</option>
+		<option value="{{ day_url }}">Day</option>
+		<option value="{{ week_url }}">Week</option>
+		<option value="{{ month_url }}">Month</option>
+		<option value="{{ year_url }}">Year</option>
 	      </select>
 	    </form>
 	</td></tr>
