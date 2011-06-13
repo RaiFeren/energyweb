@@ -5,6 +5,7 @@ $(function () {
     var desired_first_record = null;
     var xy_pairs = {};
     var sensor_groups = null;
+    var mode = 'sensors';
 
     function kw_tickformatter(val, axis) {
         // Workaround to get units on the y axis
@@ -31,6 +32,71 @@ $(function () {
         }
     }
 
+    // Clear the graph and put the options up
+    function set_mode_settings(data)
+    {
+        // When data is received the first time,
+        // remove the graph's loading animation
+        $('#graph').empty();
+	
+	var options = $("#mode_settings");
+	options.empty();
+	// Enable the form for switching resolutions
+	options.append('View By:' +
+		       '<form action=""><select name="period"' +
+		       'OnChange="location.href=' +
+		       'period.options[selectedIndex].value">' +
+		       '<option value="" selected="selected">' +
+		       'Select Resolution</option>' +
+		       '<option value="'+ day_url +'">Day</option>' +
+		       '<option value="'+ week_url +'">Week</option>' +
+		       '<option value="'+ month_url +'">Month</option>' +
+		       '<option value="'+ year_url +'">Year</option>' +
+		       ' </select></form>');
+	if (mode == 'sensors') {
+	    // Enable checkbox for splitting sensors
+	    options.append('<input type = "checkbox" name="'
+			   + 'showSensors" id="showSensors">'
+			   + '<label for "showSensors">'
+			   + 'Show by Sensors' +'</label>');
+	
+	    $(':checkbox').click(function() {
+		refreshdata();
+	    });
+	} else if (mode == 'cycle') {
+	    var cycles = '';
+	    switch (data.res)
+	    {
+	    case 'day':
+		cycles += '<option value="1"> Previous Day </option>';
+		cycles += '<option value="2"> 1 Week Ago </option>';
+		cycles += '<option value="3"> 1 Month Ago </option>';
+		break;
+	    case 'week':
+		cycles += '<option value="1"> Previous Week </option>';
+		cycles += '<option value="2"> 1 Month Ago </option>';
+		cycles += '<option value="3"> 1 Year Ago </option>';
+		break;
+	    case 'month':
+		cycles += '<option value="1"> Previous Month </option>';
+		cycles += '<option value="2"> 1 Year Ago </option>';
+		break;
+	    case 'year':
+		cycles += '<option value="1"> Previous Year </option>';
+		break;
+	    }	    
+	    options.append('Previous Cycles:' + 
+			   '<form action=""><select name="cycles"'+
+			   'multiple="multiple" id="cycles">'+
+			   cycles +
+			   '</select></form>' );
+	    $('#cycles').change(function() {
+
+		refreshdata();
+	    });
+	}
+    }
+    
     // Interprets data from the server and updates the table
     function update_table(data) 
     {
@@ -66,7 +132,7 @@ $(function () {
 			     '<td id="week'+sensor+'"></td>' +
 			     '<td id="month'+sensor+'"></td></tr>');
 	    }
-
+	    
 	    $.each(values, function(average_type,average_value) {
 		$('#'+average_type+sensor).empty();
 		$('#'+average_type+sensor).append( rnd(average_value) );
@@ -104,73 +170,40 @@ $(function () {
             group_id,
             graph_opts;
 
-	var options = $("#mode_settings");
-
+	// Clear the loading animation and put up the various options
         if (first_time) {
-            sensor_groups = data.sensor_groups;
-
-            // When data is received the first time,
-            // remove the graph's loading animation
-            $('#graph').empty();
-	    options.append('<input type = "checkbox" name="'
-			   + 'showSensors" checked="checked" id="showSensors">'
-			   + '<label for "showSensors">'
-			   + 'Show by Sensors' +'</label>');
-
-	    $(':checkbox').click(function() {
-		refreshdata();
-	    });
+	    set_mode_settings(data);
         }
 
-	// Iterate through each sensor with data points
-	$.each(data.xy_pairs, function(cur_sensor,data_points) {
-	    if (first_time) {
-		xy_pairs[cur_sensor] = data_points;
-            } else {
-		/* We've already collected some data, so combine it 
-		 * with the new.  About this slicing:  We're 
-		 * discarding our latest record, preferring the new copy
-		 * from the sever, since last time we may have e.g. 
-		 * collected data just before a sensor reported a 
-		 * reading (for the 10-second time period we were 
-		 * considering).  Hence, while the latest record may be
-		 * incomplete, the second latest (and older) records are
-		 * safe---they will never change.
-		 */
-		var j;
-		for (j=0; j < xy_pairs[cur_sensor].length; j++) {
-                    if (xy_pairs[cur_sensor][j][0] >= desired_first_record) {
-			// We break out of the loop when j is the index
-			// of the earliest record on or later than
-			// desired_first_record
-			break;
-                    }
-		}
-		xy_pairs[cur_sensor] = 
-		    xy_pairs[cur_sensor].slice(j,
-                                               xy_pairs[cur_sensor].length - 1
-                                              ).concat(data_points);
-            }
-	});
+	// get what cycles to plot
+	var cycles = [];
+	cycles.push(0);
+	if ($("#cycles").val()){
+	    cycles = cycles.concat($("#cycles").val());
+	}
 
-	$.each(xy_pairs, function(sensor_name, data_points) {
-	    if (sensor_name =='total') {
-		series.push({
-		    data: data_points,
-		    label: data.building + ' ' + sensor_name,
-		    color: '#' + data.building_color,
-		});
-	    } else if ($('#showSensors').is(':checked')) {
-		series.push({
-		    data: data_points,
-		    label: data.building + ' ' + sensor_name,
-		    //points: {
-			//symbol: 'diamond',
-		    //},
-		});
-	    }
+	$.each(cycles, function(cycleID) {
+	    xy_pairs[cycleID] = {};
+	    // Iterate through each sensor with data points
+	    $.each(data.graph_data[cycleID], function(cur_sensor,data_points) {
+		xy_pairs[cycleID][cur_sensor] = data_points;
+	    });
+	    
+	    $.each(xy_pairs[cycleID], function(sensor_name, data_points) {
+		if (sensor_name =='total') {
+		    series.push({
+			data: data_points,
+			label: data.building + ' ' + sensor_name + ' ' + cycleID,
+			color: '#' + data.building_color,
+		    });
+		} else if ($('#showSensors').is(':checked')) {
+		    series.push({
+			data: data_points,
+			label: data.building + ' ' + sensor_name,
+		    });
+		}
+	    });
 	});
-	
         // Finally, make the graph
         graph_opts = {
             series: {
@@ -222,6 +255,17 @@ $(function () {
     // Initially, show a loading animation instead of the graph
     $('#graph').append(
         '<img class="loading" src="' + MEDIA_URL + 'loading.gif" />');
+
+    // Make the mode selector work
+    $('select').change(function() {
+	mode = $("select option:selected").val() ;
+	first_time = true; // Set to first time such that it reloads everything.
+	// Open the loading animation
+	$('#graph').empty();
+	$('#graph').append(
+            '<img class="loading" src="' + MEDIA_URL + 'loading.gif" />');
+	refreshdata();
+    });
     mainloop();
 
     
