@@ -1,3 +1,5 @@
+from functools import wraps
+
 from django.shortcuts import render_to_response
 from django.core import serializers
 from django.http import HttpResponse
@@ -5,11 +7,15 @@ from django.template import RequestContext
 from django.core.urlresolvers import reverse
 from django.conf import settings
 from django import forms
+from django.contrib.auth import REDIRECT_FIELD_NAME
+from django.contrib.auth.views import login
 from django.db.models import Avg, Max, Min, Count
+
 from energyweb.graph.models import SensorGroup, SensorReading, Sensor, \
                                    PowerAverage, SRProfile
 import calendar, datetime, simplejson, time
 
+from constants import *
 
 # If a full graph has this many points or fewer, show the individual
 # points.  (Otherwise only draw the lines.)
@@ -613,11 +619,10 @@ def detail_graphs(request, building, res):
     (This graph represents the last three hours and updates
     automatically.)
     '''
-    # TODO: Should not be magic. Should be determined by users
-    (data, junk) = _generate_start_data( datetime.timedelta(1,0,0) )
+    # Get the current date.
+    (data, junk) = _generate_start_data( datetime.timedelta(0,0,0) )
 
     # TODO: Change such that mode and resolution are change-able by users.
-
     return render_to_response('graph/detail_graphs.html', 
         {'data_url': reverse('energyweb.graph.views.detail_graphs_data', 
                              kwargs={'building': building,
@@ -648,23 +653,6 @@ def detail_graphs_data(request, building, mode, resolution, start_time):
     from django.db import connection, transaction
     cur = connection.cursor()
 
-    res_convert = {
-        'day':'minute*10',
-        'week':'hour',
-        'month':'hour',
-        'year':'day',
-        }
-
-    # TODO: Do we want this to be a global somewhere? Would be nice.
-    resolution_deltas = {
-        'year':datetime.timedelta(365,0,0), # TODO: do we care about leap?
-        'month':datetime.timedelta(30,0,0), # TODO: make less of a hack number
-        'week':datetime.timedelta(7,0,0),
-        'day':datetime.timedelta(1,0,0),
-        'hour':datetime.timedelta(0,3600,0),
-        'minute*10':datetime.timedelta(0,600,0),
-        }
-
     (sensor_groups, sensor_ids, sensor_ids_by_group) = _get_sensor_groups()
 
     # Because transferring non-strings over gets annoying,
@@ -682,107 +670,123 @@ def detail_graphs_data(request, building, mode, resolution, start_time):
             average_data[sid][average_type] = \
                 all_averages[average_type][sid]
 
+    returnDictionary = {'graph_data':[]}
 
-
-    # If the client has supplied data (a string of digits in the
-    # URL---representing UTC seconds since the epoch), then we only
-    # consider data since (and including) that timestamp.
-
-    # NOTE: Removed the max... Might be a bad idea. We'll see.
-    start_dt = datetime.datetime.utcfromtimestamp(int(start_time) / 1000)
-                   
-    PowerAverage.graph_data_execute(cur,
-                                    res_convert[resolution],
-                                    start_dt)
-
-    # Also note, above, that if data was supplied then we selected
-    # everything since the provided timestamp's truncated date,
-    # including that date.  We will always provide the client with
-    # a new copy of the latest record he received last time, since
-    # that last record may have changed (more sensors may have
-    # submitted measurements and added to it).  The second to
-    # latest and older records, however, will never change.
-
-    # Now organize the query in a format amenable to the 
-    # (javascript) client.  (The grapher wants (x, y) pairs.)
-
-    # dictionary has keys of total and then the sensor ids
-    xy_pairs = {'total':[]}
-    for sensor_id in sensor_ids_by_group[cur_building[0]]:
-        xy_pairs[sensor_id] = []
-    
-    r = cur.fetchone()
-    d = {'no_results':False}
-    if r is None:
-        d = {'no_results': True,}
-    else:
-        per = r[2]
-        per_incr = resolution_deltas[res_convert[resolution]]
-    
-        while r is not None:
-            # Remember that the JavaScript client takes (and
-            # gives) UTC timestamps in ms
-            x = int(calendar.timegm(per.timetuple()) * 1000)
-            xy_pairs['total'].append([x,0])
-            for sg in sensor_groups:
-                for sid in sensor_ids_by_group[sg[0]]:
-                    y = 0
-                    # If this sensor has a reading for the current per,
-                    # update y.  There are three ways the sensor might
-                    # not have such a reading:
-                    # 1. r is None, i.e. there are no more readings at
-                    #    all
-                    # 2. r is not None and r[2] > per, i.e. there are 
-                    #    more readings but not for this per
-                    # 3. r is not None and r[2] <= per and r[1] != s[0],
-                    #    i.e. there are more readings for this per,
-                    #    but none for this sensor
-                    if r is not None and r[2] <= per and r[1] == sid:
-                        # If y is None, leave it as such.   Else, add
-                        # this sensor reading to y.  Afterwards, in
-                        # either case, fetch a new row.
-                        if y is not None and sid in xy_pairs.keys():
-                            y += float(r[0])
-                            # increment total here!
-                            xy_pairs['total'][-1][1] += y
-                        r = cur.fetchone()
-                    else:
-                        y = None
-                    if sid in xy_pairs.keys():
-                        xy_pairs[sid].append( [x, y] )
-            per += per_incr
-    
-        last_record = x
-        # desired_first_record lags by 10 seconds from our initial time
-        desired_first_record = x -  \
-            int((resolution_deltas[resolution].seconds + \
-                     resolution_deltas[resolution].days*3600*24) * 1000)
-        # desired_first_record = x - 1000*3600*24 + 1000*10
-    
-        junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
-        data_url = reverse('energyweb.graph.views.detail_graphs_data',
-                           kwargs={ 'building': building, \
-                                        'mode':'cycle', \
-                                    'resolution':resolution, \
-                                        'start_time':str(last_record)
-                                    }) + '?junk=' + junk
+    for start_time_delta in range(len(CYCLE_START_DELTAS[resolution])):
+        # If the client has supplied data (a string of digits in the
+        # URL---representing UTC seconds since the epoch), then we only
+        # consider data since (and including) that timestamp.
         
-        d = {'no_results': False,
-             'building': building.capitalize(),
-             'building_color':cur_building[2],
-             'xy_pairs': xy_pairs,
-             'sensors': xy_pairs.keys(),
-             'desired_first_record':
-                 desired_first_record,
-             'data_url': data_url,
-             'min_averages': all_averages['minute'],
-             'week_averages': all_averages['week'],
-             'month_averages': all_averages['month'],
-             'averages': average_data,
-             }
+        # NOTE: Removed the max... Might be a bad idea. We'll see.
+        start_dt = datetime.datetime.utcfromtimestamp(
+            int(start_time) / 1000 - 
+            CYCLE_START_DELTAS[resolution][start_time_delta].seconds - 
+            CYCLE_START_DELTAS[resolution][start_time_delta].days*3600*24 )
+                   
+        PowerAverage.graph_data_execute(cur,
+                                        AUTO_RES_CONVERT[resolution],
+                                        start_dt,
+                                        start_dt + RESOLUTION_DELTAS[resolution]);
+
+        # Also note, above, that if data was supplied then we selected
+        # everything since the provided timestamp's truncated date,
+        # including that date.  We will always provide the client with
+        # a new copy of the latest record he received last time, since
+        # that last record may have changed (more sensors may have
+        # submitted measurements and added to it).  The second to
+        # latest and older records, however, will never change.
+        
+        # Now organize the query in a format amenable to the 
+        # (javascript) client.  (The grapher wants (x, y) pairs.)
+        
+        # dictionary has keys of total and then the sensor ids
+        xy_pairs = {'total':[]}
+        for sensor_id in sensor_ids_by_group[cur_building[0]]:
+            xy_pairs[sensor_id] = []
+            
+        r = cur.fetchone()
+
+        if r is None:
+            d = {'no_results': True,}
+        else:
+            per = r[2]
+            per_incr = RESOLUTION_DELTAS[AUTO_RES_CONVERT[resolution]]
+            
+            while r is not None:
+                # Remember that the JavaScript client takes (and
+                # gives) UTC timestamps in ms
+                x = int(calendar.timegm(per.timetuple()) * 1000)
+                # Need to adjust start time such that all X values are actually the same
+                if not start_time_delta == 0:
+                    x += CYCLE_START_DELTAS[resolution][start_time_delta].seconds + \
+                        CYCLE_START_DELTAS[resolution][start_time_delta].days*3600*24 - \
+                        CYCLE_START_DELTAS[resolution][0].seconds - \
+                        CYCLE_START_DELTAS[resolution][0].days*3600*24
+                xy_pairs['total'].append([x,0])
+                for sg in sensor_groups:
+                    for sid in sensor_ids_by_group[sg[0]]:
+                        y = 0
+                        # If this sensor has a reading for the current per,
+                        # update y.  There are three ways the sensor might
+                        # not have such a reading:
+                        # 1. r is None, i.e. there are no more readings at
+                        #    all
+                        # 2. r is not None and r[2] > per, i.e. there are 
+                        #    more readings but not for this per
+                        # 3. r is not None and r[2] <= per and r[1] != s[0],
+                        #    i.e. there are more readings for this per,
+                        #    but none for this sensor
+                        if r is not None and r[2] <= per and r[1] == sid:
+                            # If y is None, leave it as such.   Else, add
+                            # this sensor reading to y.  Afterwards, in
+                            # either case, fetch a new row.
+                            if y is not None and sid in xy_pairs.keys():
+                                y += float(r[0])
+                                # increment total here!
+                                xy_pairs['total'][-1][1] += y
+                            r = cur.fetchone()
+                        else:
+                            y = None
+
+                        if start_time_delta == 0 and sid in xy_pairs.keys():
+                            xy_pairs[sid].append( [x, y] )
+                per += per_incr
+            
+
+            last_record = x
+            # desired_first_record lags by 10 seconds from our initial time
+            desired_first_record = x -  \
+                int((RESOLUTION_DELTAS[resolution].seconds + \
+                         RESOLUTION_DELTAS[resolution].days*3600*24) * 1000)
+
+            # Only set the data_url for the original time loop
+            if ( start_time_delta == 0):
+                junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
+                data_url = reverse('energyweb.graph.views.detail_graphs_data',
+                                   kwargs={ 'building': building, \
+                                                'mode':'cycle', \
+                                                'resolution':resolution, \
+                                                'start_time':str(last_record)
+                                            }) + '?junk=' + junk
+                returnDictionary['data_url'] = data_url
+                returnDictionary['sensors'] = xy_pairs.keys()
+                returnDictionary['no_results'] = False
+                returnDictionary['desired_first_record'] = desired_first_record
+                d = xy_pairs # Allow for split sensors
+            else:
+                d = xy_pairs
+
+            # Put the graph data on the return dictionary
+            returnDictionary['graph_data'].append(d)
+
+    # Set some useful things to return
+    returnDictionary['building'] = building.capitalize()
+    returnDictionary['building_color'] = cur_building[2]
+    returnDictionary['averages'] = average_data
+    returnDictionary['res'] = resolution
 
     json_serializer = serializers.get_serializer("json")()
-    return HttpResponse(simplejson.dumps(d),
+    return HttpResponse(simplejson.dumps(returnDictionary),
                         mimetype='application/json')
 
 def mon_status_data(request):
@@ -810,26 +814,40 @@ def mon_status_data(request):
                                                               + '?junk=' + junk}),
                         mimetype='application/json')
 
+# decorator for views that require login
+def login_required(view_callable):
+    def check_login(request, *args, **kwargs):
+        if request.user.is_authenticated():
+            return view_callable(request, *args, **kwargs)
 
+        assert hasattr(request, 'session'), "Session middleware needed."
+        login_kwargs = {
+            'extra_context': {
+                REDIRECT_FIELD_NAME: request.get_full_path(),
+                },
+            }
+        return login(request, **login_kwargs)
+    return wraps(view_callable)(check_login)
+
+
+@login_required
 def mon_status(request):
-    username = request.POST['username']
-    password = request.POST['password']
-    user = authenticate(username=username, password=password)
-    if user is not None:
-        if user.is_active:
-            login(request, user)
-            junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
-            return render_to_response('graph/mon_status.html',
-                {'sensor_groups': _get_sensor_groups()[0],
-                 'data_url': reverse('energyweb.graph.views.mon_status_data')
-                                     + '?junk=' + junk},
-                context_instance=RequestContext(request))
-        else:
-            return render_to_response('forbidden.html')
-    else:
-        return render_to_response('forbidden.html')
+    junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
+    return render_to_response('graph/maintenance/status.html',
+                              {'sensor_groups': _get_sensor_groups()[0],
+                               'data_url': reverse('energyweb.graph.views.mon_status_data')
+                               + '?junk=' + junk},
+                              context_instance=RequestContext(request))
 
+@login_required
+def data_access(request):
+    return render_to_response('graph/maintenance/data_access.html',
+                              context_instance=RequestContext(request))
 
+@login_required
+def logs(request):
+    return render_to_response('graph/maintenance/logs.html',
+                              context_instance=RequestContext(request))
 
 if settings.DEBUG:
     def _html_wrapper(view_name):
