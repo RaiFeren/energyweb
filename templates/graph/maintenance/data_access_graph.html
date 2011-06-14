@@ -1,0 +1,26 @@
+{% extends "graph/maintenance/data_access.html" %}
+
+{% block morehead %}
+{{ block.super }}
+<link rel="stylesheet" href="{{ MEDIA_URL }}css/graph.css" type="text/css" media="screen" />
+<script language="javascript" type="text/javascript">
+    var MEDIA_URL = "{{ MEDIA_URL }}";
+    var data_url = "{{ data_url }}";
+    var start = {{ start }};
+    var end = {{ end }};
+</script>
+<script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}js/page_specific/static_graph.js"></script>
+{% endblock %}
+
+{% block content %}
+
+<div id="graph"></div>
+
+<div id="download">
+  <h2 class="center">
+  <a href="{{download_url}}">Download Data</a>
+  </h2>
+</div>
+
+{{ block.super }}
+{% endblock %}

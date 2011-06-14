@@ -1,0 +1,26 @@
+{% extends "base_maintenance.html" %}
+
+{% block title %}Large Data Download{% endblock %}
+
+{% block morehead %}
+<link rel="stylesheet" href="{{ MEDIA_URL }}css/static_graph_form.css" type="text/css" media="screen" />
+<link rel="stylesheet" href="{{ MEDIA_URL }}jquery-ui/css/jquery-ui-timepicker.css" type="text/css" media="screen" />
+<script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}jquery-ui/js/jquery.ui.timepicker-0.0.6.js"></script>
+<script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}js/page_specific/static_graph_form.js"></script>
+<script language="javascript" type="text/javascript">
+    var MEDIA_URL = "{{ MEDIA_URL }}";
+    var data_url = "{{ data_url }}";
+    var start = {{ start }};
+    var end = {{ end }};
+</script>
+{% endblock %}
+
+{% block content %}
+<p> WARNING: This will let you download massive amounts of data. Please try not to use it excessively. </p>
+<form action="{{ form_action }}">
+<table id="static-graph-form">
+    {{ form.as_table }}
+    <tr><th></th><td><input type="submit" value="Submit" /></td></tr>
+</table>
+</form>
+{% endblock %}

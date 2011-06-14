@@ -1,0 +1,49 @@
+body 
+{
+    margin: 0;
+    padding: 0;
+}
+
+h1 
+{
+    font-size: 18px;
+    color: #666;
+    padding: 0 6px 0 0;
+    margin: 0 0 .2em 0;
+}
+
+#header 
+{
+    background: #417690;
+    color: #ffc;
+    overflow: hidden;
+}
+
+#header a:link, #header a:visited 
+{
+    color: white;
+}
+
+#branding h1 
+{
+    padding: 0 10px;
+    font-size: 18px;
+    margin: 8px 0;
+    font-weight: normal;
+    color: #f4f379;
+}
+
+#user-tools 
+{
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 1.2em 10px;
+    font-size: 11px;
+    text-align: right;
+}
+
+#user-tools a
+{
+    font-size: 11px;
+}

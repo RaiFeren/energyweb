@@ -1,0 +1,17 @@
+div#selector
+{
+    text-align: center;
+    height: 150px;
+}
+
+div#heading
+{
+    text-align: center;
+}
+
+canvas#campMap
+{
+    border-style:solid;
+    border-width:1px;
+    border-color:gray;
+}

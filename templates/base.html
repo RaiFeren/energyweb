@@ -5,11 +5,11 @@
 <title>{% block title %}{% endblock %}</title>
 
 <link rel="stylesheet" href="{{ MEDIA_URL }}jquery-ui/css/ui-lightness/jquery-ui-1.8.7.custom.css" type="text/css" media="screen" />
-<link rel="stylesheet" href="{{ MEDIA_URL }}screen.css" type="text/css" media="screen" />
+<link rel="stylesheet" href="{{ MEDIA_URL }}css/screen.css" type="text/css" media="screen" />
 <!--[if IE]><script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}flot/excanvas.min.js"></script><![endif]-->
 <script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}jquery-ui/js/jquery-1.4.4.min.js"></script>
-<script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}flot/jquery.flot.min.js"></script>
-<script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}jquery-ui/js/jquery-ui-1.8.7.custom.min.js"></script>
+<script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}js/flot/jquery.flot.min.js"></script>
+<script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}/jquery-ui/js/jquery-ui-1.8.7.custom.min.js"></script>
 
 {% block morehead %}
 {% endblock %}
@@ -20,7 +20,6 @@
     <li><a href="{{ dynamic_graph_url }}">Home</a></li>
     | <li><a href="{{ static_graph_url }}">Custom Graph</a></li>
     | <li><a href="{{ data_interface_url }}">Data Interface</a></li>
-    | <li><a href="{{ mon_status_url }}">Status</a></li>
     | <li><a href="{{ detail_url }}">Detailed View</a></li>
 </ul>
 
@@ -30,6 +29,10 @@
 <p id="poweredby">
     Powered by <a href="http://www.rhizomesystems.com/">Rhizome Systems</a>.
 </p>
+<ul id="navbar2">
+    <li><a href="{{ status_url }}">Maintenance</a></li>
+    | <li><a href="{{ admin_url }}">Administration</a></li>
+</ul>
 
 </body>
 </html>

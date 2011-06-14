@@ -19,7 +19,14 @@ urlpatterns = patterns('energyweb.graph.views',
     (r'^static/(?P<start>\d+)/to/(?P<end>\d+)/(?P<res>[a-z]+(\*10)?)/data.csv$', 'download_csv'),
     (r'^status/$', 'mon_status'), # Status Page, for telling if the sensors work
     (r'^status/data.json$', 'mon_status_data'),
+    (r'^logs/$', 'logs'),
+    (r'^dataaccess/$', 'data_access'),
+    (r'^dataaccess/(?P<start>\d+)/to/(?P<end>\d+)/(?P<res>[a-z]+(\*10)?)/data.json$', 'data_access_data'),
+    (r'^dataaccess/(?P<start>\d+)/to/(?P<end>\d+)/(?P<res>[a-z]+(\*10)?)/data.csv$', 'download_csv'),
+    (r'^logout/$', 'logout'),
+    (r'^changepass/$', 'change_password'),
 )
+
 '''
 # Admin site:
 urlpatters += patterns('',

@@ -1,0 +1,75 @@
+/* generic overall css */
+*
+{
+    font-size: 16px;
+    font-family: sans-serif;
+}
+
+/* generic overall css */
+div#content
+{
+    max-width: 985px;
+    margin: auto;
+}
+
+/* Image loading css */
+img.loading
+{
+    padding-top: 200px;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+}
+
+/* Center all tables by default */
+table.center 
+{
+    margin: auto;
+}
+
+/* START Navigation css */
+ul#navbar
+{
+    text-align: center;
+}
+
+ul#navbar li
+{
+    display: inline;
+    list-style-type: none;
+}
+/* END Navigation css */
+
+ul#navbar2
+{
+    text-align: center;
+    font-size: 10px;
+}
+
+ul#navbar2 li
+{
+    display: inline;
+    list-style-type: none;
+}
+
+ul#navbar2 li a
+{
+    font-size: 10px;
+}
+/* START Powered by css */
+p#poweredby
+{
+    text-align: center;
+    font-size: 14px;
+    font-family: sans-serif;
+}
+
+/* For some reason, getting rid of either of these
+   font-size: 14px;
+   causes the font to increase...
+*/
+p#poweredby *
+{
+    font-size: 14px;
+}
+/* END Powered by css */

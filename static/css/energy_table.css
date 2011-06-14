@@ -1,0 +1,65 @@
+/* General settings for the table */
+table.tablesorter 
+{
+    border: 2px solid #bbbbbb;
+    border-collapse: collapse;
+    font-family:sans-serif;
+    margin:auto;
+    font-size: 16px;
+    width:600px;
+    text-align: center;
+}
+
+/* START Settings for the header of the table */
+table.tablesorter thead tr th, table.tablesorter tfoot tr th 
+{
+    background-color: #e6EEEE;
+    border: 1px solid #FFF;
+    font-size: 8pt;
+    padding: 4px;
+}
+
+/* style for cells in header */
+table.tablesorter thead tr .header 
+{
+    background-image: url(../img/tablesort/bg.gif);
+    background-repeat: no-repeat;
+    background-position: center right;
+    cursor: pointer;
+}
+
+/* change image for a sorting header */
+table.tablesorter thead tr .headerSortUp 
+{
+    background-image: url(../img/tablesort/asc.gif);
+}
+
+/* change image for a sorting header */
+table.tablesorter thead tr .headerSortDown 
+{
+    background-image: url(../img/tablesort/desc.gif);
+}
+
+/* style for the selected header */
+table.tablesorter thead tr .headerSortDown, table.tablesorter thead tr .headerSortUp 
+{
+background-color: #8dbdd8;
+}
+/* END header settings */
+
+/* Style for body of table */
+table.tablesorter tbody td 
+{
+    color: #3D3D3D;
+    padding: 4px;
+    background-color: #;
+    vertical-align: top;
+    border-top: 2px solid #bbbbbb;
+    border-bottom: 1px solid #d0d0d0;
+}
+
+/* Color for every other row */
+table.tablesorter tbody tr.even 
+{
+    background-color:#F0F0F6;
+}

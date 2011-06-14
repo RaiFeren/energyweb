@@ -3,8 +3,9 @@
 {% block title %}Energy Usage at Mudd{% endblock %}
 
 {% block morehead %}
-<link rel="stylesheet" href="{{ MEDIA_URL }}energy_table.css" type="text/css" media="screen" />
-<link rel="stylesheet" href="{{ MEDIA_URL }}graph.css" type="text/css" media="screen" />
+<link rel="stylesheet" href="{{ MEDIA_URL }}css/energy_table.css" type="text/css" media="screen" />
+<link rel="stylesheet" href="{{ MEDIA_URL }}css/graph.css" type="text/css" media="screen" />
+<link rel="stylesheet" href="{{ MEDIA_URL }}css/detailed_view.css" type="text/css" media="screen" />
 <script language="javascript" type="text/javascript">
     var MEDIA_URL = "{{ MEDIA_URL }}";
     var data_url = "{{ data_url }}";
@@ -13,9 +14,17 @@
     var week_url = "{{ week_url }}";
     var month_url = "{{ month_url }}";
     var year_url = "{{ year_url }}";
+    var south_url = "{{ south_url }}";
+    var west_url = "{{ west_url }}";
+    var north_url = "{{ north_url }}";
+    var east_url = "{{ east_url }}";
+    var sontag_url = "{{ sontag_url }}";
+    var atwood_url = "{{ atwood_url }}";
+    var linde_url = "{{ linde_url }}";
+    var case_url = "{{ case_url }}";
 </script>
 <script language="javascript" type="text/javascript"
-src="{{ MEDIA_URL }}detail_graphs.js"></script>
+src="{{ MEDIA_URL }}js/page_specific/detail_graphs.js"></script>
 
 {% endblock %}
 
@@ -24,49 +33,7 @@ src="{{ MEDIA_URL }}detail_graphs.js"></script>
 <table class="center">
   <tr>
     <td><div id="selector">
-      <!-- The table below is hardcoded such that
-      the buildings are in the same order as they would be
-      on a map. This means more work for us when making a new
-      building, but less work for users to go "oh, where is this
-      building?" as they shouldn't need to even read the names -->
-      <table id="buildingSelector" class="center">
-        <tr>
-	  <td> &nbsp; </td>
-	  <td id="selectParsons"> Parsons </td>
-	  <td> &nbsp; </td>
-	  <td id="selectTG"> TG </td>
-	  <td id="selectPlatt"> Platt </td>
-          <td id="select7"> <a href="{{south_url}}"> South </a> </td>
-          <td id="select5"> <a href="{{north_url}}"> North </a> </td>
-          <td> LAC </td>
-          <td id="select6"> <a href="{{sontag_url}}"> Sontag </a> </td>
-          <td id="select4"> <a href="{{linde_url}}"> Linde </a> </td>
-        </tr>
-	<tr>
-	  <td> Olin </td>
-	  <td> Sprague </td>
-	  <td> Gallileo </td>
-	  <td> &nbsp; </td>
-	  <td> &nbsp; </td>
-	  <td> &nbsp; </td>
-	  <td> &nbsp; </td>
-	  <td> &nbsp; </td>
-	  <td> &nbsp; </td>
-	</tr>
-        <tr>
-	  <td> &nbsp; </td>
-	  <td> Keck </td>
-	  <td> &nbsp; </td>
-	  <td> Kingston </td>
-	  <td> Hoch </td>
-
-          <td id="select8"> <a href="{{west_url}}"> West </a> </td>
-          <td id="select3"> <a href="{{east_url}}"> East </a> </td>
-          <td> &nbsp; </td>
-          <td id="select1"> <a href="{{atwood_url}}"> Atwood </a> </td>
-          <td id="select2"> <a href="{{case_url}}"> Case </a> </td>
-        </tr>
-      </table>
+	<canvas id="campMap" width="570" height="150"></canvas>
     </div></td>
   </tr>
   <tr> <td> <div id="heading">
@@ -77,15 +44,18 @@ src="{{ MEDIA_URL }}detail_graphs.js"></script>
     <td><div id="settings">
       <table id="settings_table">
         <tr><td id="mode_type">
+	    <!-- Set what type of graphs we will be showing -->
 	    <form action="">
 	      <select name="mode">
 		<option value="sensors" selected="selected">
 		  Diagnostic View </option>
-		<option value="cycle">Cycle View</option>
+		<option value="cycle">
+		  Cycle View</option>
 	      </select>
 	    </form>
 	</td></tr>
         <tr><td id="mode_settings">
+	    <!-- The following settings will be necessary for all modes -->
 	    View By:
 	    <form action="">
 	      <select name="period"
@@ -97,9 +67,10 @@ src="{{ MEDIA_URL }}detail_graphs.js"></script>
 		<option value="{{ year_url }}">Year</option>
 	      </select>
 	    </form>
+	    <!-- Any further settings are set by javascripts -->
 	</td></tr>
         <tr><td id="download"> 
-	    <a href="{{data_url}}"> Download Data</a>
+	    <!-- <a href="{{data_url}}"> Download Data</a> -->
 	</td></tr>
       </table>
     </div></td>

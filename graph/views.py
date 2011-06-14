@@ -3,6 +3,7 @@ from functools import wraps
 from django.shortcuts import render_to_response
 from django.core import serializers
 from django.http import HttpResponse
+from django.http import HttpResponseRedirect
 from django.template import RequestContext
 from django.core.urlresolvers import reverse
 from django.conf import settings
@@ -30,7 +31,7 @@ def _graph_max_points(start, end, res):
     points if there are missing sensor readings in the date range.)
     '''
     delta = end - start
-    per_incr = PowerAverage.AVERAGE_TYPE_TIMEDELTAS[res]
+    per_incr = RESOLUTION_DELTAS[res] #PowerAverage.AVERAGE_TYPE_TIMEDELTAS[res]
     return ((delta.days * 3600 * 24 + delta.seconds) 
             / float(per_incr.days * 3600 * 24 + per_incr.seconds))
 
@@ -622,27 +623,27 @@ def detail_graphs(request, building, res):
     # Get the current date.
     (data, junk) = _generate_start_data( datetime.timedelta(0,0,0) )
 
-    # TODO: Change such that mode and resolution are change-able by users.
-    return render_to_response('graph/detail_graphs.html', 
-        {'data_url': reverse('energyweb.graph.views.detail_graphs_data', 
-                             kwargs={'building': building,
-                                     'mode':'cycle',
-                                     'resolution':res,
-                                     'start_time':data}) + '?junk=' + junk,
-         'day_url': reverse('energyweb.graph.views.detail_graphs',
-                            kwargs={'building':building,
-                                    'res':'day'}),
-         'week_url':reverse('energyweb.graph.views.detail_graphs',
-                            kwargs={'building':building,
-                                    'res':'week'}),
-         'month_url':reverse('energyweb.graph.views.detail_graphs',
-                            kwargs={'building':building,
-                                    'res':'month'}),
-         'year_url':reverse('energyweb.graph.views.detail_graphs',
-                            kwargs={'building':building,
-                                    'res':'year'}),
-         'graph_title': building.capitalize() + ' viewed over a ' + res,
-         },
+    d = {
+        'data_url': reverse('energyweb.graph.views.detail_graphs_data', 
+                            kwargs={'building': building,
+                                    'mode':'cycle',
+                                    'resolution':res,
+                                    'start_time':data}) + '?junk=' + junk,
+        'graph_title': building.capitalize() + ' viewed over a ' + res, 
+        }
+
+    # Set the URLs for changing time periods.
+    for time_period in ['day','week','month','year']:
+        d[time_period+'_url'] = reverse('energyweb.graph.views.detail_graphs',
+                                        kwargs={'building':building,
+                                                'res':time_period})
+
+    for building in ['south','north','west','east',\
+                         'sontag','atwood','case','linde']:
+        d[building+'_url'] = reverse('energyweb.graph.views.detail_graphs' ,
+                                     kwargs={'building':building,'res':res})
+
+    return render_to_response('graph/detail_graphs.html',d,
         context_instance=RequestContext(request))
 
 
@@ -832,6 +833,7 @@ def login_required(view_callable):
 
 @login_required
 def mon_status(request):
+    ''' Requires login, shows the status table for sensors. '''
     junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
     return render_to_response('graph/maintenance/status.html',
                               {'sensor_groups': _get_sensor_groups()[0],
@@ -841,13 +843,124 @@ def mon_status(request):
 
 @login_required
 def data_access(request):
-    return render_to_response('graph/maintenance/data_access.html',
+    '''                                                                                   
+    A view returning the HTML for the static (custom-time-period) graph.
+    Several return possibilities:
+       1) Did not input data yet
+       2) Input invalid data
+       3) Input valid data
+    They only get a graph back if they have input valid data!'''
+
+    def _request_valid(request):
+        return request.method == 'GET' \
+               and 'start_0' in request.GET \
+               and 'end_0' in request.GET \
+               and 'res' in request.GET
+
+    def _clean_input(get):
+        # *_0 gives date, *_1 gives time in 12 hr w/ AM or PM
+        for field in ('start_0', 'start_1', 'end_0', 'end_1'):
+            if field in ('start_1', 'end_1'):
+                # Allow e.g. pm or p.m. instead of PM
+                get[field] = get[field].upper().replace('.', '')
+                # Allow surrounding whitespace
+            get[field] = get[field].strip()
+        return get
+
+    def _show_only_form():
+        '''
+        Refuse to show them a graph until they give you good parameters
+        '''
+        now = datetime.datetime.now()
+        one_day_ago = now - datetime.timedelta(1)
+        form = StaticGraphForm(initial={
+            'start': one_day_ago,
+            'end': now
+        })
+        return render_to_response('graph/maintenance/data_access.html',
+            {'form_action': reverse('energyweb.graph.views.data_access'),
+             'form': form},
+            context_instance=RequestContext(request))
+    # BEGIN Case 1
+    if not _request_valid(request):
+        return _show_only_form()
+    # BEGIN Case 2
+    _get = _clean_input(request.GET.copy())
+    form = StaticGraphForm(_get)
+
+    if not form.is_valid():
+        return _show_only_form()
+    # We've passed the checks, now can display the graph!
+    # The following functions are for setting the various arguments
+    start = form.cleaned_data['start']
+    end = form.cleaned_data['end']
+    res = form.cleaned_data['computed_res']
+
+    # js_* is in the format for the Flot plotting package.
+    int_start = int(calendar.timegm(start.timetuple()))
+    int_end = int(calendar.timegm(end.timetuple()))
+    js_start = int_start * 1000
+    js_end = int_end * 1000
+    junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
+    keyword_args = {'start': str(int_start),
+                    'end': str(int_end),
+                    'res': res}
+
+    # generate the URLs for data dumps
+    data_url = reverse('energyweb.graph.views.data_access_data',
+                       kwargs=keyword_args) + '?junk=' + junk
+    download_url = reverse('energyweb.graph.views.download_csv',
+                           kwargs=keyword_args) + '?junk=' + junk
+
+    final_args = {'start': js_start,
+                  'end': js_end,
+                  'data_url': data_url,
+                  'download_url': download_url,
+                  'form': form,
+                  'form_action': reverse('energyweb.graph.views.data_access'),
+                  'res': res}
+
+    return render_to_response('graph/maintenance/data_access_graph.html',
+                              final_args,
                               context_instance=RequestContext(request))
+
+@login_required
+def data_access_data(request, start, end, res):
+    '''
+    A view returning the JSON data used to populate the static graph.
+    '''
+
+    data_dump = _make_data_dump(start, end, res)
+
+    json_serializer = serializers.get_serializer("json")()
+    return HttpResponse(simplejson.dumps(data_dump),
+                        mimetype='application/json')
 
 @login_required
 def logs(request):
     return render_to_response('graph/maintenance/logs.html',
                               context_instance=RequestContext(request))
+
+def logout(request):
+    ''' Log a user out then redirect to main page of energyweb site'''
+    from django.contrib.auth import logout
+    
+    logout(request)
+    return HttpResponseRedirect('/graph/')
+
+@login_required
+def change_password(request, template_name='registration/password_change_form.html'):
+    ''' Let a user change their password by entering their old password'''
+    from django.contrib.auth.forms import PasswordChangeForm
+    if request.method == "POST":
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/graph/status/')
+    else:
+        form = PasswordChangeForm(request.user)
+    return render_to_response('registration/password_change_form.html', {'form': form,}, context_instance=RequestContext(request))
+
 
 if settings.DEBUG:
     def _html_wrapper(view_name):

@@ -1,6 +1,6 @@
 # Django settings for energyweb project.
 
-DEBUG = False
+DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
@@ -113,7 +113,6 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'django.contrib.messages.context_processors.messages',
     'energyweb.graph.context_processors.media_url',
     'energyweb.graph.context_processors.nav_urls',
-    'energyweb.graph.context_processors.detail_views_urls',
 )
 
 
