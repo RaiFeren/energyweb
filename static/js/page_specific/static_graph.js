@@ -29,7 +29,7 @@ $(function () {
         // and show the download link
         $('#graph').empty();
         $('#download').show();
-    
+   
         for (var i=0; i < sensor_groups.length; i++) {
             group_id = sensor_groups[i][0];
     

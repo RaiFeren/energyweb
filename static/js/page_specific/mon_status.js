@@ -28,6 +28,8 @@ $(function () {
 
         if (first_time) {
             sensor_groups = data.sensor_groups;
+            $('#loading').empty();
+            $('#loading').hide();
 
             // When data is received the first time, reveal the table 
             // and remove the graph's loading animation
@@ -66,7 +68,9 @@ $(function () {
     }
 
     // Initially, hide the table and show a loading animation instead of
-    // the graph
+        // the graph
     $('#monstatus').hide();
+    $('#loading').append(
+        '<img class="loading" src="' + MEDIA_URL + 'img/loading.gif" />');
     refreshdata();
 });

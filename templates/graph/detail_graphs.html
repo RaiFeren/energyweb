@@ -47,10 +47,10 @@ src="{{ MEDIA_URL }}js/page_specific/detail_graphs.js"></script>
 	    <!-- Set what type of graphs we will be showing -->
 	    <form action="">
 	      <select name="mode">
-		<option value="sensors" selected="selected">
-		  Diagnostic View </option>
-		<option value="cycle">
+		<option value="cycle" selected="selected">
 		  Cycle View</option>
+		<option value="diagnostic">
+		  Diagnostic View </option>
 	      </select>
 	    </form>
 	</td></tr>
@@ -77,7 +77,7 @@ src="{{ MEDIA_URL }}js/page_specific/detail_graphs.js"></script>
   </tr>
   <tr>
     <td><div id="statistics_table">
-	<table class="tablesorter" id="energystats">
+	<table class="tablesorter">
 	  <thead>
 	    <tr id="trhead">
 	      <th>Sensor</th>
@@ -86,7 +86,7 @@ src="{{ MEDIA_URL }}js/page_specific/detail_graphs.js"></script>
 	      <th>Average This Month (kW)</th>
 	    </tr>
 	  </thead>
-	  <tbody>
+	  <tbody id="energystats">
 	  </tbody>
 	</table>
     </div></td>

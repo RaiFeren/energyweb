@@ -719,10 +719,11 @@ def detail_graphs_data(request, building, mode, resolution, start_time):
                 x = int(calendar.timegm(per.timetuple()) * 1000)
                 # Need to adjust start time such that all X values are actually the same
                 if not start_time_delta == 0:
-                    x += CYCLE_START_DELTAS[resolution][start_time_delta].seconds + \
-                        CYCLE_START_DELTAS[resolution][start_time_delta].days*3600*24 - \
-                        CYCLE_START_DELTAS[resolution][0].seconds - \
-                        CYCLE_START_DELTAS[resolution][0].days*3600*24
+                    x += CYCLE_START_DELTAS[resolution][start_time_delta].seconds*1000
+                    x += CYCLE_START_DELTAS[resolution][start_time_delta].days*3600*24*1000 
+                    x -= CYCLE_START_DELTAS[resolution][0].seconds*1000
+                    x -= CYCLE_START_DELTAS[resolution][0].days*3600*24*1000
+                    pass
                 xy_pairs['total'].append([x,0])
                 for sg in sensor_groups:
                     for sid in sensor_ids_by_group[sg[0]]:
@@ -844,12 +845,11 @@ def mon_status(request):
 @login_required
 def data_access(request):
     '''                                                                                   
-    A view returning the HTML for the static (custom-time-period) graph.
-    Several return possibilities:
+    A view returning the HTML for the unrestricted data download page.
+    Two return possibilities:
        1) Did not input data yet
-       2) Input invalid data
-       3) Input valid data
-    They only get a graph back if they have input valid data!'''
+       2) Input valid data
+    '''
 
     def _request_valid(request):
         return request.method == 'GET' \
@@ -884,12 +884,10 @@ def data_access(request):
     # BEGIN Case 1
     if not _request_valid(request):
         return _show_only_form()
-    # BEGIN Case 2
+
     _get = _clean_input(request.GET.copy())
     form = StaticGraphForm(_get)
 
-    if not form.is_valid():
-        return _show_only_form()
     # We've passed the checks, now can display the graph!
     # The following functions are for setting the various arguments
     start = form.cleaned_data['start']
@@ -899,22 +897,16 @@ def data_access(request):
     # js_* is in the format for the Flot plotting package.
     int_start = int(calendar.timegm(start.timetuple()))
     int_end = int(calendar.timegm(end.timetuple()))
-    js_start = int_start * 1000
-    js_end = int_end * 1000
     junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
     keyword_args = {'start': str(int_start),
                     'end': str(int_end),
                     'res': res}
 
     # generate the URLs for data dumps
-    data_url = reverse('energyweb.graph.views.data_access_data',
-                       kwargs=keyword_args) + '?junk=' + junk
     download_url = reverse('energyweb.graph.views.download_csv',
                            kwargs=keyword_args) + '?junk=' + junk
 
-    final_args = {'start': js_start,
-                  'end': js_end,
-                  'data_url': data_url,
+    final_args = {
                   'download_url': download_url,
                   'form': form,
                   'form_action': reverse('energyweb.graph.views.data_access'),

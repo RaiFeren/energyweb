@@ -9,18 +9,19 @@
     var start = {{ start }};
     var end = {{ end }};
 </script>
-<script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}js/page_specific/static_graph.js"></script>
 {% endblock %}
 
 {% block content %}
 
-<div id="graph"></div>
-
+<table id="datarequest">
+<tr>
+    <td> {{ block.super }} </td>
+    <td>
 <div id="download">
   <h2 class="center">
   <a href="{{download_url}}">Download Data</a>
   </h2>
 </div>
-
-{{ block.super }}
+    </td>
+</table>
 {% endblock %}

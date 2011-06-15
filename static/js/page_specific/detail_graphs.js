@@ -5,31 +5,39 @@ $(function () {
     var desired_first_record = null;
     var xy_pairs = {};
     var sensor_groups = null;
-    var mode = 'sensors'; // Default value
+    var mode = 'cycle'; // Default value
     var cur_building = null;
 
     // Buildings are defined as rectangles. 
     // Defined as xy pairs, [Top Left, Bottom Right]
     var buildings = {
-	'Olin':[[15,90],[30,125],null],
-	'Beckman':[[35,100],[50,115],null],
-	'Parsons':[[58,60],[100,85],null],
-	'Sprague':[[55,100],[75,120],null],
-	'Gallileo':[[85,100],[105,115],null],
-	'Keck':[[60,130],[105,155],null],
-	'TG':[[140,70],[180,90],null],
-	'Kingston':[[140,120],[180,140],null],
-	'Platt':[[215,55],[270,90], null],
-	'Hoch':[[215,115],[270,150],null],
-	'South':[[290,60],[325,90], south_url],
-	'West': [[290,115],[325,150], west_url],
-	'North':[[345,60],[380,90], north_url],
-	'East': [[345,115],[380,150], east_url],
-	'LAC': [[390,60],[435,90], null],
-	'Sontag': [[460,65],[495,95], sontag_url],
-	'Atwood': [[460,125],[500,160], atwood_url],
-	'Linde':[[545,85],[580,125], linde_url],
-	'Case': [[515,130],[555,170], case_url],
+	'Olin':[[15,90],[30,125],null,null],
+	'Beckman':[[35,100],[50,115],null,null],
+	'Parsons':[[58,60],[100,85],null,null],
+	'Sprague':[[55,100],[75,120],null,null],
+	'Gallileo':[[85,100],[105,115],null,null],
+	'Keck':[[60,130],[105,155],null,null],
+	'TG':[[140,70],[180,90],null,null],
+	'Kingston':[[140,120],[180,140],null,null],
+	'Platt':[[215,55],[270,90], null,null],
+	'Hoch':[[215,115],[270,150],null,null],
+	'South':[[290,60],[325,90], south_url,
+		 [[276,2],MEDIA_URL + 'img/south.png']],
+	'West': [[290,115],[325,150], west_url,
+		 [[273,58],MEDIA_URL + 'img/west.png']],
+	'North':[[345,60],[380,90], north_url,
+		 [[326,1],MEDIA_URL + 'img/north.png']],
+	'East': [[345,115],[380,150], east_url,
+		 [[325,55],MEDIA_URL + 'img/east.png']],
+	'LAC': [[390,60],[435,90], null,null],
+	'Sontag': [[460,65],[495,95], sontag_url,
+		   [[442,6],MEDIA_URL + 'img/sontag.png']],
+	'Atwood': [[460,125],[500,160], atwood_url,
+		   [[441,66],MEDIA_URL + 'img/atwood.png']],
+	'Linde':[[545,85],[580,125], linde_url,
+		 [[525,23],MEDIA_URL + 'img/linde.png']],
+	'Case': [[515,130],[555,170], case_url,
+		 [[501,73],MEDIA_URL + 'img/case.png']],
     };
     
     function kw_tickformatter(val, axis) {
@@ -110,7 +118,16 @@ $(function () {
 		cur_building = name;
 		context.fillText(name, 25, 125);
 		draw = true;
-//		alert(name);
+		if (dimensions[3] != null) {
+		    var img = new Image();
+		    img.src =  dimensions[3][1]
+		    img.onload = function() {
+			context.drawImage(img,
+					  dimensions[3][0][0],
+					  dimensions[3][0][1]);
+		    };
+//		    alert('drawing image!');
+		}
 	    }
 	});
 	if (draw == false) {
@@ -122,7 +139,8 @@ $(function () {
 	var spot = getCursorPosition(e);
 	//alert('Clicked at ' + spot[0] + ',' + spot[1]);
 
-	// Alert user when they've clicked on a building
+	// Determine which building they clicked on
+	// Buildings are [topLeftCorner, bottomRightCorner, redirectURL]
 	$.each(buildings, function(name,dimensions) {
 	    if (spot[0] > dimensions[0][0]
 		&& spot[0] < dimensions[1][0] 
@@ -168,7 +186,7 @@ $(function () {
 		       '<option value="'+ month_url +'">Month</option>' +
 		       '<option value="'+ year_url +'">Year</option>' +
 		       ' </select></form>');
-	if (mode == 'sensors') {
+	if (mode == 'diagnostic') {
 	    // Enable checkbox for splitting sensors
 	    options.append('<input type = "checkbox" name="'
 			   + 'showSensors" id="showSensors">'
@@ -207,7 +225,6 @@ $(function () {
 			   cycles +
 			   '</select></form>' );
 	    $('#cycles').change(function() {
-		alert('Saw a change in cycles!');
 		refreshdata();
 	    });
 	}
@@ -222,6 +239,8 @@ $(function () {
         // data_url gives the json dump of data transferred from database
 	data_url = data.data_url;
 
+	var table = $('#energystats')
+
 	var missed_min_average,
             missed_week_average,
 	    missed_month_average,
@@ -233,10 +252,9 @@ $(function () {
 
         // get the sensor groups
         if (first_time) {
+	    table.empty();
             sensor_groups = data.sensor_groups;
         }
-
-	var table = $('#energystats')
 
 	$.each(data.averages, function(sensor,values) {
 	    // Make the row
@@ -294,13 +312,10 @@ $(function () {
 	var cycles = [];
 	cycles.push(0);
 	if ($("#cycles").val()){
-	    //alert('Saw values of ' + $("#cycles").val());
 	    cycles = cycles.concat($("#cycles").val());
-	    //alert('cycles is ' + cycles);
 	}
 
 	$.each(cycles, function(index,cycleID) {
-	   // alert('Now reading ' + cycleID);
 	    xy_pairs[cycleID] = {};
 	    if (data.graph_data[cycleID] == null) {
 		alert('Do not have data old enough for cycle ' + cycleID + '!');
@@ -313,17 +328,20 @@ $(function () {
 		});
 		
 		$.each(xy_pairs[cycleID], function(sensor_name, data_points) {
+		    var cur_label = data.building + ' ' + sensor_name;
+		    if (mode == 'cycle') {
+			cur_label += ' ' + cycleID;
+		    }
 		    if (sensor_name =='total') {
 			series.push({
 			    data: data_points,
-			    label: data.building + ' ' + sensor_name + ' ' 
-				+ cycleID,
+			    label: cur_label,
 			    color: '#' + data.building_color,
 			});
 		    } else if ($('#showSensors').is(':checked')) {
 			series.push({
 			    data: data_points,
-			    label: data.building + ' ' + sensor_name,
+			    label: cur_label,
 			});
 		    }
 		});

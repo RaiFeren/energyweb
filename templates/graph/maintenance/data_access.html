@@ -16,7 +16,7 @@
 {% endblock %}
 
 {% block content %}
-<p> WARNING: This will let you download massive amounts of data. Please try not to use it excessively. </p>
+<p id="warning"> WARNING: This will let you download massive amounts of data. Please try not to use it excessively. </p>
 <form action="{{ form_action }}">
 <table id="static-graph-form">
     {{ form.as_table }}
