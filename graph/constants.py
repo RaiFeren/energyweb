@@ -4,6 +4,10 @@ Used for various constants
 
 import calendar, datetime, simplejson, time
 
+# If a full graph has this many points or fewer, show the individual
+# points.  (Otherwise only draw the lines.)
+GRAPH_SHOW_POINTS_THRESHOLD = 40
+
 AUTO_RES_CONVERT = {
     'day':'minute*10',
     'week':'hour',
