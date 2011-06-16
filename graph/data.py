@@ -474,4 +474,153 @@ def download_csv(request, start, end, res):
     return HttpResponse(data,
                         mimetype='application/csv')
 
+def _get_detail_data(building, mode, resolution, start_time):
+    '''
+    Creates the dictionary for detail view
+    TODO: IS MESSY AND NEEDS REFACTORING
+    '''
+    from django.db import connection, transaction
+    cur = connection.cursor()
+
+    # Because transferring non-strings over gets annoying,
+    # this is how we'll get buildings
+    cur_building = None
+    for sg in SENSOR_GROUPS:
+        if sg[1].lower() == str(building): # check if identical names
+            cur_building = sg
+
+    average_data = {}
+    all_averages = data._get_averages(SENSOR_IDS)
+    for sid in data.SENSOR_IDS_BY_GROUP[cur_building[0]]:
+        average_data[sid] = {}
+        for average_type in all_averages.keys():
+            average_data[sid][average_type] = \
+                all_averages[average_type][sid]
+
+    watthr_data = []
+
+    returnDictionary = {'graph_data':[],
+                        'building': building.capitalize(),
+                        'building_color': cur_building[2],
+                        'averages': average_data,
+                        'res': resolution,
+                        'watthr_data': watthr_data
+                        }
+
+    for start_time_delta in range(len(CYCLE_START_DELTAS[resolution])):
+
+        start_dt = datetime.datetime.utcfromtimestamp(
+            int(start_time) / 1000 - 
+            CYCLE_START_DELTAS[resolution][start_time_delta].seconds - 
+            CYCLE_START_DELTAS[resolution][start_time_delta].days*3600*24 )
+                   
+        all_watthr_data = _integrate(start_dt,
+                                          start_dt + \
+                                              RESOLUTION_DELTAS[resolution],
+                                          AUTO_RES_CONVERT[resolution],
+                                          True)
+
+        returnDictionary['watthr_data'].append(all_watthr_data)
+
+        PowerAverage.graph_data_execute(cur,
+                                        AUTO_RES_CONVERT[resolution],
+                                        start_dt,
+                                        start_dt + \
+                                        RESOLUTION_DELTAS[resolution])
+
+        # If data was supplied then we selected everything since
+        # the provided timestamp's truncated date, including that date.
+        # We will always provide the client with
+        # a new copy of the latest record he received last time, since
+        # that last record may have changed (more sensors may have
+        # submitted measurements and added to it).  The second to
+        # latest and older records, however, will never change.
+
+        
+        # Now organize the query in a format amenable to the 
+        # (javascript) client.  (The grapher wants (x, y) pairs.)
+        
+        # dictionary has keys of total and then the sensor ids
+        xy_pairs = {'total':[]}
+        for sensor_id in SENSOR_IDS_BY_GROUP[cur_building[0]]:
+            xy_pairs[sensor_id] = []
+            
+        r = cur.fetchone()
+
+        if r is None:
+            d = {'no_results': True,}
+        else:
+            per = r[2]
+            per_incr = RESOLUTION_DELTAS[AUTO_RES_CONVERT[resolution]]
+            
+            while r is not None:
+                # Remember that the JavaScript client takes (and
+                # gives) UTC timestamps in ms
+                x = int(calendar.timegm(per.timetuple()) * 1000)
+                # Need to adjust start time such that all
+                # x values are actually the same.
+                # So lines will show on same axis.
+                if not start_time_delta == 0:
+                    old_cycle = CYCLE_START_DELTAS[resolution][start_time_delta]
+
+                    x += old_cycle.seconds*1000 +\
+                         old_cycle.days*3600*24*1000 -\
+                         CYCLE_START_DELTAS[resolution][0].seconds*1000 -\
+                         CYCLE_START_DELTAS[resolution][0].days*3600*24*1000
+
+                xy_pairs['total'].append([x,0])
+                for sg in SENSOR_GROUPS:
+                    for sid in SENSOR_IDS_BY_GROUP[sg[0]]:
+                        y = 0
+                        # If this sensor has a reading for the current per,
+                        # update y.  There are three ways the sensor might
+                        # not have such a reading:
+                        # 1. r is None, i.e. there are no more readings at
+                        #    all
+                        # 2. r is not None and r[2] > per, i.e. there are 
+                        #    more readings but not for this per
+                        # 3. r is not None and r[2] <= per and r[1] != s[0],
+                        #    i.e. there are more readings for this per,
+                        #    but none for this sensor
+                        if r is not None and r[2] <= per and r[1] == sid:
+                            # If y is None, leave it as such.   Else, add
+                            # this sensor reading to y.  Afterwards, in
+                            # either case, fetch a new row.
+                            if y is not None and sid in xy_pairs.keys():
+                                y += float(r[0])
+                                # increment total here!
+                                xy_pairs['total'][-1][1] += y
+                            r = cur.fetchone()
+                        else:
+                            y = None
+
+                        if start_time_delta == 0 and sid in xy_pairs.keys():
+                            xy_pairs[sid].append( [x, y] )
+                per += per_incr
+                
+            last_record = x
+            # desired_first_record lags by 10 seconds from our initial time
+            desired_first_record = x -  \
+                int((RESOLUTION_DELTAS[resolution].seconds + \
+                         RESOLUTION_DELTAS[resolution].days*3600*24) * 1000)
+
+            # Only set the data_url for the original time loop
+            if ( start_time_delta == 0):
+                junk = _gen_now()
+                data_url = reverse('energyweb.graph.views.detail_graphs_data',
+                                   kwargs={ 'building': building, \
+                                            'mode':'cycle', \
+                                            'resolution':resolution, \
+                                            'start_time':str(last_record)
+                                            }) + '?junk=' + junk
+                returnDictionary['data_url'] = data_url
+                returnDictionary['sensors'] = xy_pairs.keys()
+                returnDictionary['no_results'] = False
+                returnDictionary['desired_first_record'] = desired_first_record
+
+            # Put the graph data on the return dictionary
+            returnDictionary['graph_data'].append(xy_pairs)
+
+    return returnDictionary
+
 (SENSOR_GROUPS, SENSOR_IDS, SENSOR_IDS_BY_GROUP) = _get_sensor_groups()
