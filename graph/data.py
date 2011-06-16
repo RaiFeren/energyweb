@@ -241,6 +241,69 @@ def _get_averages(sensor_ids):
 
     return all_averages
 
+def _integrate(start_dt,end_dt,res,splitSensors=True):
+    '''
+    Reports the integrated power usage from start to stop.
+    Returns in watt*hr
+    Uses data points of res resolution for the integration.
+    '''
+    from django.db import connection, transaction
+    cur = connection.cursor()
+
+    per_incr = PowerAverage.AVERAGE_TYPE_TIMEDELTAS[res]
+
+    corrections = {
+        'minute*10':1/6.0,#6 of these per hour
+        'hour':1,
+        'day':24,}
+    
+    PowerAverage.graph_data_execute(cur, res, start_dt, end_dt)
+
+    if not splitSensors:
+        watt_totals = dict([ [sg[0], 0] for sg in SENSOR_GROUPS])
+    else:
+        watt_totals = dict([ [sid,0] for sid in SENSOR_IDS])
+
+    r = cur.fetchone()
+    if r is None:
+        return None
+    else:
+        per = r[2]
+    
+        while r is not None:
+
+            for sg in SENSOR_GROUPS:
+                y = 0
+                for sid in SENSOR_IDS_BY_GROUP[sg[0]]:
+                    # If this sensor has a reading for the current per,
+                    # update y.  There are three ways the sensor might
+                    # not have such a reading:
+                    # 1. r is None, i.e. there are no more readings at
+                    #    all
+                    # 2. r is not None and r[2] > per, i.e. there are 
+                    #    more readings but not for this per
+                    # 3. r is not None and r[2] <= per and r[1] != s[0],
+                    #    i.e. there are more readings for this per,
+                    #    but none for this sensor
+                    if r is not None and r[2] <= per and r[1] == sid:
+                        if y is not None:
+                            if splitSensors:
+                                watt_totals[sid] += float(r[0])
+                            else:
+                                y += float(r[0])
+                        r = cur.fetchone()
+                    else:
+                        y = None
+                if not splitSensors and y:
+                    watt_totals[sg[0]] += y
+            per += per_incr
+        
+        for reading in watt_totals.keys():
+            watt_totals[reading] = watt_totals[reading]*corrections[res]
+
+    return watt_totals
+    
+
 ##############################
 # Converting data to a serializable form
 ##############################

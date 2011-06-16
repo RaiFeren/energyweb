@@ -72,10 +72,12 @@ $(function () {
 	var y;
 
 	if (e.pageX != undefined && e.pageY != undefined) {
+
 	    x = e.pageX;
 	    y = e.pageY;
 	}
 	else {
+
 	    x = e.clientX + document.body.scrollLeft +
 		document.documentElement.scrollLeft;
 	    y = e.clientY + document.body.scrollTop +
@@ -126,7 +128,6 @@ $(function () {
 					  dimensions[3][0][0],
 					  dimensions[3][0][1]);
 		    };
-//		    alert('drawing image!');
 		}
 	    }
 	});
@@ -137,7 +138,7 @@ $(function () {
 
     function map_click_handler(e) {
 	var spot = getCursorPosition(e);
-	//alert('Clicked at ' + spot[0] + ',' + spot[1]);
+//	alert('Clicked at ' + spot[0] + ',' + spot[1]);
 
 	// Determine which building they clicked on
 	// Buildings are [topLeftCorner, bottomRightCorner, redirectURL]
@@ -264,13 +265,18 @@ $(function () {
 			     data.building + ' ' + sensor +
 			     '</td><td id="minute'+sensor+'"></td>' +
 			     '<td id="week'+sensor+'"></td>' +
-			     '<td id="month'+sensor+'"></td></tr>');
+			     '<td id="month'+sensor+'"></td>'+
+			     '<td id="integrate'+sensor+'"></td>'+
+			     '</tr>');
 	    }
 	    
 	    $.each(values, function(average_type,average_value) {
 		$('#'+average_type+sensor).empty();
 		$('#'+average_type+sensor).append( rnd(average_value) );
 	    });
+
+	    $('#integrate'+sensor).empty();
+	    $('#integrate'+sensor).append( rnd(data.watthr_data[0][sensor]) );
 
 	});
 
@@ -337,11 +343,13 @@ $(function () {
 			    data: data_points,
 			    label: cur_label,
 			    color: '#' + data.building_color,
+			    points: { symbol:'triangle' },
 			});
 		    } else if ($('#showSensors').is(':checked')) {
 			series.push({
 			    data: data_points,
 			    label: cur_label,
+			    points: { symbol:'triangle' },
 			});
 		    }
 		});
@@ -351,7 +359,7 @@ $(function () {
         graph_opts = {
             series: {
                 lines: {show: true},
-                points: {show: false}
+                points: {show: false, radius:3}
             },
             legend: {
                 show: true, 
@@ -406,7 +414,7 @@ $(function () {
 	// Open the loading animation
 	$('#graph').empty();
 	$('#graph').append(
-            '<img class="loading" src="' + MEDIA_URL + 'loading.gif" />');
+            '<img class="loading" src="' + MEDIA_URL + 'img/loading.gif" />');
 	refreshdata();
     });
     

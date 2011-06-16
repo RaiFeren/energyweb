@@ -25,7 +25,8 @@
 </script>
 <script language="javascript" type="text/javascript"
 src="{{ MEDIA_URL }}js/page_specific/detail_graphs.js"></script>
-
+<script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}js/flot/jquery.flot.dashes.js"></script>
+<script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}js/flot/jquery.flot.symbol.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -84,6 +85,7 @@ src="{{ MEDIA_URL }}js/page_specific/detail_graphs.js"></script>
 	      <th>Average This Minute (kW)</th>
 	      <th>Average Since Monday (kW)</th>
 	      <th>Average This Month (kW)</th>
+	      <th>Integrated Power this Interval (kW*hr)</th>
 	    </tr>
 	  </thead>
 	  <tbody id="energystats">

@@ -259,6 +259,8 @@ def detail_graphs_data(request, building, mode, resolution, start_time):
             average_data[sid][average_type] = \
                 all_averages[average_type][sid]
 
+    watthr_data = []
+
     returnDictionary = {'graph_data':[]}
 
     for start_time_delta in range(len(CYCLE_START_DELTAS[resolution])):
@@ -268,6 +270,14 @@ def detail_graphs_data(request, building, mode, resolution, start_time):
             CYCLE_START_DELTAS[resolution][start_time_delta].seconds - 
             CYCLE_START_DELTAS[resolution][start_time_delta].days*3600*24 )
                    
+        all_watthr_data = data._integrate(start_dt,
+                                          start_dt + \
+                                              RESOLUTION_DELTAS[resolution],
+                                          AUTO_RES_CONVERT[resolution],
+                                          True)
+
+        watthr_data.append(all_watthr_data)
+
         PowerAverage.graph_data_execute(cur,
                                         AUTO_RES_CONVERT[resolution],
                                         start_dt,
@@ -376,6 +386,7 @@ def detail_graphs_data(request, building, mode, resolution, start_time):
     returnDictionary['building_color'] = cur_building[2]
     returnDictionary['averages'] = average_data
     returnDictionary['res'] = resolution
+    returnDictionary['watthr_data'] = watthr_data
 
     json_serializer = serializers.get_serializer("json")()
     return HttpResponse(simplejson.dumps(returnDictionary),
