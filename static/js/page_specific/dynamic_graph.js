@@ -6,30 +6,45 @@ $(function () {
     var sg_xy_pairs = {};
     var sensor_groups = null;
 
-    function kw_tickformatter(val, axis) {
-        // Workaround to get units on the y axis
-        return val + " kW";
-    }
-    
-    function array_index_of(ar, x) {
-        // (IE doesn't have Array.indexOf)
-        for (var i=0; i < ar.length; i++) {
-            if (ar[i] == x) {
-                return i;
-            }
-        }
-        return -1;
-    }
-    
-    function refreshdata_json_cb(data) {
-        // Given new data from the server, update the page (graph and
-        // table).
+    // Create our chart object right away - options can be added later.
+    chart = new Highcharts.Chart({
+        chart: {
+          renderTo: 'graph',
+          defaultSeriesType: 'line',
+          marginRight: 130,
+          marginBottom: 25
+        },
+        title: {
+          text: 'Energy Usage in the Last 3 Hours',
+          x: -20 //center
+        },
+        xAxis: {
+          type: 'datetime'
+        },
+        yAxis: {},
+        tooltip: {
+          formatter: function() {
+              return '<b>' + this.series.name +'</b><br/>'+this.x +': '+ this.y +'ÂkW';
+          }
+        },
+        legend: {
+          layout: 'vertical',
+          align: 'right',
+          verticalAlign: 'top',
+          x: -10,
+          y: 100,
+          borderWidth: 0
+        },
+        series: []
+    }); 
 
-        // TODO: what if somehow we get no results and it's not the 
-        // first time?
+    function refreshdata_json_cb(data) {
+        // Given new data from the server, update the graph.
+
+        // Alert the user if we have no data and it is the first time.
         if (first_time && data.no_results) {
-            alert("No data received. Check connection to sensors.");
-            return;
+          alert("No data received. Check connection to sensors.");
+          return;
         }
 
         // When this function is first called, it is expected that 
@@ -38,15 +53,9 @@ $(function () {
 
         desired_first_record = data.desired_first_record;
 
-        var series_opts = [];
+        var series_opts = []
         var series = [];
-        var sensor_id,
-            group_id,
-            graph_opts;
-
-        // Used to mark which lines to plot
-        var choice_container =$("#choices");
-        var chosen_lines = {};
+        var sensor_id, group_id;
 
         if (first_time) {
             sensor_groups = data.sensor_groups;
@@ -54,59 +63,15 @@ $(function () {
             // When data is received the first time,
             // remove the graph's loading animation
             $('#graph').empty();
-
-            // Creates table for listing off Buildings
-            choice_container.append('Show Buildings:<br/>');
-	    $.each(sensor_groups, function() {
-		var build_id = this[0];
-                var build_name = this[1];
-                var build_color = this[2];
-
-                choice_container.append('<table><td><div id="colorBox'
-                                        + build_id
-                                        + '">&nbsp;</div></td>'
-                                        + '<td><input type="checkbox" name="' 
-                                        + build_id
-                                        + '" checked="checked" id="selector">'
-                                        + '<label for "id' 
-                                        + build_id
-                                        + '">'
-                                        + build_name
-                                        + '</label></td></table>');
-
-                var colorid = $("#colorBox" + build_id);
-                var linecolor = "#" + build_color;
-                colorid.css("background-color", linecolor);
-                colorid.css("width", 25);
-	    });
-	    // Make it so checkboxes cause a refresh of the graph.
-	    $(':checkbox').click(function() {
-		refreshdata();
-	    });
         }
-        
-        // Update which lines we want to plot. Must happen each update
-        choice_container.find("input:checked").each(function () {
-            var group_number = $(this).attr("name");
-            chosen_lines[group_number]=''; // dummy so can use the in function
-        });
 
-	$.each(sensor_groups,function(index,cur_group) {
+        // Push each sensor group's data onto the series
+        $.each(sensor_groups,function(index,cur_group) {
 	    group_id = cur_group[0];
     
             if (first_time) {
                 sg_xy_pairs[group_id] = data.sg_xy_pairs[group_id];
             } else {
-                /* We've already collected some data, so combine it 
-                 * with the new.  About this slicing:  We're 
-                 * discarding our latest record, preferring the new copy
-                 * from the sever, since last time we may have e.g. 
-                 * collected data just before a sensor reported a 
-                 * reading (for the 10-second time period we were 
-                 * considering).  Hence, while the latest record may be
-                 * incomplete, the second latest (and older) records are
-                 * safe---they will never change.
-                 */
                 var j;
                 for (j=0; j < sg_xy_pairs[group_id].length; j++) {
                     if (sg_xy_pairs[group_id][j][0] >= desired_first_record) {
@@ -122,54 +87,20 @@ $(function () {
                         data.sg_xy_pairs[group_id]);
             }
             
-            // plot only the selected lines
-            if (group_id in chosen_lines) {
-                series.push({
-                    data: sg_xy_pairs[group_id],
-                    label: cur_group[1],
-                    color: '#' + cur_group[2]
-                });
-            }
+            
+            chart.series.push({
+                name: cur_group[1],
+                data: sg_xy_pairs[group_id],
+                color: '#' + cur_group[2]
+            });
 	});
 
-        // Finally, make the graph
-        graph_opts = {
-            series: {
-                lines: {show: true},
-                points: {show: false}
-            },
-            legend: {
-                show: false, // Set to true if want it back...
-                position: 'ne',
-                backgroundOpacity: 0.6,
-                noColumns: sensor_groups.length
-            },
-            yaxis: {
-                min: 0,
-                tickFormatter: kw_tickformatter,
-            },
-            xaxis: {
-                min: desired_first_record,
-                mode: 'time',
-                timeformat: '%h:%M %p',
-                twelveHourClock: true
-            },
-            grid: {
-                show: true,
-                color: '#d0d0d0',
-                borderColor: '#bbbbbb',
-                backgroundColor: { colors: ['#dbefff', '#ffffff']}
-            }
-        };
+    first_time = false;
+    
 
-        $.plot($('#graph'), series, graph_opts);
+    } // END function refreshdata_json_cb
     
-        if (first_time) {
-            first_time = false;
-        }
-    
-    }
-    
+
     function refreshdata() {
         // Calls built in functions to get JSON data then pass it to a parsing function
         $.getJSON(data_url, refreshdata_json_cb);
@@ -182,8 +113,7 @@ $(function () {
 
     // Initially, show a loading animation instead of the graph
     $('#graph').append(
-        '<img class="loading" src="' + MEDIA_URL + 'img/loading.gif" />');
+      '<img class="loading" src="' + MEDIA_URL + 'img/loading.gif" />');
     mainloop();
 
-    
 });
