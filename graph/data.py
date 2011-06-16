@@ -2,6 +2,9 @@ from functools import wraps
 
 from django.core.urlresolvers import reverse
 from django.conf import settings
+from django.http import HttpResponse
+from django.http import HttpResponseRedirect
+from django.template import RequestContext
 from django import forms
 from django.db.models import Avg, Max, Min, Count
 
@@ -10,8 +13,6 @@ from energyweb.graph.models import SensorGroup, SensorReading, Sensor, \
 import calendar, datetime, simplejson, time
 
 from constants import *
-
-(SENSOR_GROUPS, SENSOR_IDS, SENSOR_IDS_BY_GROUP) = _get_sensor_groups()
 
 def _gen_now():
     ''' Returns now as a time that urls play nicely with '''
@@ -40,11 +41,8 @@ def _graph_max_points(start, end, res):
     return ((delta.days * 3600 * 24 + delta.seconds) 
             / float(per_incr.days * 3600 * 24 + per_incr.seconds))
 
-class StaticGraphForm(forms.Form):
-    # TODO: GRAPH_MAX_POINTS is used to determine when to refuse data
-    # because the resolution is too fine (it would be too hard on the
-    # database).  This functionality could be more robust.
-    GRAPH_MAX_POINTS = 2000
+class CustomGraphForm(forms.Form):
+    ''' Used to validate forms for custom graphs '''
     DATE_INPUT_FORMATS = (
         '%Y-%m-%d',              # '2006-10-25'
         '%m/%d/%Y',              # '10/25/2006'
@@ -106,11 +104,6 @@ class StaticGraphForm(forms.Form):
             max_points = ((delta.days * 3600 * 24 + delta.seconds) 
                 / float(per_incr.days * 3600 * 24 + per_incr.seconds))
 
-            if _graph_max_points(cleaned_data['start'], 
-                                 cleaned_data['end'], 
-                                 cleaned_data['res']) > self.GRAPH_MAX_POINTS:
-                raise forms.ValidationError('Too many points in graph '
-                                            '(resolution too fine).')
             cleaned_data['computed_res'] = cleaned_data['res']
             
         # Typically called if auto is used
@@ -129,6 +122,29 @@ class StaticGraphForm(forms.Form):
                 cleaned_data['computed_res'] = 'second*10'
                 
         return cleaned_data
+
+class StaticGraphForm(CustomGraphForm):
+    # TODO: GRAPH_MAX_POINTS is used to determine when to refuse data
+    # because the resolution is too fine (it would be too hard on the
+    # database).  
+    GRAPH_MAX_POINTS = 2000
+
+    def clean(self):
+        '''
+        Ensure the data is sane.
+        This version also checks that ordinary users aren't asking
+        for too much data, because it might kill the server.
+        Really only an issue for users who specified resolutions.
+        '''
+        cleaned_data = CustomGraphForm.clean(self)
+
+        if _graph_max_points(cleaned_data['start'], 
+                             cleaned_data['end'], 
+                             cleaned_data['computed_res']) \
+                             > self.GRAPH_MAX_POINTS:
+            raise forms.ValidationError('Too many points in graph '
+                                        '(resolution too fine).')
+        return cleaned_data                
 
 # TODO: this could probably be done in a more portable way.
 def _get_sensor_groups():
@@ -194,7 +210,7 @@ def _get_averages(sensor_ids):
         trunc_reading_time = None
 
         for average in PowerAverage.objects.filter(average_type=average_type
-            ).order_by('-trunc_reading_time')[:len(sensor_ids)]:
+            ).order_by('-trunc_reading_time')[:len(SENSOR_IDS)]:
 
             if trunc_reading_time is None:
                 trunc_reading_time = average.trunc_reading_time
@@ -206,7 +222,7 @@ def _get_averages(sensor_ids):
                 # have an earlier trunc_reading_time .
                 all_averages[average_type][average.sensor_id] \
                     = average.watts / 1000.0
-        for sensor_id in sensor_ids:
+        for sensor_id in SENSOR_IDS:
             if not all_averages[average_type].has_key(sensor_id):
                 # We didn't find an average for this sensor; set the entry
                 # to None.
@@ -379,3 +395,5 @@ def download_csv(request, start, end, res):
     # Send the csv to be posted
     return HttpResponse(data,
                         mimetype='application/csv')
+
+(SENSOR_GROUPS, SENSOR_IDS, SENSOR_IDS_BY_GROUP) = _get_sensor_groups()

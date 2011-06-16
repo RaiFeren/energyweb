@@ -31,15 +31,15 @@ def data_interface(request):
 
     return render_to_response('graph/data_interface.html', 
         {'sensor_groups': data.SENSOR_GROUPS,
-         'data_url': reverse('energyweb.graph.views.statistics_table_data', 
-                             kwargs={'data': startTime}) + '?junk=' + junk},
+         'data_url': reverse('energyweb.graph.views.statistics_table_data'
+                             ) + '?junk=' + junk},
         context_instance=RequestContext(request))
 
 def statistics_table_data(request):
     '''
     A view returning the JSON data used to populate the averages table.
     '''
-    all_averages = data._get_averages(sensor_ids)
+    all_averages = data._get_averages(data.SENSOR_IDS)
 
     data_url = reverse('energyweb.graph.views.statistics_table_data') \
                +'?junk=' + data._gen_now()
@@ -66,23 +66,25 @@ def dynamic_graph(request):
     automatically.)
     '''
     # Get all data from last three hours until now
-    (data, junk) = data._generate_start_data( datetime.timedelta(0,3600*3,0) )
+    (start_date, junk) = \
+        data._generate_start_data( datetime.timedelta(0,3600*3,0) )
 
     return render_to_response('graph/dynamic_graph.html', 
         {'sensor_groups': data.SENSOR_GROUPS,
          'data_url': reverse('energyweb.graph.views.dynamic_graph_data', 
-                             kwargs={'data': data}) + '?junk=' + junk},
+                             kwargs={'input_data': start_date}) +\
+             '?junk=' + junk},
         context_instance=RequestContext(request))
 
 
-def dynamic_graph_data(request, data):
+def dynamic_graph_data(request, input_data):
     '''
     A view returning the JSON data used to populate the dynamic graph.
     '''
     # Set the maximum possible start time to three hours ago
     # to prevent excessive drawing of data
     max_time = datetime.datetime.now() - datetime.timedelta(0,3600*3,0)
-    start = max( datetime.datetime.utcfromtimestamp(int(int(data)/1000)) ,
+    start = max( datetime.datetime.utcfromtimestamp(int(int(input_data)/1000)) ,
                  max_time )
     # Grab the dump of xy pairs
     data_dump = data._make_data_dump( calendar.timegm(start.timetuple()) ,
@@ -93,7 +95,7 @@ def dynamic_graph_data(request, data):
         # Create the URL to get more data
         junk = data._gen_now()
         data_url = reverse('energyweb.graph.views.dynamic_graph_data', \
-                               kwargs={'data': \
+                               kwargs={'input_data': \
                                            str(data_dump['last_record'])}) +\
                                            '?junk=' + junk
         data_dump['data_url'] = data_url
@@ -199,6 +201,9 @@ def static_graph_data(request, start, end, res):
     return HttpResponse(simplejson.dumps(data_dump),
                         mimetype='application/json')
 
+def download_csv(request, start, end, res):
+    return data.download_csv(request, start, end, res)
+
 def detail_graphs(request, building, res):
     '''
     A view returning the HTML for the Detailed Building graph.
@@ -206,14 +211,14 @@ def detail_graphs(request, building, res):
     automatically.)
     '''
     # Get the current date.
-    (data, junk) = data._generate_start_data( datetime.timedelta(0,0,0) )
+    (start_data, junk) = data._generate_start_data( datetime.timedelta(0,0,0) )
 
     d = {
         'data_url': reverse('energyweb.graph.views.detail_graphs_data', 
                             kwargs={'building': building,
                                     'mode':'cycle',
                                     'resolution':res,
-                                    'start_time':data}) + '?junk=' + junk,
+                                    'start_time':start_data}) + '?junk=' + junk,
         'graph_title': building.capitalize() + ' viewed over a ' + res, 
         }
 
@@ -247,7 +252,7 @@ def detail_graphs_data(request, building, mode, resolution, start_time):
             cur_building = sg
 
     average_data = {}
-    all_averages = data._get_averages(sensor_ids)
+    all_averages = data._get_averages(data.SENSOR_IDS)
     for sid in data.SENSOR_IDS_BY_GROUP[cur_building[0]]:
         average_data[sid] = {}
         for average_type in all_averages.keys():
@@ -399,7 +404,7 @@ def mon_status_data(request):
         sreadings[s_id][2] = d['transaction_time__min']
         sreadings[s_id][3] = d['transaction_time__max']
     return HttpResponse(simplejson.dumps({'sensor_readings': sreadings,
-                                          'sensor_groups': sensor_groups,
+                                          'sensor_groups': data.SENSOR_GROUPS,
                                           'data_url': reverse('energyweb.graph.views.mon_status_data')
                                           + '?junk=' + junk}),
                         mimetype='application/json')
@@ -425,7 +430,7 @@ def mon_status(request):
     ''' Requires login, shows the status table for sensors. '''
     junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
     return render_to_response('graph/maintenance/status.html',
-                              {'sensor_groups': _get_sensor_groups()[0],
+                              {'sensor_groups': data._get_sensor_groups()[0],
                                'data_url': reverse('energyweb.graph.views.mon_status_data')
                                + '?junk=' + junk},
                               context_instance=RequestContext(request))
@@ -461,7 +466,7 @@ def data_access(request):
         '''
         now = datetime.datetime.now()
         one_day_ago = now - datetime.timedelta(1)
-        form = data.StaticGraphForm(initial={
+        form = data.CustomGraphForm(initial={
             'start': one_day_ago,
             'end': now
         })
@@ -474,7 +479,10 @@ def data_access(request):
         return _show_only_form()
 
     _get = _clean_input(request.GET.copy())
-    form = data.StaticGraphForm(_get)
+    form = data.CustomGraphForm(_get)
+
+    if not form.is_valid():
+        return _show_only_form()
 
     # We've passed the checks, now can display the graph!
     # The following functions are for setting the various arguments

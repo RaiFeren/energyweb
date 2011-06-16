@@ -8,8 +8,7 @@ from django.conf import settings
 
 urlpatterns = patterns('energyweb.graph.views',
     (r'^$', 'dynamic_graph'), # home page -- Dynamic graph
-    (r'^(?P<data>\d+)/data.json$', 'dynamic_graph_data'), # data dump for it
-    (r'^(?P<data>\d+)/averages_data.json$', 'statistics_table_data'),
+    (r'^(?P<input_data>\d+)/data.json$', 'dynamic_graph_data'), # data dump for it
     (r'^detail/(?P<building>[a-z]+)/(?P<res>[a-z]+)/$','detail_graphs'), # details page -- for building views
     (r'^detail/(?P<building>[a-z]+)/(?P<mode>[a-z]+)/(?P<resolution>[a-z]+)/(?P<start_time>\d+)/data.json$','detail_graphs_data'),
     (r'^interface/$', 'data_interface'), # Energy Statistics Table
