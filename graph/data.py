@@ -14,6 +14,10 @@ import calendar, datetime, simplejson, time
 
 from constants import *
 
+##############################
+# URL generating helper functions
+##############################
+
 def _gen_now():
     ''' Returns now as a time that urls play nicely with '''
     return str(calendar.timegm(datetime.datetime.now().timetuple()))
@@ -28,6 +32,9 @@ def _generate_start_data(startOffset):
     data = str(int(calendar.timegm(start_dt.timetuple()) * 1000))
     return (data,junk)
 
+##############################
+# User Specified Data's Form Verification
+##############################
 
 def _graph_max_points(start, end, res):
     '''
@@ -192,6 +199,10 @@ def _get_sensor_groups():
             
     return (sensor_groups, sensor_ids, sensor_ids_by_group)
 
+##############################
+# Average Collecting
+##############################
+
 def _get_averages(sensor_ids):
     '''
     Obtains minute, week, and month averages over those
@@ -229,6 +240,10 @@ def _get_averages(sensor_ids):
                 all_averages[average_type][sensor_id] = None        
 
     return all_averages
+
+##############################
+# Converting data to a serializable form
+##############################
 
 def _make_data_dump(start, end=None, res='second*10'):
     '''
@@ -390,7 +405,7 @@ def download_csv(request, start, end, res):
 
                 data += str(y) + ','
             per += per_incr
-            data = data[:-1] + '\n'
+            data = data[:-1] + '\n' # Slice off the last comma, again
 
     # Send the csv to be posted
     return HttpResponse(data,
