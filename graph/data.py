@@ -490,8 +490,8 @@ def _get_detail_data(building, mode, resolution, start_time):
             cur_building = sg
 
     average_data = {}
-    all_averages = data._get_averages(SENSOR_IDS)
-    for sid in data.SENSOR_IDS_BY_GROUP[cur_building[0]]:
+    all_averages = _get_averages(SENSOR_IDS)
+    for sid in SENSOR_IDS_BY_GROUP[cur_building[0]]:
         average_data[sid] = {}
         for average_type in all_averages.keys():
             average_data[sid][average_type] = \
