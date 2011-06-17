@@ -231,57 +231,72 @@ $(function () {
 	}
     }
     
-    // Interprets data from the server and updates the table
-    function update_table(data) 
+    function write_table(data)
     {
-	// We've already confirmed we have the right data
-	// with the function that calls this
+        var table = $('#energystats');
+        switch (mode) {
 
-        // data_url gives the json dump of data transferred from database
-	data_url = data.data_url;
+        case 'diagnostic':
+            var data_source = data.diagnosticTable;
+            var data_row = data.diagnosticRow;
+            break;
 
-	var table = $('#energystats')
-
-	var missed_min_average,
-            missed_week_average,
-	    missed_month_average,
-	    sensor_id,
-       	    group_name,
-            group_current,
-	    group_week_average,
-	    group_month_average;
-
-        // get the sensor groups
-        if (first_time) {
-	    table.empty();
-            sensor_groups = data.sensor_groups;
+        case 'cycle':
+            var data_source = data.cycleTable;
+            var data_row = data.cycleRow;
+            break;
         }
+        
 
-	$.each(data.averages, function(sensor,values) {
+        if (first_time) {
+            table.empty();
+            var table_head = $('#trhead');
+            table_head.empty();
+            switch (mode) {
+
+            case 'cycle':
+                table_head.append('
+                    <th>Cycle</th>
+                    <th>Average This Cycle (kW)</th>
+                    <th>Max This Cycle (kW)</th>
+                    <th>Integrated Power This Cycle (kW*hr)</th>
+                    ');
+                
+            case 'diagnostic':
+                table_head.append('
+                    <th>Sensor</th>
+                    <th>Average This Minute (kW)</th>
+	            <th>Average This Interval (kW)</th>
+	            <th>Integrated Power This Interval (kW*hr)</th>
+                    ');
+                break;
+            }
+        }
+   
+        // Write data to each row
+	$.each(data_source, function(source,values) {
 	    // Make the row
 	    if (first_time) {
-		table.append('<tr id="'+sensor+'">'+
-			     '<td id="name'+sensor+'">'+
-			     data.building + ' ' + sensor +
-			     '</td><td id="minute'+sensor+'"></td>' +
-			     '<td id="week'+sensor+'"></td>' +
-			     '<td id="month'+sensor+'"></td>'+
-			     '<td id="integrate'+sensor+'"></td>'+
-			     '</tr>');
+		table.append('<tr id="row'+source+'"></tr>');
+                var table_row = $('#row'+source);
+                table_row.append(
+                    '<td id="name'+source+'">'
+                        +data.building + ' ' + source
+                        +'</td>');
+                $.each(data_row, function(index,type) {
+                    table_row.append(
+                        '<td id="'+type+source+'">&nbsp;</td>');
+                }
 	    }
-	    
-	    $.each(values, function(average_type,average_value) {
-		$('#'+average_type+sensor).empty();
-		$('#'+average_type+sensor).append( rnd(average_value) );
+	    // Insert data values
+	    $.each(values, function(type,statistic) {
+		$('#'+type+source).empty();
+		$('#'+type+source).append( rnd(statistic) );
 	    });
 
-	    $('#integrate'+sensor).empty();
-	    $('#integrate'+sensor).append( rnd(data.watthr_data[0][sensor]) );
-
 	});
-
+     
     }
-    
 
     function refreshdata_json_cb(data) {
         // Given new data from the server, update the page (graph and
@@ -295,7 +310,7 @@ $(function () {
             return;
         }
 
-	update_table(data);
+	write_table(data);
 
         // When this function is first called, it is expected that 
         // data_url was defined previously (before loading this file).
@@ -421,5 +436,4 @@ $(function () {
     make_map();
     mainloop();
 
-    
 });
