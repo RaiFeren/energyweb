@@ -489,23 +489,14 @@ def _get_detail_data(building, mode, resolution, start_time):
         if sg[1].lower() == str(building): # check if identical names
             cur_building = sg
 
-    average_data = {}
-    all_averages = _get_averages(SENSOR_IDS)
-    for sid in SENSOR_IDS_BY_GROUP[cur_building[0]]:
-        average_data[sid] = {}
-        for average_type in all_averages.keys():
-            average_data[sid][average_type] = \
-                all_averages[average_type][sid]
-
-    watthr_data = []
-
     returnDictionary = {'graph_data':[],
                         'building': building.capitalize(),
                         'building_color': cur_building[2],
-                        'averages': average_data,
                         'res': resolution,
-                        'watthr_data': watthr_data
                         }
+
+    # Modify the return Dictionary with data to make the tables.
+    _get_detail_table(returnDictionary, cur_building, resolution, start_time)
 
     for start_time_delta in range(len(CYCLE_START_DELTAS[resolution])):
 
@@ -513,14 +504,6 @@ def _get_detail_data(building, mode, resolution, start_time):
             int(start_time) / 1000 - 
             CYCLE_START_DELTAS[resolution][start_time_delta].seconds - 
             CYCLE_START_DELTAS[resolution][start_time_delta].days*3600*24 )
-                   
-        all_watthr_data = _integrate(start_dt,
-                                          start_dt + \
-                                              RESOLUTION_DELTAS[resolution],
-                                          AUTO_RES_CONVERT[resolution],
-                                          True)
-
-        returnDictionary['watthr_data'].append(all_watthr_data)
 
         PowerAverage.graph_data_execute(cur,
                                         AUTO_RES_CONVERT[resolution],
@@ -622,5 +605,74 @@ def _get_detail_data(building, mode, resolution, start_time):
             returnDictionary['graph_data'].append(xy_pairs)
 
     return returnDictionary
+
+def _get_detail_table(dataDictionary, building, resolution, start_time):
+    '''
+    Returns two data tables.
+    Cycle Table:
+        Cycle Name | Avg This Cycle | Max Value | Integrated Value
+    Diagnostic Table:
+        Sensor ID | Avg. This Minute | Avg. This Interval | Integrated Value
+    '''
+    dataDictionary['cycleTable'] = {}
+    dataDictionary['diagnosticTable'] = {}
+
+    for sid in data.SENSOR_IDS_BY_GROUP[building[0]]:
+        dataDictionary['diagnosticTable'][sid] = {
+            'now': 0,
+            'interval':0,
+            'integrated':0,
+            }
+    # Python doesn't shuffle order of lists...
+    dataDictionary['diagnosticRow'] = ['now','interval','integrated']
+
+    for cycle_id in len(CYCLE_START_DELTAS[resolution]):
+        dataDictionary['cycleTable'][cycle_id] = {
+            'avg': 0,
+            'max': 0,
+            'integrated': 0,
+            }
+    # Python doesn't shuffle order of lists...
+    dataDictionary['cycleRow'] = ['avg','max','integrated']
+
+    CONVERT = {'minute': 'now', resolution:'interval'}
+
+    ####
+    # get averages for the diagnostic table
+    all_averages = {}
+    for average_type in ('minute',resolution):
+
+        trunc_reading_time = None
+
+        for average in PowerAverage.objects.filter(average_type=average_type
+            ).order_by('-trunc_reading_time')[:len(SENSOR_IDS)]:
+
+            if trunc_reading_time is None:
+                trunc_reading_time = average.trunc_reading_time
+            if average.trunc_reading_time == trunc_reading_time and \
+                   average.sensor_id in dataDictionary['diagnosticTable']:
+                # Note that we limited the query by the number of sensors in
+                # the database.  However, there may not be an average for
+                # every sensor for this time period.  If this is the case,
+                # some of the results will be for an earlier time period and
+                # have an earlier trunc_reading_time.
+                dataDictionary['diagnosticTable']\
+                                [average.sensor_id][CONVERT[average_type]] \
+                                = average.watts / 1000.0
+                if not average_type == 'minute':
+                    dataDictionary[0]['avg'] += average.watts / 1000.0
+
+
+
+            # GET INTEGRATED VALUES
+            all_watthr_data = _integrate(start_dt,
+                                         start_dt + \
+                                         RESOLUTION_DELTAS[resolution],
+                                         AUTO_RES_CONVERT[resolution],
+                                         True)
+            
+            returnDictionary['watthr_data'].append(all_watthr_data)
+    
+    return dataDictionary
 
 (SENSOR_GROUPS, SENSOR_IDS, SENSOR_IDS_BY_GROUP) = _get_sensor_groups()
