@@ -1,26 +1,29 @@
 {% extends "graph/maintenance/data_access.html" %}
 
 {% block morehead %}
-{{ block.super }}
-<link rel="stylesheet" href="{{ MEDIA_URL }}css/graph.css" type="text/css" media="screen" />
+<link rel="stylesheet" href="{{ MEDIA_URL }}css/static_graph_form.css" type="text/css" media="screen" />
+<link rel="stylesheet" href="{{ MEDIA_URL }}jquery-ui/css/jquery-ui-timepicker.css" type="text/css" media="screen" />
+<script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}jquery-ui/js/jquery.ui.timepicker-0.0.6.js">\
+</script>
+<script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}js/page_specific/static_graph_form.js"></scr\
+ipt>
 <script language="javascript" type="text/javascript">
     var MEDIA_URL = "{{ MEDIA_URL }}";
     var data_url = "{{ data_url }}";
-    var start = {{ start }};
-    var end = {{ end }};
 </script>
 {% endblock %}
 
 {% block content %}
-
+{% block warning %}
+  {{ block.super }}
+{% endblock %}
 <table id="datarequest">
 <tr>
-    <td> {{ block.super }} </td>
+    <td> {% block form %} {{ block.super }} {% endblock %}</td>
+    <td> &nbsp </td>
     <td>
-<div id="download">
-  <h2 class="center">
-  <a href="{{download_url}}">Download Data</a>
-  </h2>
+<div id="download"> &nbsp
+  <a href="{{download_url}}"><input type="submit" value="Download Data"></a> &nbsp
 </div>
     </td>
 </table>

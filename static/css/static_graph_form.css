@@ -16,3 +16,30 @@ table#static-graph-form ul.errorlist li
     list-style-type: none;
     color: #990000;
 }
+
+table#datarequest
+{
+    margin-left: auto;
+    margin-right: auto;
+}
+
+table#datarequest td
+{
+    align: center;
+}
+
+input *
+{
+    width: 200px;
+    font-size: 24px;
+}
+
+div#download
+{
+    text-align: center;
+}
+
+p#warning
+{
+    text-align: center;
+}

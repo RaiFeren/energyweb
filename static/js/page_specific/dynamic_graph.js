@@ -1,3 +1,11 @@
+Highcharts.setOptions({
+    global: {
+	useUTC: false
+    }
+});
+
+var chart;
+
 $(function () {
     // This function is a callback, called when the DOM is loaded
 
@@ -5,7 +13,6 @@ $(function () {
     var desired_first_record = null;
     var sg_xy_pairs = {};
     var sensor_groups = null;
-
     // Create our chart object right away - options can be added later.
     chart = new Highcharts.Chart({
         chart: {
@@ -35,12 +42,17 @@ $(function () {
           y: 100,
           borderWidth: 0
         },
-        series: []
+        point: {
+            marker: {enabled: false}
+        },
+        series: [{
+            data: [29.9, 71.5, 106.4, 129.2, 144.0, 176.0, 135.6, 148.5, 216.4, 194.1, 95.6, 54.4]
+	}]
     }); 
 
     function refreshdata_json_cb(data) {
         // Given new data from the server, update the graph.
-
+        
         // Alert the user if we have no data and it is the first time.
         if (first_time && data.no_results) {
           alert("No data received. Check connection to sensors.");
@@ -53,8 +65,6 @@ $(function () {
 
         desired_first_record = data.desired_first_record;
 
-        var series_opts = []
-        var series = [];
         var sensor_id, group_id;
 
         if (first_time) {
@@ -62,7 +72,7 @@ $(function () {
 
             // When data is received the first time,
             // remove the graph's loading animation
-            $('#graph').empty();
+           // $('#graph').empty();
         }
 
         // Push each sensor group's data onto the series
@@ -88,10 +98,9 @@ $(function () {
             }
             
             
-            chart.series.push({
+            chart.addSeries({
                 name: cur_group[1],
-                data: sg_xy_pairs[group_id],
-                color: '#' + cur_group[2]
+                data: sg_xy_pairs[group_id]
             });
 	});
 
@@ -103,12 +112,13 @@ $(function () {
 
     function refreshdata() {
         // Calls built in functions to get JSON data then pass it to a parsing function
-        $.getJSON(data_url, refreshdata_json_cb);
+        //$.getJSON(data_url, refreshdata_json_cb);
+        //chart.series.push({name: 'something', data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]});
     }
 
     function mainloop() {
         refreshdata()
-        setTimeout(mainloop, 10000);
+        //setTimeout(mainloop, 10000);
     }
 
     // Initially, show a loading animation instead of the graph

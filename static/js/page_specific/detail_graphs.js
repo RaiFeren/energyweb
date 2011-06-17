@@ -7,6 +7,7 @@ $(function () {
     var sensor_groups = null;
     var mode = 'cycle'; // Default value
     var cur_building = null;
+    var cycle_names = null;
 
     // Buildings are defined as rectangles. 
     // Defined as xy pairs, [Top Left, Bottom Right]
@@ -199,25 +200,32 @@ $(function () {
 	    });
 	} else if (mode == 'cycle') {
 	    var cycles = '';
+	    cycle_names = []
 	    switch (data.res)
 	    {
 	    case 'day':
 		cycles += '<option value="1"> Previous Day </option>';
 		cycles += '<option value="2"> 1 Week Ago </option>';
 		cycles += '<option value="3"> 1 Month Ago </option>';
-		cycles += '<option value="4"> 1 Year ago </option>';
+		cycles += '<option value="4"> 1 Year Ago </option>';
+		cycle_names += [['Today'],['Yesterday'],
+				['1 Week Ago'],[' 1 Month Ago'],['1 Year Ago']];
 		break;
 	    case 'week':
 		cycles += '<option value="1"> Previous Week </option>';
 		cycles += '<option value="2"> 1 Month Ago </option>';
 		cycles += '<option value="3"> 1 Year Ago </option>';
+		cycle_names += [['This Week'],['Last Week'],
+				['1 Month Ago'],[' 1 Year Ago']];
 		break;
 	    case 'month':
 		cycles += '<option value="1"> Previous Month </option>';
 		cycles += '<option value="2"> 1 Year Ago </option>';
+		cycle_names += ['This Month', 'Last Month', '1 Year Ago'];
 		break;
 	    case 'year':
 		cycles += '<option value="1"> Previous Year </option>';
+		cycle_names += ['This Year', 'Last Year'];
 		break;
 	    }	    
 	    options.append('Previous Cycles:' + 
@@ -234,13 +242,12 @@ $(function () {
     function write_table(data)
     {
         var table = $('#energystats');
-        switch (mode) {
-
+        switch (mode) 
+	{
         case 'diagnostic':
             var data_source = data.diagnosticTable;
             var data_row = data.diagnosticRow;
             break;
-
         case 'cycle':
             var data_source = data.cycleTable;
             var data_row = data.cycleRow;
@@ -252,23 +259,19 @@ $(function () {
             table.empty();
             var table_head = $('#trhead');
             table_head.empty();
-            switch (mode) {
-
+            switch (mode) 
+	    {
             case 'cycle':
-                table_head.append('
-                    <th>Cycle</th>
-                    <th>Average This Cycle (kW)</th>
-                    <th>Max This Cycle (kW)</th>
-                    <th>Integrated Power This Cycle (kW*hr)</th>
-                    ');
-                
+                table_head.append('<th>Cycle</th>'+
+                    '<th>Average This Cycle (kW)</th>'+
+                    '<th>Max This Cycle (kW)</th>'+
+                    '<th>Integrated Power This Cycle (kW*hr)</th>');
+		break;
             case 'diagnostic':
-                table_head.append('
-                    <th>Sensor</th>
-                    <th>Average This Minute (kW)</th>
-	            <th>Average This Interval (kW)</th>
-	            <th>Integrated Power This Interval (kW*hr)</th>
-                    ');
+                table_head.append('<th>Sensor</th>'+
+                    '<th>Average This Minute (kW)</th>'+
+	            '<th>Average This Interval (kW)</th>'+
+	            '<th>Integrated Power This Interval (kW*hr)</th>');
                 break;
             }
         }
@@ -279,15 +282,32 @@ $(function () {
 	    if (first_time) {
 		table.append('<tr id="row'+source+'"></tr>');
                 var table_row = $('#row'+source);
+		var source_name = ''
+		switch(mode)
+		{
+		case 'cycle':
+		    $.each(cycle_names, function(index,value) {
+			if (index == parseInt(source)) {
+			    source_name = value;
+			}
+		    });
+		    break;
+		default:
+		    source_name = source;
+		    
+		}
+		alert(source_name);
+
                 table_row.append(
                     '<td id="name'+source+'">'
-                        +data.building + ' ' + source
+                        +data.building + ' ' + source_name
                         +'</td>');
                 $.each(data_row, function(index,type) {
                     table_row.append(
                         '<td id="'+type+source+'">&nbsp;</td>');
-                }
+                });
 	    }
+	    
 	    // Insert data values
 	    $.each(values, function(type,statistic) {
 		$('#'+type+source).empty();
@@ -309,8 +329,6 @@ $(function () {
 	    alert('No data! Check connection to sensors.');
             return;
         }
-
-	write_table(data);
 
         // When this function is first called, it is expected that 
         // data_url was defined previously (before loading this file).
@@ -399,6 +417,8 @@ $(function () {
                 backgroundColor: { colors: ['#dbefff', '#ffffff']}
             }
         };
+
+	write_table(data);
 
         if (first_time) {
             first_time = false;

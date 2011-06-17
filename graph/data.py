@@ -617,8 +617,8 @@ def _get_detail_table(dataDictionary, building, resolution, start_time):
     dataDictionary['cycleTable'] = {}
     dataDictionary['diagnosticTable'] = {}
 
-    for sid in data.SENSOR_IDS_BY_GROUP[building[0]]:
-        dataDictionary['diagnosticTable'][sid] = {
+    for sid in SENSOR_IDS_BY_GROUP[building[0]]:
+        dataDictionary['diagnosticTable'][str(sid)] = {
             'now': 0,
             'interval':0,
             'integrated':0,
@@ -626,8 +626,8 @@ def _get_detail_table(dataDictionary, building, resolution, start_time):
     # Python doesn't shuffle order of lists...
     dataDictionary['diagnosticRow'] = ['now','interval','integrated']
 
-    for cycle_id in len(CYCLE_START_DELTAS[resolution]):
-        dataDictionary['cycleTable'][cycle_id] = {
+    for cycle_id in range(len(CYCLE_START_DELTAS[resolution])):
+        dataDictionary['cycleTable'][str(cycle_id)] = {
             'avg': 0,
             'max': 0,
             'integrated': 0,
@@ -650,28 +650,35 @@ def _get_detail_table(dataDictionary, building, resolution, start_time):
             if trunc_reading_time is None:
                 trunc_reading_time = average.trunc_reading_time
             if average.trunc_reading_time == trunc_reading_time and \
-                   average.sensor_id in dataDictionary['diagnosticTable']:
+                   str(average.sensor_id) in \
+                   dataDictionary['diagnosticTable'].keys():
                 # Note that we limited the query by the number of sensors in
                 # the database.  However, there may not be an average for
                 # every sensor for this time period.  If this is the case,
                 # some of the results will be for an earlier time period and
                 # have an earlier trunc_reading_time.
                 dataDictionary['diagnosticTable']\
-                                [average.sensor_id][CONVERT[average_type]] \
+                                [str(average.sensor_id)][CONVERT[average_type]] \
                                 = average.watts / 1000.0
                 if not average_type == 'minute':
-                    dataDictionary[0]['avg'] += average.watts / 1000.0
+                    dataDictionary['cycleTable']['0']['avg'] +=\
+                        average.watts / 1000.0
 
 
-
-            # GET INTEGRATED VALUES
-            all_watthr_data = _integrate(start_dt,
-                                         start_dt + \
-                                         RESOLUTION_DELTAS[resolution],
-                                         AUTO_RES_CONVERT[resolution],
-                                         True)
-            
-            returnDictionary['watthr_data'].append(all_watthr_data)
+    start_dt = datetime.datetime.utcfromtimestamp(
+        int(start_time) / 1000 - 
+        CYCLE_START_DELTAS[resolution][0].seconds - 
+        CYCLE_START_DELTAS[resolution][0].days*3600*24 )
+    
+    # GET INTEGRATED VALUES
+    all_watthr_data = _integrate(start_dt,
+                                 start_dt + \
+                                     RESOLUTION_DELTAS[resolution],
+                                 AUTO_RES_CONVERT[resolution],
+                                 True)
+    for ID in dataDictionary['diagnosticTable'].keys():
+        dataDictionary['diagnosticTable'][ID]['integrated'] = \
+            all_watthr_data[int(ID)]
     
     return dataDictionary
 

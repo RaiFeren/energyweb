@@ -16,11 +16,15 @@
 {% endblock %}
 
 {% block content %}
+{% block warning %}
 <p id="warning"> WARNING: This will let you download massive amounts of data. Please try not to use it excessively. </p>
+{% endblock %}
+{% block form %}
 <form action="{{ form_action }}">
 <table id="static-graph-form">
     {{ form.as_table }}
     <tr><th></th><td><input type="submit" value="Submit" /></td></tr>
 </table>
 </form>
+{% endblock %}
 {% endblock %}

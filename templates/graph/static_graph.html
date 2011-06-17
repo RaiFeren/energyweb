@@ -9,7 +9,8 @@
     var start = {{ start }};
     var end = {{ end }};
 </script>
-<script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}js/page_specific/static_graph.js"></script>
+<!--<script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}js/page_specific/static_graph.js"></script>-->
+<script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}js/page_specific/static_graph_high.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -17,10 +18,8 @@
 <div id="graph"></div>
 
 <div id="download">
-  <h2 class="center">
-  <a href="{{download_url}}">Download Data</a>
-  </h2>
+  <a href="{{download_url}}"><input type="button" value="Download Data"></a>
 </div>
-
+</br>
 {{ block.super }}
 {% endblock %}
