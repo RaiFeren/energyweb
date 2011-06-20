@@ -5,7 +5,6 @@ $(function () {
 
     var sg_xy_pairs = {};
     var sensor_groups = null;
-
     function getdata_json_cb(data) {
         // Given data from the server, make a graph.
 	if (data.no_results) {
@@ -51,8 +50,10 @@ $(function () {
 		text: 'Energy Usage at Mudd',
 		x: -20 //center
 	    },
-	    xAxis: {
-		type: 'datetime'
+	    xAxis: { 
+		type: 'datetime',
+		min: start, // Don't autoscale the axis
+		tickInterval:'auto'
 	    },
 	    yAxis: {
 		title: {
@@ -62,7 +63,9 @@ $(function () {
 		    value: 0,
 		    width: 1,
 		    color: '#808080'
-		}]
+		}],
+		minorGridLineColor: '#E0E0E0',
+		minorTickInterval: 'auto'
 	    },
 	    tooltip: { // Disable tooltip when hovering above a point
 		enabled: false

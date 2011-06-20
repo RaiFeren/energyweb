@@ -200,7 +200,7 @@ $(function () {
 	    });
 	} else if (mode == 'cycle') {
 	    var cycles = '';
-	    cycle_names = []
+	    cycle_names = null;
 	    switch (data.res)
 	    {
 	    case 'day':
@@ -208,24 +208,25 @@ $(function () {
 		cycles += '<option value="2"> 1 Week Ago </option>';
 		cycles += '<option value="3"> 1 Month Ago </option>';
 		cycles += '<option value="4"> 1 Year Ago </option>';
-		cycle_names += [['Today'],['Yesterday'],
-				['1 Week Ago'],[' 1 Month Ago'],['1 Year Ago']];
+		cycle_names = {0:'Today',1:'Yesterday',
+			       2:'1 Week Ago',3:' 1 Month Ago',
+			       4:'1 Year Ago'};
 		break;
 	    case 'week':
 		cycles += '<option value="1"> Previous Week </option>';
 		cycles += '<option value="2"> 1 Month Ago </option>';
 		cycles += '<option value="3"> 1 Year Ago </option>';
-		cycle_names += [['This Week'],['Last Week'],
-				['1 Month Ago'],[' 1 Year Ago']];
+		cycle_names = {0:'This Week',1:'Last Week',
+			       2:'1 Month Ago',3:' 1 Year Ago'};
 		break;
 	    case 'month':
 		cycles += '<option value="1"> Previous Month </option>';
 		cycles += '<option value="2"> 1 Year Ago </option>';
-		cycle_names += ['This Month', 'Last Month', '1 Year Ago'];
+		cycle_names = {0:'This Month', 1:'Last Month', 2:'1 Year Ago'};
 		break;
 	    case 'year':
 		cycles += '<option value="1"> Previous Year </option>';
-		cycle_names += ['This Year', 'Last Year'];
+		cycle_names = {0:'This Year', 1:'Last Year'};
 		break;
 	    }	    
 	    options.append('Previous Cycles:' + 
@@ -296,7 +297,6 @@ $(function () {
 		    source_name = source;
 		    
 		}
-		alert(source_name);
 
                 table_row.append(
                     '<td id="name'+source+'">'
@@ -322,9 +322,6 @@ $(function () {
         // Given new data from the server, update the page (graph and
         // table).
 
-
-        // TODO: what if somehow we get no results and it's not the 
-        // first time?
         if (first_time && data.no_results) {
 	    alert('No data! Check connection to sensors.');
             return;
@@ -367,9 +364,12 @@ $(function () {
 		});
 		
 		$.each(xy_pairs[cycleID], function(sensor_name, data_points) {
-		    var cur_label = data.building + ' ' + sensor_name;
+		    var cur_label = data.building;
 		    if (mode == 'cycle') {
-			cur_label += ' ' + cycleID;
+			cur_label += ' ' + cycle_names[cycleID];
+		    }
+		    else {
+			cur_label += ' ' + sensor_name;
 		    }
 		    if (sensor_name =='total') {
 			series.push({

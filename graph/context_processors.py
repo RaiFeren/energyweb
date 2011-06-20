@@ -13,7 +13,7 @@ def nav_urls(request):
     return {'dynamic_graph_url': reverse('energyweb.graph.views.dynamic_graph'),
             'static_graph_url': reverse('energyweb.graph.views.static_graph'),
             'status_url': reverse('energyweb.graph.views.mon_status'),
-            'data_interface_url': reverse('energyweb.graph.views.data_interface'),
+            'energy_table_url': reverse('energyweb.graph.views.energy_table'),
             'detail_url': reverse('energyweb.graph.views.detail_graphs' ,
                                   kwargs={'building':'atwood','res':'day'}),
             'logs_url': reverse('energyweb.graph.views.logs'),

@@ -250,7 +250,7 @@ def _integrate(start_dt,end_dt,res,splitSensors=True):
     from django.db import connection, transaction
     cur = connection.cursor()
 
-    per_incr = PowerAverage.AVERAGE_TYPE_TIMEDELTAS[res]
+    per_incr = RESOLUTION_DELTAS[res]
 
     corrections = {
         'minute*10':1/6.0,#6 of these per hour
@@ -632,6 +632,26 @@ def _get_detail_table(dataDictionary, building, resolution, start_time):
             'max': 0,
             'integrated': 0,
             }
+
+    for cycle_id in dataDictionary['cycleTable'].keys():
+        cid = int(cycle_id)
+
+        start_dt = datetime.datetime.utcfromtimestamp(
+            int(start_time) / 1000 - 
+            CYCLE_START_DELTAS[resolution][cid].seconds - 
+            CYCLE_START_DELTAS[resolution][cid].days*3600*24 )
+
+        integValues = _integrate(start_dt,
+                                 start_dt+RESOLUTION_DELTAS[resolution],
+                                 AUTO_RES_CONVERT[resolution],
+                                 False)
+
+        try:
+            dataDictionary['cycleTable'][cycle_id]['integrated'] = \
+                integValues[building[0]]
+        except:
+            dataDictionary['cycleTable'][cycle_id]['integrated'] = 0
+        
     # Python doesn't shuffle order of lists...
     dataDictionary['cycleRow'] = ['avg','max','integrated']
 

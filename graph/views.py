@@ -20,16 +20,16 @@ from constants import *
 
 import energyweb.graph.data as data
 
-def data_interface(request):
+def energy_table(request):
     '''
     A view returning the HTML for the dynamic table.
-    This table holds curr. use and avg of past week/month.
+    This table holds curr. use (minute avg) and avg of past week/month.
     '''
     # Get data from three hours ago until now.
     (startTime, junk) = \
                 data._generate_start_data( datetime.timedelta(0,3600*3,0) )
 
-    return render_to_response('graph/data_interface.html', 
+    return render_to_response('graph/energy_table.html', 
         {'sensor_groups': data.SENSOR_GROUPS,
          'data_url': reverse('energyweb.graph.views.statistics_table_data'
                              ) + '?junk=' + junk},

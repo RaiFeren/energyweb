@@ -41,7 +41,32 @@ $(function () {
 		renderTo: 'graph',
 		defaultSeriesType: 'line',
 		marginRight: 130,
-		marginBottom: 25
+		marginBottom: 25,
+		events: {
+		    // Refresh the graph!
+		    load: function() {
+			var series = this.series; // get the series in scope
+			// Refresh data every 10 seconds
+			setInterval(function() {
+
+			    $.getJSON(data_url, function(data) {
+				// Add the data for each sensor
+				$.each(sensor_groups, function(index,cur_sg) {
+				    group_id = cur_sg[0];
+				    sg_xy_pairs[group_id] = 
+					data.sg_xy_pairs[group_id];
+
+				    series[index].data.push({
+					name: cur_sg[1],
+					data: sg_xy_pairs[group_id]
+				    });
+
+				});
+				chart.redraw()
+			    });
+			}, 10000); // time between redraws in milliseconds
+		    }
+		}
 	    },
 	    credits: {
 		enabled: false
@@ -51,7 +76,11 @@ $(function () {
 		x: -20 //center
 	    },
 	    xAxis: {
-		type: 'datetime'
+		type: 'datetime',
+		min: data.desired_first_record,
+		tickInterval: 900 * 1000, // Every 15 min
+		tickWidth: 2,
+		minorTickInterval: 300 * 1000, // Every 5 min
 	    },
 	    yAxis: {
 		title: {
@@ -97,7 +126,6 @@ $(function () {
     }
 
     // Initially, show a loading animation instead of the graph
-    // and hide the download link.
     $('#graph').append(
 	'<img class="loading" src="' + MEDIA_URL + 'img/loading.gif" />');
 
