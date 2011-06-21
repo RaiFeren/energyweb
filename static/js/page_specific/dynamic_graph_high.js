@@ -45,24 +45,16 @@ $(function () {
 		events: {
 		    // Refresh the graph!
 		    load: function() {
-			var series = this.series; // get the series in scope
+			var chart_series = this.series; // get the series in scope
 			// Refresh data every 10 seconds
 			setInterval(function() {
 
 			    $.getJSON(data_url, function(data) {
-				// Add the data for each sensor
-				$.each(sensor_groups, function(index,cur_sg) {
+				// Replace data for each sensor
+				$.each(sensor_groups, function(index, cur_sg) {
 				    group_id = cur_sg[0];
-				    sg_xy_pairs[group_id] = 
-					data.sg_xy_pairs[group_id];
-
-				    series[index].data.push({
-					name: cur_sg[1],
-					data: sg_xy_pairs[group_id]
-				    });
-
+				    chart_series[index].addPoint(data.sg_xy_pairs[group_id].pop());
 				});
-				chart.redraw()
 			    });
 			}, 10000); // time between redraws in milliseconds
 		    }

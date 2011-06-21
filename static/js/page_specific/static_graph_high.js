@@ -53,7 +53,8 @@ $(function () {
 	    xAxis: { 
 		type: 'datetime',
 		min: start, // Don't autoscale the axis
-		tickInterval:'auto'
+		minorTickInterval: res*1000*5
+		tickInterval: res*1000*10
 	    },
 	    yAxis: {
 		title: {

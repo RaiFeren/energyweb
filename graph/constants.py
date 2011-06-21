@@ -53,3 +53,28 @@ CYCLE_START_DELTAS = {
         2*RESOLUTION_DELTAS['year'],
         ]
     }
+
+CYCLE_START_DIFFS = {
+    'day':[ #use day averages
+        0,
+        1,
+        7,
+        30,
+        365,
+        ],
+    'week':[ #use week averages
+        0,
+        1,
+        4,
+        52,
+        ],
+    'month':[ #use month averages
+        0,
+        1,
+        12,
+        ],
+    'year':[ #use year averages
+        0,
+        1
+        ]
+    }

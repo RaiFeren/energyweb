@@ -203,7 +203,7 @@ def _get_sensor_groups():
 # Average Collecting
 ##############################
 
-def _get_averages(sensor_ids):
+def _get_averages(sensor_ids=None):
     '''
     Obtains minute, week, and month averages over those
     last cycles for certain sensors.
@@ -239,6 +239,33 @@ def _get_averages(sensor_ids):
                 # to None.
                 all_averages[average_type][sensor_id] = None        
 
+    return all_averages
+
+def _get_detail_averages(res):
+    '''
+    '''
+    # TODO: implement month and year averages
+    if res in ['month','year']:
+        return None
+    all_averages = dict([[sid,{}] for sid in SENSOR_IDS])
+    for start_offset in range(len(CYCLE_START_DIFFS[res])):
+
+        trunc_reading_time = None
+
+        for average in PowerAverage.objects.filter(average_type=res
+            ).order_by('-trunc_reading_time')[:len(SENSOR_IDS)*(
+                CYCLE_START_DIFFS[res][start_offset]+1)]:
+
+            if trunc_reading_time is None:
+                trunc_reading_time = average.trunc_reading_time
+            if average.trunc_reading_time == trunc_reading_time:
+                # Note that we limited the query by the number of sensors in
+                # the database.  However, there may not be an average for
+                # every sensor for this time period.  If this is the case,
+                # some of the results will be for an earlier time period and
+                # have an earlier trunc_reading_time .
+                all_averages[average.sensor_id][start_offset] \
+                    = average.watts / 1000.0
     return all_averages
 
 def _integrate(start_dt,end_dt,res,splitSensors=True):
@@ -389,8 +416,8 @@ def _make_data_dump(start, end=None, res='second*10'):
             per += per_incr
     
         last_record = x
-        # desired_first_record lags by (3:00:00 - 0:00:10) = 2:59:50
-        desired_first_record = x - 1000*3600*3 + 1000*10
+        # Says where the graph should start at
+        desired_first_record = start*1000
     
         d = {'no_results': False,
              'sg_xy_pairs': sg_xy_pairs,
@@ -633,6 +660,8 @@ def _get_detail_table(dataDictionary, building, resolution, start_time):
             'integrated': 0,
             }
 
+    average_cycles = _get_detail_averages(resolution)
+
     for cycle_id in dataDictionary['cycleTable'].keys():
         cid = int(cycle_id)
 
@@ -651,6 +680,12 @@ def _get_detail_table(dataDictionary, building, resolution, start_time):
                 integValues[building[0]]
         except:
             dataDictionary['cycleTable'][cycle_id]['integrated'] = 0
+        for sid in SENSOR_IDS_BY_GROUP[building[0]]:
+            #try:
+            dataDictionary['cycleTable'][cycle_id]['avg'] += \
+                average_cycles[sid][int(cycle_id)]
+            #except:
+            #    dataDictionary['cycleTable'][cycle_id]['avg'] += 0
         
     # Python doesn't shuffle order of lists...
     dataDictionary['cycleRow'] = ['avg','max','integrated']

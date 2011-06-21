@@ -67,7 +67,7 @@ def dynamic_graph(request):
     '''
     # Get all data from last three hours until now
     (start_date, junk) = \
-        data._generate_start_data( datetime.timedelta(0,3600*3,0) )
+        data._generate_start_data( datetime.timedelta(0,3600*2,0) )
 
     return render_to_response('graph/dynamic_graph.html', 
         {'sensor_groups': data.SENSOR_GROUPS,
@@ -81,9 +81,9 @@ def dynamic_graph_data(request, input_data):
     '''
     A view returning the JSON data used to populate the dynamic graph.
     '''
-    # Set the maximum possible start time to three hours ago
+    # Set the maximum possible start time to two hours ago
     # to prevent excessive drawing of data
-    max_time = datetime.datetime.now() - datetime.timedelta(0,3600*3,0)
+    max_time = datetime.datetime.now() - datetime.timedelta(0,3600*2,0)
     start = max( datetime.datetime.utcfromtimestamp(int(int(input_data)/1000)) ,
                  max_time )
     # Grab the dump of xy pairs
@@ -184,7 +184,7 @@ def static_graph(request):
                   'download_url': download_url,
                   'form': form,
                   'form_action': reverse('energyweb.graph.views.static_graph'),
-                  'res': res}
+                  'res': RESOLUTION_DELTAS[res].seconds}
     
     return render_to_response('graph/static_graph.html', 
                               final_args,
