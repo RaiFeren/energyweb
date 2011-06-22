@@ -35,26 +35,52 @@ $(function () {
 	$('#graph').empty();
 	$('#download').show();
 
+	// Find the x-axis tick options:
+	var newTickOptions = tickhelper(timedelta_ms);
+	
+	// Make the title text:
+	var start_Date = new Date(start);
+	start_Date.setTime(start_Date.getTime()+start_Date.getTimezoneOffset()*60*1000);
+	var end_Date = new Date(end);
+	end_Date.setTime(end_Date.getTime()+end_Date.getTimezoneOffset()*60*1000);
+	var start_time = start_Date.toTimeString().slice(0, 5);
+	var start_date = start_Date.toDateString();
+	var end_time = end_Date.toTimeString().slice(0, 5);
+	var end_date = end_Date.toDateString();
+	var titletext = "Energy Usage at Mudd from "+start_time+", "+start_date+" to "+end_time+", "+end_date;
 	// Actually make the graph:
 	chart = new Highcharts.Chart({
 	    chart: {
 		renderTo: 'graph',
 		defaultSeriesType: 'line',
 		marginRight: 130,
-		marginBottom: 25
+		marginBottom: 50
 	    },
 	    credits: {
 		enabled: false
 	    },
 	    title: {
-		text: 'Energy Usage at Mudd',
+		text: titletext,
 		x: -20 //center
 	    },
 	    xAxis: { 
+		title: {
+		    text: 'Time'
+		},
 		type: 'datetime',
 		min: start, // Don't autoscale the axis
-		minorTickInterval: res*1000*5
-		tickInterval: res*1000*10
+		tickInterval: newTickOptions[0],
+		gridLineWidth: 2,
+		minorTickInterval: newTickOptions[1],
+		dateTimeLabelFormats: { // override with labels set in tickhelper.js
+		    second: newTickOptions[2],
+		    minute: newTickOptions[2],
+		    hour: newTickOptions[2],
+		    day: newTickOptions[2],
+		    week: newTickOptions[2],
+		    month: newTickOptions[2],
+		    year: newTickOptions[2]
+		}
 	    },
 	    yAxis: {
 		title: {
@@ -64,9 +90,7 @@ $(function () {
 		    value: 0,
 		    width: 1,
 		    color: '#808080'
-		}],
-		minorGridLineColor: '#E0E0E0',
-		minorTickInterval: 'auto'
+		}]
 	    },
 	    tooltip: { // Disable tooltip when hovering above a point
 		enabled: false
@@ -97,7 +121,11 @@ $(function () {
 		}
 	    },
 	    colors: data_colors, // Set colors from the json data
-	    series: data_series // Set data from the json data
+	    series: data_series, // Set data from the json data
+	    exporting:
+	    {
+		enabled: true,
+	    },
 	});
     }
 

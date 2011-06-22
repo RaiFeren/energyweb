@@ -18,7 +18,8 @@ $(function () {
         // TODO: what if somehow we get no results and it's not the 
         // first time?
         if (first_time && data.no_results) {
-            return; // TODO: tell the user what happened?
+	    alert("No data was loaded.");
+            return;
         }
 
         // When this function is first called, it is expected that 
@@ -34,6 +35,7 @@ $(function () {
             // When data is received the first time, reveal the table 
             // and remove the graph's loading animation
             $('#monstatus').show();
+	    first_time = false;
         }
     
         for (var i=0; i < sensor_groups.length; i++) {
@@ -47,19 +49,14 @@ $(function () {
                     // 7 hours to display the right PST time, and may or may not break at
                     // daylight savings time...
                     readDate = new Date(data.sensor_readings[sensor_id][0]);
-                    readDate.setTime(readDate.getTime() + (7*60*60*1000));
-                    update_cell('#last-reading-' + sensor_id, (readDate).toString().slice(0, -14)+"PST", '#sensor-name-' + sensor_id);
+                    readDate.setTime(readDate.getTime() + readDate.getTimezoneOffset()*60*1000);
+                    update_cell('#last-reading-' + sensor_id, (readDate).toString(), '#sensor-name-' + sensor_id);
                     update_cell('#avg-time-' + sensor_id, data.sensor_readings[sensor_id][1]);
                     update_cell('#min-time-' + sensor_id, data.sensor_readings[sensor_id][2]);
                     update_cell('#max-time-' + sensor_id, data.sensor_readings[sensor_id][3]);
                 }
             }
         }
-    
-        if (first_time) {
-            first_time = false;
-        }
-    
         setTimeout(refreshdata, 10000);
     }
     

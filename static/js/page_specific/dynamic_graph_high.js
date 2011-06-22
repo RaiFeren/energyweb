@@ -35,6 +35,8 @@ $(function () {
 	// that we are about to show the graph:
 	$('#graph').empty();
 
+	var newTickOptions = tickhelper(2*3600*1000);
+
 	// Actually make the graph:
 	chart = new Highcharts.Chart({
 	    chart: {
@@ -64,15 +66,24 @@ $(function () {
 		enabled: false
 	    },
 	    title: {
-		text: 'Energy Usage at Mudd',
+		text: 'Energy Usage at Mudd in the Past 2 Hours',
 		x: -20 //center
 	    },
 	    xAxis: {
 		type: 'datetime',
 		min: data.desired_first_record,
-		tickInterval: 900 * 1000, // Every 15 min
-		tickWidth: 2,
-		minorTickInterval: 300 * 1000, // Every 5 min
+		tickInterval: newTickOptions[0],
+		gridLineWidth: 2,
+		minorTickInterval: newTickOptions[1],
+		dateTimeLabelFormats: { // override with labels set in tickhelper.js
+		    second: newTickOptions[2],
+		    minute: newTickOptions[2],
+		    hour: newTickOptions[2],
+		    day: newTickOptions[2],
+		    week: newTickOptions[2],
+		    month: newTickOptions[2],
+		    year: newTickOptions[2]
+		}
 	    },
 	    yAxis: {
 		title: {

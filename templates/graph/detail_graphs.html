@@ -22,9 +22,11 @@
     var atwood_url = "{{ atwood_url }}";
     var linde_url = "{{ linde_url }}";
     var case_url = "{{ case_url }}";
+    var timedelta_ms = {{ timedelta_ms }};
 </script>
 <!--<script language="javascript" type="text/javascript"
 src="{{ MEDIA_URL }}js/page_specific/detail_graphs.js"></script>-->
+<script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}js/page_specific/tickhelper.js"></script>
 <script language="javascript" type="text/javascript"
 src="{{ MEDIA_URL }}js/page_specific/detail_graph_high.js"></script>
 <script language="javascript" type="text/javascript"
@@ -41,9 +43,6 @@ src="{{ MEDIA_URL }}js/page_specific/map_selector.js"></script>
 	<canvas id="campMap" width="570" height="150"></canvas>
     </div></td>
   </tr>
-  <tr> <td> <div id="heading">
-	<h2 class="center">{{ graph_title }}</h2>
-  </div> </td> </tr>
   <tr>
     <td><div id="graph"></div></td>
     <td><div id="settings">

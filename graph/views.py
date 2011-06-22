@@ -184,7 +184,8 @@ def static_graph(request):
                   'download_url': download_url,
                   'form': form,
                   'form_action': reverse('energyweb.graph.views.static_graph'),
-                  'res': RESOLUTION_DELTAS[res].seconds}
+                  'res': RESOLUTION_DELTAS[res].seconds,
+                  'timedelta_ms': (int_end-int_start)*1000}
     
     return render_to_response('graph/static_graph.html', 
                               final_args,
@@ -219,7 +220,8 @@ def detail_graphs(request, building, res):
                                      'resolution':res,
                                      'start_time':start_data}) +\
          '?junk=' + junk,
-         'graph_title': building.capitalize() + ' viewed over a ' + res, 
+         'timedelta_ms': (RESOLUTION_DELTAS[res].days*24*3600 +\
+                              RESOLUTION_DELTAS[res].seconds)*1000
         }
 
     # Set the URLs for changing time periods.

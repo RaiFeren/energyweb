@@ -9,7 +9,8 @@ $(function () {
     var desired_first_record = null;
     var first_time = true;
 
-    var styles = ['Solid','Dot','Dash','DashDot','LongDashDotDot'];
+    var styles = ['ShortDashDot','Dash','DashDot',
+		  'LongDashDotDot','ShortDot','Dot'];
     
     function rnd(x)
     {
@@ -50,39 +51,21 @@ $(function () {
 	    switch (data.res)
 	    {
 	    case 'day':
-		cycles += '<option value="1"> Previous Day </option>';
-		cycles += '<option value="2"> 1 Week Ago </option>';
-		cycles += '<option value="3"> 1 Month Ago </option>';
-		cycles += '<option value="4"> 1 Year Ago </option>';
 		cycle_names = {0:'Today',1:'Yesterday',
 			       2:'1 Week Ago',3:' 1 Month Ago',
 			       4:'1 Year Ago'};
 		break;
 	    case 'week':
-		cycles += '<option value="1"> Previous Week </option>';
-		cycles += '<option value="2"> 1 Month Ago </option>';
-		cycles += '<option value="3"> 1 Year Ago </option>';
 		cycle_names = {0:'This Week',1:'Last Week',
 			       2:'1 Month Ago',3:' 1 Year Ago'};
 		break;
 	    case 'month':
-		cycles += '<option value="1"> Previous Month </option>';
-		cycles += '<option value="2"> 1 Year Ago </option>';
 		cycle_names = {0:'This Month', 1:'Last Month', 2:'1 Year Ago'};
 		break;
 	    case 'year':
-		cycles += '<option value="1"> Previous Year </option>';
 		cycle_names = {0:'This Year', 1:'Last Year'};
 		break;
-	    }	    
-	    options.append('Previous Cycles:' + 
-			   '<form action=""><select name="cycles"'+
-			   'multiple="multiple" id="cycles">'+
-			   cycles +
-			   '</select></form>' );
-	    $('#cycles').change(function() {
-		refreshdata();
-	    });
+	    }	 
 	}
     }
     
@@ -141,7 +124,6 @@ $(function () {
 		    break;
 		default:
 		    source_name = source;
-		    
 		}
 
                 table_row.append(
@@ -178,54 +160,58 @@ $(function () {
         set_mode_settings(data);
         write_table(data);
 
-	// get what cycles to plot
-	var cycles = [];
-	cycles.push(0);
-	if ($("#cycles").val()){
-	    cycles = cycles.concat($("#cycles").val());
-	}
 
-	$.each(cycles, function(index,cycleID) {
-	    xy_pairs[cycleID] = {};
-	    if (data.graph_data[cycleID] == null) {
-		alert('Do not have data old enough for cycle ' + 
-		      cycleID + '!');
-	    }
-	    else {
-		if (mode == 'diagnostic') {
-		// Iterate through each sensor with data points
-		    $.each(data.graph_data[cycleID], 
-			   function(cur_sensor,data_points) {
-			       xy_pairs[cycleID][cur_sensor] = data_points;
-			   });
+	switch(mode)
+	{
+	case 'cycle':
+	    $.each(data.graph_data, function(index,cycleData) {
+		var cur_label = data.building +
+		    '<br/>' + cycle_names[index];
+		var curStyle = '';
+		if (index == 0) {
+		    curStyle = 'Solid';
 		} else {
-		    xy_pairs[cycleID]['total'] = 
-			data.graph_data[cycleID]['total'];
-		}
-		
-		$.each(xy_pairs[cycleID], function(sensor_name, data_points) {
-		    var cur_label = data.building;
-		    if (mode == 'cycle') {
-			cur_label += ' ' + cycle_names[cycleID];
-		    }
-		    else {
-			cur_label += ' ' + sensor_name;
-		    }
-		    var curStyle = styles.shift();
+		    curStyle = styles.shift();
 		    styles.push(curStyle);
-		    data_series.push({
-                        name: cur_label,			    
-                        data: data_points,
-			dashStyle: curStyle,
-			color: '#' + data.building_color,
-		    });
-		});	   
-	    }
-	});
+		}
+		data_series.push({
+		    name: cur_label,			    
+		    data: cycleData['total'],
+		    dashStyle: curStyle,
+		    color: '#' + data.building_color,
+		});
+	    });
+	    break;
+	case 'diagnostic':
+	    // Iterate through each sensor with data points
+	    $.each(data.graph_data[0], 
+		   function(cur_sensor,data_points) {
+
+		       var cur_label = data.building 
+			   + ' ' + cur_sensor;
+		       var curStyle = '';
+		       if (cur_sensor == 'total') {
+			   curStyle = 'Solid';
+		       } else {
+			   curStyle = styles.shift();
+			   styles.push(curStyle);
+		       }
+		       data_series.push({
+			   name: cur_label,			    
+			   data: data_points,
+			   dashStyle: curStyle,
+			   color: '#' + data.building_color,
+		       });
+		   });
+	    break;
+	}
 
 	// Clear the loading animation now
 	// that we are about to show the graph:
 	$('#graph').empty();
+
+	// Find the x-axis tick options:
+	var newTickOptions = tickhelper(timedelta_ms);
 
 	// Actually make the graph:
 	chart = new Highcharts.Chart({
@@ -234,24 +220,25 @@ $(function () {
 		defaultSeriesType: 'line',
 		marginRight: 130,
 		marginBottom: 25,
-//		events: {
-//		    // Refresh the graph!
-//		    load: function() {
-//			var chart_series = this.series; 
-//                    // get the series in scope
-//			// Refresh data every 10 seconds
-//			setInterval(function() {
-//
-//			    $.getJSON(data_url, function(data) {
+		events: {
+		    // Refresh the graph!
+		    load: function() {
+			// get the series in scope
+			var chart_series = this.series; 
+			// Refresh data every 10 seconds
+			setInterval(function() {
+			    
+			    $.getJSON(data_url, function(data) {
+				write_table(data);
 //				// Replace data for each sensor
 //				$.each(sensor_groups, function(index, cur_sg) {
 //				    group_id = cur_sg[0];
 //				    chart_series[index].addPoint(data.sg_xy_pairs[group_id].pop());
 //				});
-//			    });
-//			}, 10000); // time between redraws in milliseconds
-//		    }
-//		}
+			    });
+			}, 10000); // time between redraws in milliseconds
+		    }
+		}
 	    },
 	    credits: {
 		enabled: false
@@ -264,9 +251,18 @@ $(function () {
 	    xAxis: {
 		type: 'datetime',
 		min: data.desired_first_record,
-		tickInterval: 4*3600 * 1000, // Every 4 hr
-		tickWidth: 2,
-		minorTickInterval: 3600 * 1000, // Every hr
+		tickInterval: newTickOptions[0],
+		gridLineWidth: 2,
+		minorTickInterval: newTickOptions[1],
+		dateTimeLabelFormats: { // override with labels set in tickhelper.js
+		    second: newTickOptions[2],
+		    minute: newTickOptions[2],
+		    hour: newTickOptions[2],
+		    day: newTickOptions[2],
+		    week: newTickOptions[2],
+		    month: newTickOptions[2],
+		    year: newTickOptions[2]
+		}
 	    },
 	    yAxis: {
 		title: {
@@ -276,7 +272,8 @@ $(function () {
 		    value: 0,
 		    width: 1,
 		    color: '#808080'
-		}]
+		}],
+		min: 0,
 	    },
 	    tooltip: { // enable tooltip when hovering above a point
 		enabled: true
@@ -285,7 +282,7 @@ $(function () {
 		layout: 'vertical',
 		align: 'right',
 		verticalAlign: 'top',
-		x: -10,
+		x: -20,
 		y: 100,
 		borderWidth: 0
 	    },
@@ -306,7 +303,6 @@ $(function () {
 		    }
 		}
 	    },
-//	    colors: data_colors, // Set colors from the json data
 	    series: data_series // Set data from the json data
 	});
     }

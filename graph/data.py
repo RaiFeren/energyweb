@@ -681,11 +681,11 @@ def _get_detail_table(dataDictionary, building, resolution, start_time):
         except:
             dataDictionary['cycleTable'][cycle_id]['integrated'] = 0
         for sid in SENSOR_IDS_BY_GROUP[building[0]]:
-            #try:
-            dataDictionary['cycleTable'][cycle_id]['avg'] += \
-                average_cycles[sid][int(cycle_id)]
-            #except:
-            #    dataDictionary['cycleTable'][cycle_id]['avg'] += 0
+            try:
+                dataDictionary['cycleTable'][cycle_id]['avg'] += \
+                    average_cycles[sid][int(cycle_id)]
+            except:
+                dataDictionary['cycleTable'][cycle_id]['avg'] += 0
         
     # Python doesn't shuffle order of lists...
     dataDictionary['cycleRow'] = ['avg','max','integrated']
