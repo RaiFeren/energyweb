@@ -3,9 +3,25 @@ var chart;
 $(function () {
     // This function is a callback, called when the DOM is loaded
 
-    var sg_xy_pairs = {};
+    var xy_pairs = {};
     var sensor_groups = null;
+    var mode = 'cycle';
+    var desired_first_record = null;
+    var first_time = true;
+
+    var styles = ['Solid','Dot','Dash','DashDot','LongDashDotDot'];
     
+    function rnd(x)
+    {
+	// (Used to format numbers in the table)
+        if (x) {
+            return x.toFixed(2);
+        }
+        else {
+            return x;
+        }
+    }
+
     // Clear the graph and put the options up
     function set_mode_settings(data)
     {
@@ -27,17 +43,8 @@ $(function () {
 		       '<option value="'+ month_url +'">Month</option>' +
 		       '<option value="'+ year_url +'">Year</option>' +
 		       ' </select></form>');
-	if (mode == 'diagnostic') {
-	    // Enable checkbox for splitting sensors
-	    options.append('<input type = "checkbox" name="'
-			   + 'showSensors" id="showSensors">'
-			   + '<label for "showSensors">'
-			   + 'Show by Sensors' +'</label>');
-	
-	    $(':checkbox').click(function() {
-		refreshdata();
-	    });
-	} else if (mode == 'cycle') {
+
+	if (mode == 'cycle') {
 	    var cycles = '';
 	    cycle_names = null;
 	    switch (data.res)
@@ -152,9 +159,7 @@ $(function () {
 		$('#'+type+source).empty();
 		$('#'+type+source).append( rnd(statistic) );
 	    });
-
 	});
-     
     }
 
     function getdata_json_cb(data) {
@@ -183,14 +188,20 @@ $(function () {
 	$.each(cycles, function(index,cycleID) {
 	    xy_pairs[cycleID] = {};
 	    if (data.graph_data[cycleID] == null) {
-		alert('Do not have data old enough for cycle ' + cycleID + '!');
+		alert('Do not have data old enough for cycle ' + 
+		      cycleID + '!');
 	    }
 	    else {
+		if (mode == 'diagnostic') {
 		// Iterate through each sensor with data points
-		$.each(data.graph_data[cycleID], 
-		       function(cur_sensor,data_points) {
-		    xy_pairs[cycleID][cur_sensor] = data_points;
-		});
+		    $.each(data.graph_data[cycleID], 
+			   function(cur_sensor,data_points) {
+			       xy_pairs[cycleID][cur_sensor] = data_points;
+			   });
+		} else {
+		    xy_pairs[cycleID]['total'] = 
+			data.graph_data[cycleID]['total'];
+		}
 		
 		$.each(xy_pairs[cycleID], function(sensor_name, data_points) {
 		    var cur_label = data.building;
@@ -200,10 +211,12 @@ $(function () {
 		    else {
 			cur_label += ' ' + sensor_name;
 		    }
+		    var curStyle = styles.shift();
+		    styles.push(curStyle);
 		    data_series.push({
                         name: cur_label,			    
                         data: data_points,
-			dashStyle: 'Dot',
+			dashStyle: curStyle,
 			color: '#' + data.building_color,
 		    });
 		});	   
@@ -251,9 +264,9 @@ $(function () {
 	    xAxis: {
 		type: 'datetime',
 		min: data.desired_first_record,
-		tickInterval: 900 * 1000, // Every 15 min
+		tickInterval: 4*3600 * 1000, // Every 4 hr
 		tickWidth: 2,
-		minorTickInterval: 300 * 1000, // Every 5 min
+		minorTickInterval: 3600 * 1000, // Every hr
 	    },
 	    yAxis: {
 		title: {
@@ -297,6 +310,32 @@ $(function () {
 	    series: data_series // Set data from the json data
 	});
     }
+
+
+    function refreshdata() {
+        // Calls built in functions to get JSON data then pass it to a parsing function
+        $.getJSON(data_url, getdata_json_cb);
+    }
+
+    function mainloop() {
+        refreshdata()
+        //setTimeout(mainloop, 10000);
+    }
+
+    // Initially, show a loading animation instead of the graph
+    $('#graph').append(
+        '<img class="loading" src="' + MEDIA_URL + 'img/loading.gif" />');
+
+    // Make the mode selector work
+    $('select').change(function() {
+	mode = $("select option:selected").val() ;
+	first_time = true; // Set to first time such that it reloads everything.
+	// Open the loading animation
+	$('#graph').empty();
+	$('#graph').append(
+            '<img class="loading" src="' + MEDIA_URL + 'img/loading.gif" />');
+	refreshdata();
+    });
 
     // Initially, show a loading animation instead of the graph
     $('#graph').append(
