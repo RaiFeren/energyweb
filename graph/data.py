@@ -63,26 +63,26 @@ class CustomGraphForm(forms.Form):
     DATE_FORMAT = '%Y-%m-%d'
     TIME_FORMAT = '%l:%M %p'
     DT_INPUT_SIZE = '10'
-    # TODO (last I checked, the entry for month in AVERAGE_TYPES was
-    # None... handle this less hackishly)
+    # TODO: last I checked, the entry for month in AVERAGE_TYPES was
+    # None... handle this less hackishly
     RES_LIST = [res for res in PowerAverage.AVERAGE_TYPES if res != 'month']
     RES_CHOICES = (
         [('auto', 'auto')]
         + [(res_choice, PowerAverage.AVERAGE_TYPE_DESCRIPTIONS[res_choice])
            for res_choice in RES_LIST]
     )
-    
-    start = forms.SplitDateTimeField(input_date_formats=DATE_INPUT_FORMATS,
-                input_time_formats=TIME_INPUT_FORMATS,
-                widget=forms.SplitDateTimeWidget(attrs={'size': DT_INPUT_SIZE},
-                                                 date_format=DATE_FORMAT,
-                                                 time_format=TIME_FORMAT))
 
-    end = forms.SplitDateTimeField(input_date_formats=DATE_INPUT_FORMATS,
-        input_time_formats=TIME_INPUT_FORMATS,
-        widget=forms.SplitDateTimeWidget(attrs={'size': DT_INPUT_SIZE},
-                                         date_format=DATE_FORMAT,
-                                         time_format=TIME_FORMAT))
+    def _formGenerator():
+        ''' create a Time Field '''
+        return forms.SplitDateTimeField(
+            input_date_formats=DATE_INPUT_FORMATS,
+            input_time_formats=TIME_INPUT_FORMATS,
+            widget=forms.SplitDateTimeWidget(attrs={'size': DT_INPUT_SIZE},
+                                             date_format=DATE_FORMAT,
+                                             time_format=TIME_FORMAT))
+    
+    start = _formGenerator()
+    end = _formGenerator()
 
     res = forms.ChoiceField(label='Resolution', choices=RES_CHOICES)
 
@@ -131,9 +131,9 @@ class CustomGraphForm(forms.Form):
         return cleaned_data
 
 class StaticGraphForm(CustomGraphForm):
-    # TODO: GRAPH_MAX_POINTS is used to determine when to refuse data
-    # because the resolution is too fine (it would be too hard on the
-    # database).  
+    '''
+    Used to limit data queries for the Public Custom Graph.
+    '''
     GRAPH_MAX_POINTS = 2000
 
     def clean(self):
@@ -153,10 +153,15 @@ class StaticGraphForm(CustomGraphForm):
                                         '(resolution too fine).')
         return cleaned_data                
 
+##############################
+# Utility
+##############################
+
 # TODO: this could probably be done in a more portable way.
 def _get_sensor_groups():
     '''
-    Return a list with three elements, representing the sensors and sensor groups.
+    Return a list with three elements,
+    representing the sensors and sensor groups.
     The zeroth element is a list containing:
       -The sensor group id (building id)
       -The sensor group name (building name)
@@ -203,70 +208,53 @@ def _get_sensor_groups():
 # Average Collecting
 ##############################
 
-def _get_averages(sensor_ids=None):
+def _query_averages(res,start_offset = 0):
+    all_averages = dict([[sid,None] for sid in SENSOR_IDS])
+
+    trunc_reading_time = None
+        
+    for average in PowerAverage.objects.filter(average_type=res
+                    ).order_by('-trunc_reading_time')[len(SENSOR_IDS)*(
+        CYCLE_START_DIFFS[res][start_offset]):len(SENSOR_IDS)*(
+        CYCLE_START_DIFFS[res][start_offset]+1)]:
+
+        if trunc_reading_time is None:
+            trunc_reading_time = average.trunc_reading_time
+        if average.trunc_reading_time == trunc_reading_time:
+            # Note that we limited the query by the number of sensors in
+            # the database.  However, there may not be an average for
+            # every sensor for this time period.  If this is the case,
+            # some of the results will be for an earlier time period and
+            # have an earlier trunc_reading_time .
+            all_averages[average.sensor_id] \
+                = average.watts / 1000.0
+    return all_averages
+
+def _get_averages():
     '''
     Obtains minute, week, and month averages over those
     last cycles for certain sensors.
     sensor_ids must be a list of sensors.
     '''
+    res_choices = ['minute','week','month']
+    all_averages = dict([[res,{}] for res in res_choices])
 
-    all_averages = {
-        'minute':{},
-        'week':{},
-        'month':{}
-        }
-
-    for average_type in ('minute','week', 'month'):
-
-        trunc_reading_time = None
-
-        for average in PowerAverage.objects.filter(average_type=average_type
-            ).order_by('-trunc_reading_time')[:len(SENSOR_IDS)]:
-
-            if trunc_reading_time is None:
-                trunc_reading_time = average.trunc_reading_time
-            if average.trunc_reading_time == trunc_reading_time:
-                # Note that we limited the query by the number of sensors in
-                # the database.  However, there may not be an average for
-                # every sensor for this time period.  If this is the case,
-                # some of the results will be for an earlier time period and
-                # have an earlier trunc_reading_time .
-                all_averages[average_type][average.sensor_id] \
-                    = average.watts / 1000.0
-        for sensor_id in SENSOR_IDS:
-            if not all_averages[average_type].has_key(sensor_id):
-                # We didn't find an average for this sensor; set the entry
-                # to None.
-                all_averages[average_type][sensor_id] = None        
+    for average_type in res_choices:
+        all_averages[average_type] = \
+                _query_averages(average_type,0)
 
     return all_averages
 
 def _get_detail_averages(res):
     '''
+    Gets the averages for detail graphs.
     '''
-    # TODO: implement month and year averages
-    if res in ['month','year']:
-        return None
     all_averages = dict([[sid,{}] for sid in SENSOR_IDS])
     for start_offset in range(len(CYCLE_START_DIFFS[res])):
+        results = _query_averages(res,start_offset)
+        for sid,value in results.items():
+            all_averages[sid][start_offset] = value
 
-        trunc_reading_time = None
-        
-        for average in PowerAverage.objects.filter(average_type=res
-            ).order_by('-trunc_reading_time')[len(SENSOR_IDS)*(
-                CYCLE_START_DIFFS[res][start_offset]):len(SENSOR_IDS)*(
-                CYCLE_START_DIFFS[res][start_offset]+1)]:
-
-            if trunc_reading_time is None:
-                trunc_reading_time = average.trunc_reading_time
-            if average.trunc_reading_time == trunc_reading_time:
-                # Note that we limited the query by the number of sensors in
-                # the database.  However, there may not be an average for
-                # every sensor for this time period.  If this is the case,
-                # some of the results will be for an earlier time period and
-                # have an earlier trunc_reading_time .
-                all_averages[average.sensor_id][start_offset] \
-                    = average.watts / 1000.0
     return all_averages
 
 def _integrate(start_dt,end_dt,res,splitSensors=True):
@@ -623,28 +611,14 @@ def _get_detail_table(dataDictionary, building, resolution, start_time):
     all_averages = {}
     for average_type in ('minute',resolution):
 
-        trunc_reading_time = None
+        results = _query_averages(average_type,0)
 
-        for average in PowerAverage.objects.filter(average_type=average_type
-            ).order_by('-trunc_reading_time')[:len(SENSOR_IDS)]:
 
-            if trunc_reading_time is None:
-                trunc_reading_time = average.trunc_reading_time
-            if average.trunc_reading_time == trunc_reading_time and \
-                   str(average.sensor_id) in \
-                   dataDictionary['diagnosticTable'].keys():
-                # Note that we limited the query by the number of sensors in
-                # the database.  However, there may not be an average for
-                # every sensor for this time period.  If this is the case,
-                # some of the results will be for an earlier time period and
-                # have an earlier trunc_reading_time.
+        for sid,value in results.items():
+            if sid in dataDictionary['diagnosticTable'].keys():
                 dataDictionary['diagnosticTable']\
-                                [str(average.sensor_id)][CONVERT[average_type]] \
-                                = average.watts / 1000.0
-                if not average_type == 'minute':
-                    dataDictionary['cycleTable']['0']['avg'] +=\
-                        average.watts / 1000.0
-
+                                [sid][CONVERT[average_type]] \
+                                = value
 
     start_dt = datetime.datetime.utcfromtimestamp(
         int(start_time) / 1000 - 
