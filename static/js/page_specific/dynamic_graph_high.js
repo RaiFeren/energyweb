@@ -43,7 +43,7 @@ $(function () {
 		renderTo: 'graph',
 		defaultSeriesType: 'line',
 		marginRight: 130,
-		marginBottom: 25,
+		marginBottom: 40,
 		events: {
 		    // Refresh the graph!
 		    load: function() {
@@ -70,6 +70,9 @@ $(function () {
 		x: -20 //center
 	    },
 	    xAxis: {
+		title: {
+		    text: 'Time'
+		},
 		type: 'datetime',
 		min: data.desired_first_record,
 		tickInterval: newTickOptions[0],

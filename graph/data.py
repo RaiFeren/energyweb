@@ -251,9 +251,10 @@ def _get_detail_averages(res):
     for start_offset in range(len(CYCLE_START_DIFFS[res])):
 
         trunc_reading_time = None
-
+        
         for average in PowerAverage.objects.filter(average_type=res
-            ).order_by('-trunc_reading_time')[:len(SENSOR_IDS)*(
+            ).order_by('-trunc_reading_time')[len(SENSOR_IDS)*(
+                CYCLE_START_DIFFS[res][start_offset]):len(SENSOR_IDS)*(
                 CYCLE_START_DIFFS[res][start_offset]+1)]:
 
             if trunc_reading_time is None:
@@ -637,7 +638,7 @@ def _get_detail_table(dataDictionary, building, resolution, start_time):
     '''
     Returns two data tables.
     Cycle Table:
-        Cycle Name | Avg This Cycle | Max Value | Integrated Value
+        Cycle Name | Avg This Cycle | Integrated Value
     Diagnostic Table:
         Sensor ID | Avg. This Minute | Avg. This Interval | Integrated Value
     '''
@@ -656,7 +657,6 @@ def _get_detail_table(dataDictionary, building, resolution, start_time):
     for cycle_id in range(len(CYCLE_START_DELTAS[resolution])):
         dataDictionary['cycleTable'][str(cycle_id)] = {
             'avg': 0,
-            'max': 0,
             'integrated': 0,
             }
 
@@ -680,6 +680,7 @@ def _get_detail_table(dataDictionary, building, resolution, start_time):
                 integValues[building[0]]
         except:
             dataDictionary['cycleTable'][cycle_id]['integrated'] = 0
+
         for sid in SENSOR_IDS_BY_GROUP[building[0]]:
             try:
                 dataDictionary['cycleTable'][cycle_id]['avg'] += \
@@ -688,7 +689,8 @@ def _get_detail_table(dataDictionary, building, resolution, start_time):
                 dataDictionary['cycleTable'][cycle_id]['avg'] += 0
         
     # Python doesn't shuffle order of lists...
-    dataDictionary['cycleRow'] = ['avg','max','integrated']
+    dataDictionary['cycleRow'] = ['avg',
+                                  'integrated']
 
     CONVERT = {'minute': 'now', resolution:'interval'}
 

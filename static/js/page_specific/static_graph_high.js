@@ -43,9 +43,9 @@ $(function () {
 	start_Date.setTime(start_Date.getTime()+start_Date.getTimezoneOffset()*60*1000);
 	var end_Date = new Date(end);
 	end_Date.setTime(end_Date.getTime()+end_Date.getTimezoneOffset()*60*1000);
-	var start_time = start_Date.toTimeString().slice(0, 5);
+	var start_time = hour_format(start_Date);
 	var start_date = start_Date.toDateString();
-	var end_time = end_Date.toTimeString().slice(0, 5);
+	var end_time = hour_format(end_Date);
 	var end_date = end_Date.toDateString();
 	var titletext = "Energy Usage at Mudd from "+start_time+", "+start_date+" to "+end_time+", "+end_date;
 	// Actually make the graph:

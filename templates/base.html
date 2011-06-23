@@ -16,24 +16,41 @@
 {% endblock %}
 </head>
 <body>
-
-<ul id="navbar">
-    <li><a href="{{ dynamic_graph_url }}">Home</a></li>
-    | <li><a href="{{ energy_table_url }}">Energy Table</a></li>
-    | <li><a href="{{ detail_url }}">Detailed View</a></li>
-    | <li><a href="{{ static_graph_url }}">Custom View</a></li>
-</ul>
-
-{% block content %}
-{% endblock %}
-
-<p id="poweredby">
-    Powered by <a href="http://www.rhizomesystems.com/">Rhizome Systems</a>.
-</p>
-<ul id="navbar2">
-    <li><a href="{{ status_url }}">Maintenance</a></li>
-    | <li><a href="{{ admin_url }}">Administration</a></li>
-</ul>
-
+<br>
+<table id="base_table">
+  <tr>
+    <td class="centerme">
+      <ul id="navbar">
+	<li><a href="{{ dynamic_graph_url }}">Home</a></li>
+	| <li><a href="{{ energy_table_url }}">Energy Table</a></li>
+	| <li><a href="{{ detail_url }}">Detailed View</a></li>
+	| <li><a href="{{ static_graph_url }}">Custom View</a></li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <td class="centerme">
+      <br>
+      {% block content %}
+      {% endblock %}
+      <br>
+    </td>
+  </tr>
+  <tr>
+    <td class="centerme">
+      <p id="poweredby">
+	Powered by <a href="http://www.rhizomesystems.com/">Rhizome Systems</a>.
+      </p>
+    </td>
+  </tr>
+  <tr>
+    <td class="centerme">
+      <ul id="navbar2">
+	<li><a href="{{ status_url }}">Maintenance</a></li>
+	| <li><a href="{{ admin_url }}">Administration</a></li>
+      </ul>
+    </td>
+  </tr>
+</table>
 </body>
 </html>

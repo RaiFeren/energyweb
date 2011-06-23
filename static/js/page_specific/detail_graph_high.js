@@ -33,7 +33,7 @@ $(function () {
 	var options = $("#mode_settings");
 	options.empty();
 	// Enable the form for switching resolutions
-	options.append('View By:' +
+	options.append(
 		       '<form action=""><select name="period"' +
 		       'OnChange="location.href=' +
 		       'period.options[selectedIndex].value">' +
@@ -94,7 +94,6 @@ $(function () {
             case 'cycle':
                 table_head.append('<th>Cycle</th>'+
                     '<th>Average This Cycle (kW)</th>'+
-                    '<th>Max This Cycle (kW)</th>'+
                     '<th>Integrated Power This Cycle (kW*hr)</th>');
 		break;
             case 'diagnostic':
@@ -230,11 +229,22 @@ $(function () {
 			    
 			    $.getJSON(data_url, function(data) {
 				write_table(data);
-//				// Replace data for each sensor
-//				$.each(sensor_groups, function(index, cur_sg) {
-//				    group_id = cur_sg[0];
-//				    chart_series[index].addPoint(data.sg_xy_pairs[group_id].pop());
-//				});
+				// get the data from each cycle or sensor
+				switch(mode) {
+				case 'cycle':
+				    $.each(data.graph_data, function(cycleID, data) {
+					chart_series[cycleID].addPoint(
+					    data['total'].pop());
+				    });
+				    break;
+				case 'diagnostic':
+				    $.each(data.graph_data[0], 
+					   function(sensorID, data) {
+					       chart_series[sensorID].addPoint(
+						   data.pop());
+					   });
+				    break;
+				} 				
 			    });
 			}, 10000); // time between redraws in milliseconds
 		    }
@@ -244,9 +254,7 @@ $(function () {
 		enabled: false
 	    },
 	    title: {
-		text: 'Energy Usage at ' + data.building +
-                    ' over a ' + data.res,
-		x: -20 //center
+		text: null // Disable
 	    },
 	    xAxis: {
 		type: 'datetime',

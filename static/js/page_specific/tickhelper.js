@@ -19,8 +19,8 @@ var two_hrs = 1000*60*60*2
 
 // Label format strings:
 var hr_min_sec = '%l:%M:%S%P'
-var hr_min = '%l:%M%p'
-var hr_min_date = '%l:%M%p,<br>%m/%e/%y'
+var hr_min = '%l:%M%P'
+var hr_min_date = '%l:%M%P,<br>%m/%e/%y'
 var full_date = '%m/%e/%y'
 var month_yr = '%b, \'%y'
 var year_month = '%m/%Y'
@@ -40,4 +40,16 @@ function tickhelper(timedelta)
     else if (timedelta <= one_month) { return [one_week, one_day, full_date]; }
     else if (timedelta <= one_year) { return [one_month, one_week, month_yr]; }
     else { return [one_year, one_month, year_month]; }
+}
+
+
+// Takes in a Date object and returns a string of HOUR:MIN(am/pm)
+// in 12 hour time. Ex: 3:40pm
+function hour_format(date_to_format)
+{
+    var hours = date_to_format.getHours();
+    var am = (hours < 12); // CHeck for am/pm
+    if (hours == 0) { hours = 12; } // hour after midnight?
+    else { hours = hours % 12; }
+    return "" + hours + ":" + date_to_format.getMinutes() + (am ? "am" : "pm");
 }

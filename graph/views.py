@@ -220,6 +220,8 @@ def detail_graphs(request, building, res):
                                      'resolution':res,
                                      'start_time':start_data}) +\
          '?junk=' + junk,
+         'building': building.capitalize(),
+         'res': res,
          'timedelta_ms': (RESOLUTION_DELTAS[res].days*24*3600 +\
                               RESOLUTION_DELTAS[res].seconds)*1000
         }

@@ -10,10 +10,12 @@
 {% endblock %}
 
 {% block content %}
+{% block form %}
 <form action="{{ form_action }}">
 <table id="static-graph-form">
     {{ form.as_table }}
     <tr><th></th><td><input type="submit" value="Submit" /></td></tr>
 </table>
 </form>
+{% endblock %}
 {% endblock %}

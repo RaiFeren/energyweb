@@ -45,9 +45,6 @@ $(function () {
                 sensor_id = sensor_groups[i][3][j][0];
 
                 if (sensor_id in data.sensor_readings) {
-                    // TODO: Fix the hax0rness of time. 2nd line below involves adding
-                    // 7 hours to display the right PST time, and may or may not break at
-                    // daylight savings time...
                     readDate = new Date(data.sensor_readings[sensor_id][0]);
                     readDate.setTime(readDate.getTime() + readDate.getTimezoneOffset()*60*1000);
                     update_cell('#last-reading-' + sensor_id, (readDate).toString(), '#sensor-name-' + sensor_id);
@@ -57,6 +54,7 @@ $(function () {
                 }
             }
         }
+	$('monstatus').tablesorter({widgets: ['zebra']}); 
         setTimeout(refreshdata, 10000);
     }
     

@@ -19,10 +19,15 @@
 {% block content %}
 
 <div id="graph"></div>
-
-<div id="download">
-  <a href="{{download_url}}"><input type="button" value="Download Data"></a>
+<br>
+<table id="datarequest">
+<tr>
+    <td> {% block form %} {{ block.super }} {% endblock %}</td>
+    <td> &nbsp </td>
+    <td>
+<div id="download"> &nbsp
+  <a href="{{download_url}}"><input type="submit" value="Download Data"></a> &nbsp
 </div>
-</br>
-{{ block.super }}
+    </td>
+</table>
 {% endblock %}
