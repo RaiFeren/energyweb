@@ -357,7 +357,7 @@ def _make_data_dump(start, end=None, res='second*10'):
     else:
         end_dt = None
 
-    sg_xy_pairs = dict([[sg[0], []] for sg in sensor_groups])
+    sg_xy_pairs = dict([[sg[0], []] for sg in SENSOR_GROUPS])
         
     _build_db_results(res,start_dt,end_dt,
                       sg_xy_pairs,
@@ -368,10 +368,10 @@ def _make_data_dump(start, end=None, res='second*10'):
     if not sg_xy_pairs:
         d = {
             'no_results': True,
-            'sensor_groups': sensor_groups,
+            'sensor_groups': SENSOR_GROUPS,
             }
     else:
-        last_record = sg_xy_pairs[0][-1][0] # get last x value
+        last_record = sg_xy_pairs[1][-1][0] # get last x value
         # Says where the graph should start at
         desired_first_record = start*1000
     
@@ -379,7 +379,7 @@ def _make_data_dump(start, end=None, res='second*10'):
              'sg_xy_pairs': sg_xy_pairs,
              'desired_first_record':
              desired_first_record,
-             'sensor_groups': sensor_groups,
+             'sensor_groups': SENSOR_GROUPS,
              'last_record':last_record}
     return d
 
@@ -401,8 +401,8 @@ def download_csv(request, start, end, res):
 
 
     # Write down the column headings
-    data += 'Time,'
-    for building in sensor_groups:
+    data += ',Time,'
+    for building in SENSOR_GROUPS:
         data += building[1] + ','
 
     data_pnts = []
@@ -416,10 +416,10 @@ def download_csv(request, start, end, res):
     _build_db_results(res,start_dt,end_dt,
                       data_pnts,
                       _x_handler,
-                      lambda id,x,y,rtn_obj : rtn_obj.append(y)
+                      lambda id,x,y,rtn_obj : rtn_obj.append(str(y))
                       )
 
-    template = ','
+    template = ","
     data += template.join(data_pnts)
 
     # Send the csv to be posted
@@ -675,7 +675,7 @@ def _build_db_results(res,start_dt,end_dt,
     from django.db import connection, transaction
 
     cur = connection.cursor()
-    Poweraverage.graph_data_execute(cur, res, start_dt, end_dt)
+    PowerAverage.graph_data_execute(cur, res, start_dt, end_dt)
 
     r = cur.fetchone()
 
@@ -683,7 +683,7 @@ def _build_db_results(res,start_dt,end_dt,
         return None
     else:
         per = r[2]
-        per_incr = RESOLUTION_DELTAS[resolution]
+        per_incr = RESOLUTION_DELTAS[res]
     
         # At the end of each outer loop, we increment the
         # current period by a resolution step.
