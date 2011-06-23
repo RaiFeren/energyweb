@@ -139,7 +139,7 @@ class StaticGraphForm(CustomGraphForm):
     def clean(self):
         '''
         Ensure the data is sane.
-        This version also checks that ordinary users aren't asking
+        This version also checks that ordinary users are not asking
         for too much data, because it might kill the server.
         Really only an issue for users who specified resolutions.
         '''
@@ -351,82 +351,36 @@ def _make_data_dump(start, end=None, res='second*10'):
            Tells where the graph stops
     If failed to make the data dictionary, will simply return None.   
     '''
-    from django.db import connection, transaction
-    cur = connection.cursor()
-
-    (sensor_groups, sensor_ids, sensor_ids_by_group) = _get_sensor_groups()
-
     start_dt = datetime.datetime.utcfromtimestamp(int(start))
     if end:
         end_dt = datetime.datetime.utcfromtimestamp(int(end))
     else:
         end_dt = None
-    per_incr = PowerAverage.AVERAGE_TYPE_TIMEDELTAS[res]
-    
-    PowerAverage.graph_data_execute(cur, res, start_dt, end_dt)
-
-    # Also note, above, that if data was supplied then we selected
-    # everything since the provided timestamp's truncated date,
-    # including that date.  We will always provide the client with
-    # a new copy of the latest record he received last time, since
-    # that last record may have changed (more sensors may have
-    # submitted measurements and added to it).  The second to
-    # latest and older records, however, will never change.
-
-    # Now organize the query in a format amenable to the 
-    # (javascript) client.  (The grapher wants (x, y) pairs.)
 
     sg_xy_pairs = dict([[sg[0], []] for sg in sensor_groups])
-    r = cur.fetchone()
-    if r is None:
-        d = {'no_results':True,
-             'sensor_groups':sensor_groups}
-        return d
+        
+    _build_db_results(res,start_dt,end_dt,
+                      sg_xy_pairs,
+                      lambda x,rtn_obj : int(calendar.timegm(x))*1000,
+                      lambda id,x,y,rtn_obj : rtn_obj[id].append((x,y))
+                      )
+
+    if not sg_xy_pairs:
+        d = {
+            'no_results': True,
+            'sensor_groups': sensor_groups,
+            }
     else:
-        per = r[2]
-    
-        # At the end of each outer loop, we increment per (the current
-        # ten-second period of time we're considering) by ten seconds.
-        while r is not None:
-            # Remember that the JavaScript client takes (and
-            # gives) UTC timestamps in ms
-            x = int(calendar.timegm(per.timetuple()) * 1000)
-            for sg in sensor_groups:
-                y = 0
-                for sid in sensor_ids_by_group[sg[0]]:
-                    # If this sensor has a reading for the current per,
-                    # update y.  There are three ways the sensor might
-                    # not have such a reading:
-                    # 1. r is None, i.e. there are no more readings at
-                    #    all
-                    # 2. r is not None and r[2] > per, i.e. there are 
-                    #    more readings but not for this per
-                    # 3. r is not None and r[2] <= per and r[1] != s[0],
-                    #    i.e. there are more readings for this per,
-                    #    but none for this sensor
-                    if r is not None and r[2] <= per and r[1] == sid:
-                        # If y is None, leave it as such.   Else, add
-                        # this sensor reading to y.  Afterwards, in
-                        # either case, fetch a new row.
-                        if y is not None:
-                            y += float(r[0])
-                        r = cur.fetchone()
-                    else:
-                        y = None
-                sg_xy_pairs[sg[0]].append((x, y))
-            per += per_incr
-    
-        last_record = x
+        last_record = sg_xy_pairs[0][-1][0] # get last x value
         # Says where the graph should start at
         desired_first_record = start*1000
     
         d = {'no_results': False,
              'sg_xy_pairs': sg_xy_pairs,
              'desired_first_record':
-                 desired_first_record,
+             desired_first_record,
              'sensor_groups': sensor_groups,
              'last_record':last_record}
-        
     return d
 
 def download_csv(request, start, end, res):
@@ -439,64 +393,34 @@ def download_csv(request, start, end, res):
     Thus while the algorithm is effectively the same,
     how it stores data differs.
     '''
-    from django.db import connection, transaction
-    cur = connection.cursor() # Allows for SQL queries
-
     # Start writing the csv output
     data = ''
     
     start_dt = datetime.datetime.utcfromtimestamp(int(start))
     end_dt = datetime.datetime.utcfromtimestamp(int(end))
-    per_incr = PowerAverage.AVERAGE_TYPE_TIMEDELTAS[res]
 
-    (sensor_groups, sensor_ids, sensor_ids_by_group) = _get_sensor_groups()
 
     # Write down the column headings
     data += 'Time,'
     for building in sensor_groups:
         data += building[1] + ','
-    data = data[:-1] + '\n' #slice off last comma because it will be extraneous.
 
-    # Run Search to get data
-    PowerAverage.graph_data_execute(cur, res, start_dt, end_dt)
+    data_pnts = []
 
-    # Crazy loop to put things in table format.
+    def _x_handler(x,rtn_obj):
+        ''' Start a new line, then return x back as readable time'''
+        rtn_obj.append('\n')
+        rtn_obj.append(time.strftime("%a %d %b %Y %H:%M:%S",x))
+        return x
+        
+    _build_db_results(res,start_dt,end_dt,
+                      data_pnts,
+                      _x_handler,
+                      lambda id,x,y,rtn_obj : rtn_obj.append(y)
+                      )
 
-    r = cur.fetchone() # Retrieves results as r
-    
-    if r: # Don't let this happen if r is none 'cause will segfault
-        per = r[2]
-
-        # At the end of each outer loop, we increment per (the current
-        # ten-second period of time we're considering) by ten seconds.
-        while r is not None:
-            x = per.timetuple()
-            # Formats time like 'Mon 30 May 2011 22:17:00'
-            data += time.strftime("%a %d %b %Y %H:%M:%S",x) + ','
-            for sg in sensor_groups:
-                y = 0
-                for sid in sensor_ids_by_group[sg[0]]:
-                    # If this sensor has a reading for the current per,
-                    # update y.  There are three ways the sensor might
-                    # not have such a reading:
-                    # 1. r is None, i.e. there are no more readings at
-                    #    all
-                    # 2. r is not None and r[2] > per, i.e. there are 
-                    #    more readings but not for this per
-                    # 3. r is not None and r[2] <= per and r[1] != s[0],
-                    #    i.e. there are more readings for this per,
-                    #    but none for this sensor
-                    if r is not None and r[2] <= per and r[1] == sid:
-                        # None implies signal was lost and should be preserved
-                        if y is not None:
-                            y += float(r[0])
-                        r = cur.fetchone() # Go to the next data point
-                    else:
-                        y = None
-
-                data += str(y) + ','
-            per += per_incr
-            data = data[:-1] + '\n' # Slice off the last comma, again
+    template = ','
+    data += template.join(data_pnts)
 
     # Send the csv to be posted
     return HttpResponse(data,
@@ -738,5 +662,63 @@ def _get_detail_table(dataDictionary, building, resolution, start_time):
             all_watthr_data[int(ID)]
     
     return dataDictionary
+
+def _build_db_results(res,start_dt,end_dt,
+                      rtn_obj, x_call, acc_call):
+    '''
+    Loops through the database from UTC datetime object start_dt to end_dt
+    Uses a string of res to determine point resolution.
+    rtn_obj must be a mutable type, like dictionary or list.
+    x_call will get current timetuple and the return object
+    acc_call 
+    '''
+    from django.db import connection, transaction
+
+    cur = connection.cursor()
+    Poweraverage.graph_data_execute(cur, res, start_dt, end_dt)
+
+    r = cur.fetchone()
+
+    if r is None:
+        return None
+    else:
+        per = r[2]
+        per_incr = RESOLUTION_DELTAS[resolution]
+    
+        # At the end of each outer loop, we increment the
+        # current period by a resolution step.
+        while r is not None:
+            # Call the given function.
+            # Pass the return object in case they want to do something odd
+            x = x_call(per.timetuple(), rtn_obj)
+
+            for sg in SENSOR_GROUPS:
+                y = 0 # Always starts at 0
+                for sid in SENSOR_IDS_BY_GROUP[sg[0]]:
+                    # If this sensor has a reading for the current per,
+                    # update y.  There are three ways the sensor might
+                    # not have such a reading:
+                    # 1. r is None, i.e. there are no more readings at
+                    #    all
+                    # 2. r is not None and r[2] > per, i.e. there are 
+                    #    more readings but not for this per
+                    # 3. r is not None and r[2] <= per and r[1] != s[0],
+                    #    i.e. there are more readings for this per,
+                    #    but none for this sensor
+                    if r is not None and r[2] <= per and r[1] == sid:
+                        # Increase y if its there.
+                        # Then get the next data point
+                        if y is not None:
+                            y += float(r[0])
+                        r = cur.fetchone()
+                    else:
+                        y = None
+                # Add to object as described
+                acc_call(sg[0],x,y,rtn_obj)
+                
+            per += per_incr
+
+    return rtn_obj
+
 
 (SENSOR_GROUPS, SENSOR_IDS, SENSOR_IDS_BY_GROUP) = _get_sensor_groups()
