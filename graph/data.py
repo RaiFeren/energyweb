@@ -257,69 +257,43 @@ def _get_detail_averages(res):
 
     return all_averages
 
+###############
+# Integrate
+###############
+
 def _integrate(start_dt,end_dt,res,splitSensors=True):
     '''
     Reports the integrated power usage from start to stop.
     Returns in watt*hr
     Uses data points of res resolution for the integration.
     '''
-    from django.db import connection, transaction
-    cur = connection.cursor()
-
-    per_incr = RESOLUTION_DELTAS[res]
-
     corrections = {
         'minute*10':1/6.0,#6 of these per hour
         'hour':1,
         'day':24,}
     
-    PowerAverage.graph_data_execute(cur, res, start_dt, end_dt)
-
-    if not splitSensors:
-        watt_totals = dict([ [sg[0], 0] for sg in SENSOR_GROUPS])
-    else:
+    if splitSensors:
         watt_totals = dict([ [sid,0] for sid in SENSOR_IDS])
-
-    r = cur.fetchone()
-    if r is None:
-        return None
+        _acc_call = lambda a,b,c,d : None # Pass
+        _snr_call = lambda sid,x,y,rtn_obj : rtn_obj[sid] += y
     else:
-        per = r[2]
-    
-        while r is not None:
+        watt_totals = dict([ [sg[0], 0] for sg in SENSOR_GROUPS])
+        _acc_call = lambda sg,x,y,rtn_obj : rtn_ojb[sg] += y
+        _snr_call = None
 
-            for sg in SENSOR_GROUPS:
-                y = 0
-                for sid in SENSOR_IDS_BY_GROUP[sg[0]]:
-                    # If this sensor has a reading for the current per,
-                    # update y.  There are three ways the sensor might
-                    # not have such a reading:
-                    # 1. r is None, i.e. there are no more readings at
-                    #    all
-                    # 2. r is not None and r[2] > per, i.e. there are 
-                    #    more readings but not for this per
-                    # 3. r is not None and r[2] <= per and r[1] != s[0],
-                    #    i.e. there are more readings for this per,
-                    #    but none for this sensor
-                    if r is not None and r[2] <= per and r[1] == sid:
-                        if y is not None:
-                            if splitSensors:
-                                watt_totals[sid] += float(r[0])
-                            else:
-                                y += float(r[0])
-                        r = cur.fetchone()
-                    else:
-                        y = None
-                if not splitSensors and y:
-                    watt_totals[sg[0]] += y
-            per += per_incr
-        
-        for reading in watt_totals.keys():
-            watt_totals[reading] = watt_totals[reading]*corrections[res]
+    _build_db_results(res,start_dt,end_dt,
+                      watt_totals,
+                      lambda a,b : None, # Does nothing on x_call
+                      _acc_call,
+                      _snr_call)
+    if not watt_totals:
+        return None
+         
+    for reading in watt_totals.keys():
+        watt_totals[reading] = watt_totals[reading]*corrections[res]
 
     return watt_totals
     
-
 ##############################
 # Converting data to a serializable form
 ##############################
@@ -417,11 +391,7 @@ def download_csv(request, start, end, res):
 def _get_detail_data(building, mode, resolution, start_time):
     '''
     Creates the dictionary for detail view
-    TODO: IS MESSY AND NEEDS REFACTORING
     '''
-    from django.db import connection, transaction
-    cur = connection.cursor()
-
     # Because transferring non-strings over gets annoying,
     # this is how we'll get buildings
     cur_building = None
@@ -445,38 +415,34 @@ def _get_detail_data(building, mode, resolution, start_time):
             CYCLE_START_DELTAS[resolution][start_time_delta].seconds - 
             CYCLE_START_DELTAS[resolution][start_time_delta].days*3600*24 )
 
-        PowerAverage.graph_data_execute(cur,
-                                        AUTO_RES_CONVERT[resolution],
-                                        start_dt,
-                                        start_dt + \
-                                        RESOLUTION_DELTAS[resolution])
-
-        # If data was supplied then we selected everything since
-        # the provided timestamp's truncated date, including that date.
-        # We will always provide the client with
-        # a new copy of the latest record he received last time, since
-        # that last record may have changed (more sensors may have
-        # submitted measurements and added to it).  The second to
-        # latest and older records, however, will never change.
-
-        
-        # Now organize the query in a format amenable to the 
+       # Now organize the query in a format amenable to the 
         # (javascript) client.  (The grapher wants (x, y) pairs.)
         
         # dictionary has keys of total and then the sensor ids
         xy_pairs = {'total':[]}
         for sensor_id in SENSOR_IDS_BY_GROUP[cur_building[0]]:
             xy_pairs[sensor_id] = []
-            
-        r = cur.fetchone()
 
-        if r is None:
+        def _snr_call(sid,x,y,rtn_obj):
+            if sid in rtn_obj.keys():
+                rtn_obj[sid].append([x,y])
+
+        def _acc_call(id,x,y,rtn_obj):
+            for sid in rtn_obj.keys():
+                if not sid is 'total':
+                    rtn_obj['total'][-1][1] += rtn_obj[sid][-1][1]
+
+        _build_db_results(AUTO_RES_CONVERT[resolution],
+                          start_dt, start_dt+RESOLUTION_DELTAS[resolution],
+                          lambda x,rtn_obj: int(calendar.timegm(x))*1000,
+                          _acc_call,_snr_call)
+
+    
+        if xy_pairs is None:
             d = {'no_results': True,}
         else:
-            per = r[2]
-            per_incr = RESOLUTION_DELTAS[AUTO_RES_CONVERT[resolution]]
             
-            while r is not None:
+
                 # Remember that the JavaScript client takes (and
                 # gives) UTC timestamps in ms
                 x = int(calendar.timegm(per.timetuple()) * 1000)
@@ -638,13 +604,14 @@ def _get_detail_table(dataDictionary, building, resolution, start_time):
     return dataDictionary
 
 def _build_db_results(res,start_dt,end_dt,
-                      rtn_obj, x_call, acc_call):
+                      rtn_obj, x_call, acc_call,snr_call=None):
     '''
     Loops through the database from UTC datetime object start_dt to end_dt
     Uses a string of res to determine point resolution.
     rtn_obj must be a mutable type, like dictionary or list.
     x_call will get current timetuple and the return object
-    acc_call 
+    acc_call puts things into the rtn_obj by building
+    snr_call will place things into the rtn_obj by sensor
     '''
     from django.db import connection, transaction
 
@@ -687,6 +654,8 @@ def _build_db_results(res,start_dt,end_dt,
                         r = cur.fetchone()
                     else:
                         y = None
+                    if snr_call:
+                        snr_call(sid,x,y,rtn_obj)
                 # Add to object as described
                 acc_call(sg[0],x,y,rtn_obj)
                 
