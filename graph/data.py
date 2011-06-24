@@ -72,17 +72,22 @@ class CustomGraphForm(forms.Form):
            for res_choice in RES_LIST]
     )
 
-    def _formGenerator():
-        ''' create a Time Field '''
-        return forms.SplitDateTimeField(
-            input_date_formats=DATE_INPUT_FORMATS,
-            input_time_formats=TIME_INPUT_FORMATS,
-            widget=forms.SplitDateTimeWidget(attrs={'size': DT_INPUT_SIZE},
-                                             date_format=DATE_FORMAT,
-                                             time_format=TIME_FORMAT))
+
+
+        
     
-    start = _formGenerator()
-    end = _formGenerator()
+    start = forms.SplitDateTimeField(
+        input_date_formats=DATE_INPUT_FORMATS,
+        input_time_formats=TIME_INPUT_FORMATS,
+        widget=forms.SplitDateTimeWidget(attrs={'size': DT_INPUT_SIZE},
+                                         date_format=DATE_FORMAT,
+                                         time_format=TIME_FORMAT))
+    end = forms.SplitDateTimeField(
+        input_date_formats=DATE_INPUT_FORMATS,
+        input_time_formats=TIME_INPUT_FORMATS,
+        widget=forms.SplitDateTimeWidget(attrs={'size': DT_INPUT_SIZE},
+                                         date_format=DATE_FORMAT,
+                                         time_format=TIME_FORMAT))
 
     res = forms.ChoiceField(label='Resolution', choices=RES_CHOICES)
 
@@ -252,7 +257,7 @@ def _get_detail_averages(res):
     all_averages = dict([[sid,{}] for sid in SENSOR_IDS])
     for start_offset in range(len(CYCLE_START_DIFFS[res])):
         results = _query_averages(res,start_offset)
-        for sid,value in results.items():
+        for sid,value in results.iteritems():
             all_averages[sid][start_offset] = value
 
     return all_averages
@@ -614,7 +619,7 @@ def _get_detail_table(dataDictionary, building, resolution, start_time):
         results = _query_averages(average_type,0)
 
 
-        for sid,value in results.items():
+        for sid,value in results.iteritems():
             if sid in dataDictionary['diagnosticTable'].keys():
                 dataDictionary['diagnosticTable']\
                                 [sid][CONVERT[average_type]] \
