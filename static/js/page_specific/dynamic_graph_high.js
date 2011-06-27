@@ -23,7 +23,7 @@ $(function () {
         $.each(sensor_groups, function(index,cur_sg) {
             group_id = cur_sg[0];
             sg_xy_pairs[group_id] = data.sg_xy_pairs[group_id];
-
+	    
 	    data_series.push({
 		name: cur_sg[1],
 		data: sg_xy_pairs[group_id]

@@ -9,6 +9,13 @@ div#heading
     text-align: center;
 }
 
+div#title
+{
+    text-align: center;
+    font-size: 18px;
+    padding: 4px;
+}
+
 canvas#campMap
 {
     border-style:solid;

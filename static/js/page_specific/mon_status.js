@@ -29,12 +29,6 @@ $(function () {
 
         if (first_time) {
             sensor_groups = data.sensor_groups;
-            $('#loading').empty();
-            $('#loading').hide();
-
-            // When data is received the first time, reveal the table 
-            // and remove the graph's loading animation
-            $('#monstatus').show();
 	    first_time = false;
         }
     
@@ -54,7 +48,7 @@ $(function () {
                 }
             }
         }
-	$('monstatus').tablesorter({widgets: ['zebra']}); 
+	$('#monstatus').tablesorter({widgets: ['zebra']}); 
         setTimeout(refreshdata, 10000);
     }
     
@@ -63,9 +57,6 @@ $(function () {
     }
 
     // Initially, hide the table and show a loading animation instead of
-        // the graph
-    $('#monstatus').hide();
-    $('#loading').append(
-        '<img class="loading" src="' + MEDIA_URL + 'img/loading.gif" />');
+    // the graph
     refreshdata();
 });

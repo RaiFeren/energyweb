@@ -4,6 +4,9 @@ Used for various constants
 
 import calendar, datetime, simplejson, time
 
+# Whether or not to report any academic data or not:
+SHOW_ACADEMIC = False
+
 # If a full graph has this many points or fewer, show the individual
 # points.  (Otherwise only draw the lines.)
 GRAPH_SHOW_POINTS_THRESHOLD = 40
@@ -55,6 +58,9 @@ CYCLE_START_DELTAS = {
     }
 
 CYCLE_START_DIFFS = {
+    'second*10': [0],
+    'minute': [0],
+    'minute*10': [0],
     'day':[ #use day averages
         0,
         1,

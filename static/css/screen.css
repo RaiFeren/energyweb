@@ -44,6 +44,17 @@ ul#navbar li
     display: inline;
     list-style-type: none;
 }
+
+ul#subnavbar
+{
+    text-align: center;
+}
+
+ul#subnavbar li
+{
+    display: inline;
+    list-style-type: none;
+}
 /* END Navigation css */
 
 ul#navbar2

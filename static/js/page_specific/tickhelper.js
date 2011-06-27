@@ -53,3 +53,24 @@ function hour_format(date_to_format)
     else { hours = hours % 12; }
     return "" + hours + ":" + date_to_format.getMinutes() + (am ? "am" : "pm");
 }
+
+
+// Lightens/Darkens a color
+// Pass in a positive integer to lighten, a negative one
+// to darken. Uses conversion to rgb. Would be more accurate
+// but less efficient to convert all the way to hsl to 
+// be able to directly affect luminosity.
+// Takes in a hex value as a string (assumes '#' at beginning)
+// and an integer.
+// Returns a hex value as a string (includes '#')
+// Based on:
+// http://stackoverflow.com/questions/5560248/programmatically-lighten-or-darken-a-hex-color
+function shadeColor(hexstring, shade)
+{
+    var hexnum = parseInt(hexstring.slice(1), 16);
+    var r = (hexnum >> 16) + shade;
+    var b = ((hexnum >> 8) & 0x00FF) + shade;
+    var g = (hexnum & 0x0000FF) + shade;
+    var newColor = g | (b << 8) | (r << 16);
+    return '#' + newColor.toString(16);
+}

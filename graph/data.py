@@ -279,12 +279,20 @@ def _integrate(start_dt,end_dt,res,splitSensors=True):
     
     if splitSensors:
         watt_totals = dict([ [sid,0] for sid in SENSOR_IDS])
-        _acc_call = lambda a,b,c,d : None # Pass
-        _snr_call = lambda sid,x,y,rtn_obj : rtn_obj[sid] += y
+        def _acc_call(sg,x,y,rtn_obj):
+            pass
+        def _snr_call(sid,x,y,rtn_obj):
+            rtn_obj[sid] += y
+
     else:
         watt_totals = dict([ [sg[0], 0] for sg in SENSOR_GROUPS])
-        _acc_call = lambda sg,x,y,rtn_obj : rtn_ojb[sg] += y
-        _snr_call = None
+        def _acc_call(sg,x,y,rtn_obj):
+            try:
+                rtn_obj[sg] += y
+            except:
+                pass
+        def _snr_call(sid,x,y,rtn_obj):
+            pass
 
     _build_db_results(res,start_dt,end_dt,
                       watt_totals,
@@ -419,101 +427,64 @@ def _get_detail_data(building, mode, resolution, start_time):
             int(start_time) / 1000 - 
             CYCLE_START_DELTAS[resolution][start_time_delta].seconds - 
             CYCLE_START_DELTAS[resolution][start_time_delta].days*3600*24 )
-
-       # Now organize the query in a format amenable to the 
-        # (javascript) client.  (The grapher wants (x, y) pairs.)
         
         # dictionary has keys of total and then the sensor ids
         xy_pairs = {'total':[]}
         for sensor_id in SENSOR_IDS_BY_GROUP[cur_building[0]]:
             xy_pairs[sensor_id] = []
 
+        def _x_call(x,rtn_obj):
+            value = int(calendar.timegm(x))*1000
+            if not start_time_delta == 0:
+                old_cycle = CYCLE_START_DELTAS[resolution][start_time_delta]
+                value += old_cycle.seconds*1000 +\
+                    old_cycle.days*3600*24*1000 -\
+                    CYCLE_START_DELTAS[resolution][0].seconds*1000 -\
+                    CYCLE_START_DELTAS[resolution][0].days*3600*24*1000   
+            rtn_obj['total'].append([value,0])
+            return value
+
         def _snr_call(sid,x,y,rtn_obj):
             if sid in rtn_obj.keys():
                 rtn_obj[sid].append([x,y])
 
-        def _acc_call(id,x,y,rtn_obj):
-            for sid in rtn_obj.keys():
-                if not sid is 'total':
-                    rtn_obj['total'][-1][1] += rtn_obj[sid][-1][1]
+        def _acc_call(sg_id,x,y,rtn_obj):
+            try:
+                for sid in rtn_obj.keys():
+                    if not sid is 'total':
+                        rtn_obj['total'][-1][-1] += rtn_obj[sid][-1][-1]
+            except:
+                pass
 
         _build_db_results(AUTO_RES_CONVERT[resolution],
                           start_dt, start_dt+RESOLUTION_DELTAS[resolution],
-                          lambda x,rtn_obj: int(calendar.timegm(x))*1000,
-                          _acc_call,_snr_call)
-
-    
-        if xy_pairs is None:
-            d = {'no_results': True,}
-        else:
-            
-
-                # Remember that the JavaScript client takes (and
-                # gives) UTC timestamps in ms
-                x = int(calendar.timegm(per.timetuple()) * 1000)
-                # Need to adjust start time such that all
-                # x values are actually the same.
-                # So lines will show on same axis.
-                if not start_time_delta == 0:
-                    old_cycle = CYCLE_START_DELTAS[resolution][start_time_delta]
-
-                    x += old_cycle.seconds*1000 +\
-                         old_cycle.days*3600*24*1000 -\
-                         CYCLE_START_DELTAS[resolution][0].seconds*1000 -\
-                         CYCLE_START_DELTAS[resolution][0].days*3600*24*1000
-
-                xy_pairs['total'].append([x,0])
-                for sg in SENSOR_GROUPS:
-                    for sid in SENSOR_IDS_BY_GROUP[sg[0]]:
-                        y = 0
-                        # If this sensor has a reading for the current per,
-                        # update y.  There are three ways the sensor might
-                        # not have such a reading:
-                        # 1. r is None, i.e. there are no more readings at
-                        #    all
-                        # 2. r is not None and r[2] > per, i.e. there are 
-                        #    more readings but not for this per
-                        # 3. r is not None and r[2] <= per and r[1] != s[0],
-                        #    i.e. there are more readings for this per,
-                        #    but none for this sensor
-                        if r is not None and r[2] <= per and r[1] == sid:
-                            # If y is None, leave it as such.   Else, add
-                            # this sensor reading to y.  Afterwards, in
-                            # either case, fetch a new row.
-                            if y is not None and sid in xy_pairs.keys():
-                                y += float(r[0])
-                                # increment total here!
-                                xy_pairs['total'][-1][1] += y
-                            r = cur.fetchone()
-                        else:
-                            y = None
-
-                        if start_time_delta == 0 and sid in xy_pairs.keys():
-                            xy_pairs[sid].append( [x, y] )
-                per += per_incr
-                
-            last_record = x
-            # desired_first_record lags by 10 seconds from our initial time
-            desired_first_record = x -  \
-                int((RESOLUTION_DELTAS[resolution].seconds + \
-                         RESOLUTION_DELTAS[resolution].days*3600*24) * 1000)
-
-            # Only set the data_url for the original time loop
-            if ( start_time_delta == 0):
-                junk = _gen_now()
-                data_url = reverse('energyweb.graph.views.detail_graphs_data',
-                                   kwargs={ 'building': building, \
-                                            'mode':'cycle', \
-                                            'resolution':resolution, \
-                                            'start_time':str(last_record)
-                                            }) + '?junk=' + junk
-                returnDictionary['data_url'] = data_url
-                returnDictionary['sensors'] = xy_pairs.keys()
-                returnDictionary['no_results'] = False
-                returnDictionary['desired_first_record'] = desired_first_record
-
-            # Put the graph data on the return dictionary
+                          xy_pairs,
+                          _x_call,_acc_call,_snr_call)
+        hadValues = False
+        for val in xy_pairs['total']:
+            if val[-1]:
+                hadValues = True
+                break
+        if len(xy_pairs['total']) > 0 and hadValues:
             returnDictionary['graph_data'].append(xy_pairs)
+        
+    # desired_first_record is our start_time in seconds
+    desired_first_record = int(start_time)/1000
+    # last x result
+    last_record = returnDictionary['graph_data'][0]['total'][-1][0] 
+
+    junk = _gen_now()
+    data_url = reverse('energyweb.graph.views.detail_graphs_data',
+                       kwargs={ 'building': building, \
+                                    'mode':'cycle', \
+                                    'resolution':resolution, \
+                                    'start_time':str(last_record)
+                                }) + '?junk=' + junk
+
+    returnDictionary['data_url'] = data_url
+    returnDictionary['sensors'] = xy_pairs.keys()
+    returnDictionary['no_results'] = False
+    returnDictionary['desired_first_record'] = desired_first_record
 
     return returnDictionary
 
@@ -538,10 +509,8 @@ def _get_detail_table(dataDictionary, building, resolution, start_time):
     dataDictionary['diagnosticRow'] = ['now','interval','integrated']
 
     for cycle_id in range(len(CYCLE_START_DELTAS[resolution])):
-        dataDictionary['cycleTable'][str(cycle_id)] = {
-            'avg': 0,
-            'integrated': 0,
-            }
+        dataDictionary['cycleTable'][str(cycle_id)] = \
+            dict([['avg',0],['integrated',0]])
 
     average_cycles = _get_detail_averages(resolution)
 
@@ -557,7 +526,6 @@ def _get_detail_table(dataDictionary, building, resolution, start_time):
                                  start_dt+RESOLUTION_DELTAS[resolution],
                                  AUTO_RES_CONVERT[resolution],
                                  False)
-
         try:
             dataDictionary['cycleTable'][cycle_id]['integrated'] = \
                 integValues[building[0]]
@@ -583,7 +551,6 @@ def _get_detail_table(dataDictionary, building, resolution, start_time):
     for average_type in ('minute',resolution):
 
         results = _query_averages(average_type,0)
-
 
         for sid,value in results.iteritems():
             if sid in dataDictionary['diagnosticTable'].keys():

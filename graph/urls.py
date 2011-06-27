@@ -24,6 +24,7 @@ urlpatterns = patterns('energyweb.graph.views',
     (r'^dataaccess/(?P<start>\d+)/to/(?P<end>\d+)/(?P<res>[a-z]+(\*10)?)/data.csv$', 'download_csv'),
     (r'^logout/$', 'logout'),
     (r'^changepass/$', 'change_password'),
+    (r'^maptest/$', 'map_test'),
 )
 
 '''

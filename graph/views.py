@@ -39,7 +39,7 @@ def statistics_table_data(request):
     '''
     A view returning the JSON data used to populate the averages table.
     '''
-    all_averages = data._get_averages(data.SENSOR_IDS)
+    all_averages = data._get_averages()
 
     data_url = reverse('energyweb.graph.views.statistics_table_data') \
                +'?junk=' + data._gen_now()
@@ -443,3 +443,8 @@ if settings.DEBUG:
 
     dynamic_graph_data_html = _html_wrapper('dynamic_graph_data')
     static_graph_data_html = _html_wrapper('static_graph_data')
+
+
+def map_test(request):
+    ''' Testing for map workingnes...'''
+    return render_to_response('graph/map_test.html', context_instance=RequestContext(request));

@@ -9,9 +9,10 @@ $(function () {
     var desired_first_record = null;
     var first_time = true;
 
-    var styles = ['ShortDashDot','Dash','DashDot',
-		  'LongDashDotDot','ShortDot','Dot'];
-    
+    var styles = ['ShortDashDotDot', 'Dot', 'DashDot', 
+		  'ShortDash', 'ShortDot', 'ShortDashDot'];
+    var colorchanges = [0, 10, -20, -10, 20, -30];
+
     function rnd(x)
     {
 	// (Used to format numbers in the table)
@@ -173,6 +174,7 @@ $(function () {
 		    curStyle = styles.shift();
 		    styles.push(curStyle);
 		}
+		alert(cycleData['total'][0][0] + ", " + cycleData['total'][0][1]);
 		data_series.push({
 		    name: cur_label,			    
 		    data: cycleData['total'],
@@ -217,8 +219,8 @@ $(function () {
 	    chart: {
 		renderTo: 'graph',
 		defaultSeriesType: 'line',
-		marginRight: 130,
-		marginBottom: 25,
+		marginRight: 155,
+		marginBottom: 55,
 		events: {
 		    // Refresh the graph!
 		    load: function() {
@@ -230,7 +232,7 @@ $(function () {
 			    $.getJSON(data_url, function(data) {
 				write_table(data);
 				// get the data from each cycle or sensor
-				switch(mode) {
+				/*switch(mode) {
 				case 'cycle':
 				    $.each(data.graph_data, function(cycleID, data) {
 					chart_series[cycleID].addPoint(
@@ -244,7 +246,7 @@ $(function () {
 						   data.pop());
 					   });
 				    break;
-				} 				
+				}*/ 				
 			    });
 			}, 10000); // time between redraws in milliseconds
 		    }
@@ -257,6 +259,9 @@ $(function () {
 		text: null // Disable
 	    },
 	    xAxis: {
+		title: {
+		    text: 'Time'
+		},
 		type: 'datetime',
 		min: data.desired_first_record,
 		tickInterval: newTickOptions[0],
@@ -296,9 +301,10 @@ $(function () {
 	    },
 	    plotOptions: {
 		line: {
-		    states: { // Disable line thickening upon hover
+		    states: { // Enable line thickening upon hover
 			hover: {
-			    enabled: false
+			    enabled: true,
+			    lineWidth: 5
 			}
 		    },
 		    marker: { // Disable markers at each point
@@ -311,7 +317,7 @@ $(function () {
 		    }
 		}
 	    },
-	    series: data_series // Set data from the json data
+	    series: data_series, // Set data from the json data
 	});
     }
 
@@ -325,10 +331,6 @@ $(function () {
         refreshdata()
         //setTimeout(mainloop, 10000);
     }
-
-    // Initially, show a loading animation instead of the graph
-    $('#graph').append(
-        '<img class="loading" src="' + MEDIA_URL + 'img/loading.gif" />');
 
     // Make the mode selector work
     $('select').change(function() {

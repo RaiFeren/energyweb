@@ -37,14 +37,19 @@ src="{{ MEDIA_URL }}js/page_specific/map_selector.js"></script>
 
 {% block content %}
 
-<div id="selector" class="center">
-  <canvas id="campMap" width="570" height="150"></canvas>
-</div>
-
+<table id="selector">
+  <tr>
+    <td id="map">
+      <canvas id="campMap" width="570" height="150"></canvas>
+    </td>
+  </tr>
+</table>
+<br>
 <div id="title" class="center"> 
   Energy Usage at {{ building }} over a {{ res }}
 </div>
 
+<div id="debug"></div>
 <div id="settings">
   <table id="settings_table" class="center">
     <tr><td id="mode_type">

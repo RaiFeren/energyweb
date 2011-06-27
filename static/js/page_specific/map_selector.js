@@ -2,34 +2,35 @@ $(function () {
     // This function is a callback, called when the DOM is loaded
 
     // Buildings are defined as rectangles. 
-    // Defined as xy pairs, [Top Left, Bottom Right]
+    // Defined as xy pairs, [Top Left, Bottom Right, redirectURL, HOVER]
+    // HOVER gives the top left corner of the hover image, and its URL.
     var buildings = {
-	'Olin':[[15,90],[30,125],null,null],
-	'Beckman':[[35,100],[50,115],null,null],
-	'Parsons':[[58,60],[100,85],null,null],
-	'Sprague':[[55,100],[75,120],null,null],
-	'Gallileo':[[85,100],[105,115],null,null],
-	'Keck':[[60,130],[105,155],null,null],
-	'TG':[[140,70],[180,90],null,null],
-	'Kingston':[[140,120],[180,140],null,null],
-	'Platt':[[215,55],[270,90], null,null],
-	'Hoch':[[215,115],[270,150],null,null],
-	'South':[[290,60],[325,90], south_url,
+	'Olin':[[10,35],[22,75],null,null],
+	'Beckman':[[23,45],[44,65],null,null],
+	'Parsons':[[48,10],[90,35],null,null],
+	'Sprague':[[45,45],[65,70],null,null],
+	'Gallileo':[[75,45],[95,65],null,null],
+	'Keck':[[50,80],[92,105],null,null],
+	'TG':[[135,20],[170,40],null,null],
+	'Kingston':[[130,65],[170,90],null,null],
+	'Platt':[[210,5],[255,40], null,null],
+	'Hoch':[[210,65],[255,100],null,null],
+	'South':[[283,10],[320,40], south_url,
 		 [[272,0],MEDIA_URL + 'img/south.png']],
-	'West': [[290,115],[325,150], west_url,
+	'West': [[283,60],[320,100], west_url,
 		 [[270,54],MEDIA_URL + 'img/west.png']],
-	'North':[[345,60],[380,90], north_url,
+	'North':[[335,10],[370,40], north_url,
 		 [[323,0],MEDIA_URL + 'img/north.png']],
-	'East': [[345,115],[380,150], east_url,
+	'East': [[335,60],[370,100], east_url,
 		 [[323,57],MEDIA_URL + 'img/east.png']],
-	'LAC': [[390,60],[435,90], null,null],
-	'Sontag': [[460,65],[495,95], sontag_url,
+	'LAC': [[380,10],[425,45], null,null],
+	'Sontag': [[450,10],[490,50], sontag_url,
 		   [[441,5],MEDIA_URL + 'img/sontag.png']],
-	'Atwood': [[460,125],[500,160], atwood_url,
+	'Atwood': [[450,75],[488,110], atwood_url,
 		   [[438,65],MEDIA_URL + 'img/atwood.png']],
-	'Linde':[[545,85],[580,125], linde_url,
+	'Linde':[[538,35],[567,75], linde_url,
 		 [[525,23],MEDIA_URL + 'img/linde.png']],
-	'Case': [[515,130],[555,170], case_url,
+	'Case': [[508,75],[547,115], case_url,
 		 [[494,68],MEDIA_URL + 'img/case.png']],
     };
     
@@ -44,16 +45,33 @@ $(function () {
         return -1;
     }
     
+    // This function put in because of the highlights occuring really off on the 
+    // x-axis. Source of fix: 
+    // http://stackoverflow.com/questions/5085689/tracking-mouse-position-in-canvas/5086147#5086147
+    function findPos(obj) {
+	var curleft = curtop = 0;
+	if (obj.offsetParent) {
+	    do {
+		curleft += obj.offsetLeft;
+		curtop += obj.offsetTop;
+	    } while (obj = obj.offsetParent);
+	    return { x: curleft, y: curtop };
+	}
+    }
+
+    // source: 
+    // http://snipt.net/sayanriju/get-cursor-position-of-clicked-mouse-on-a-html5-canvas/
     function getCursorPosition(e) {
 	var camp_map = document.getElementById("campMap");
 
 	var x;
 	var y;
+	var pos = findPos(camp_map);
 
 	if (e.pageX != undefined && e.pageY != undefined) {
 
-	    x = e.pageX;
-	    y = e.pageY;
+	    x = e.pageX - pos.x;
+	    y = e.pageY - pos.y;
 	}
 	else {
 
@@ -117,7 +135,7 @@ $(function () {
 
     function map_click_handler(e) {
 	var spot = getCursorPosition(e);
-//	alert('Clicked at ' + spot[0] + ',' + spot[1]);
+	//alert('Clicked at ' + spot[0] + ',' + spot[1]);
 
 	// Determine which building they clicked on
 	// Buildings are [topLeftCorner, bottomRightCorner, redirectURL]
