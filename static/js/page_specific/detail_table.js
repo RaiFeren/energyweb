@@ -5,7 +5,6 @@ $(function () {
 
     var xy_pairs = {};
     var sensor_groups = null;
-    var mode = 'cycle';
     var desired_first_record = null;
     var first_time = true;
 
@@ -134,13 +133,12 @@ $(function () {
         write_table(data);
     }
 
-
-    function refresh_table_data() {
-        // Calls built in functions to get JSON data then pass it to a parsing function
-        $.getJSON(table_url, getdata_json_table_cb);
-    }
-
     // It is expected that data_url was defined previously (before
     // loading this file).
     $.getJSON(table_url, getdata_json_table_cb);
 });
+
+function refresh_table_data() {
+    // Calls built in functions to get JSON data then pass it to a parsing function
+    $.getJSON(table_url, getdata_json_table_cb);
+}

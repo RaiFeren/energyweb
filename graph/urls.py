@@ -9,7 +9,7 @@ from django.conf import settings
 urlpatterns = patterns('energyweb.graph.views',
     (r'^$', 'dynamic_graph'), # home page -- Dynamic graph
     (r'^(?P<input_data>\d+)/data.json$', 'dynamic_graph_data'), # data dump for it
-    (r'^detail/(?P<building>[a-z]+)/(?P<res>[a-z]+)/$','detail_graph'), # details page -- for building views
+    (r'^detail/(?P<building>[a-z]+)/(?P<mode>[a-z]+)/(?P<res>[a-z]+)/$','detail_graph'), # details page -- for building views
     (r'^detail/(?P<building>[a-z]+)/(?P<resolution>[a-z]+)/(?P<start_time>\d+)/graph_data.json$','detail_graph_data'),
     (r'^detail/(?P<building>[a-z]+)/(?P<resolution>[a-z]+)/(?P<start_time>\d+)/table_data.json$','detail_table_data'),
     (r'^energytable/$', 'energy_table'), # Energy Statistics Table

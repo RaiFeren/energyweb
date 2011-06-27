@@ -205,7 +205,7 @@ def static_graph_data(request, start, end, res):
 def download_csv(request, start, end, res):
     return data.download_csv(request, start, end, res)
 
-def detail_graph(request, building, res):
+def detail_graph(request, building, mode, res):
     '''
     A view returning the HTML for the Detailed Building graph.
     (This graph represents the last three hours and updates
@@ -225,21 +225,30 @@ def detail_graph(request, building, res):
                                      'start_time':start_data}) +\
          '?junk=' + junk,
          'building': building.capitalize(),
+         'mode': mode,
          'res': res,
          'timedelta_ms': (RESOLUTION_DELTAS[res].days*24*3600 +\
-                              RESOLUTION_DELTAS[res].seconds)*1000
+                              RESOLUTION_DELTAS[res].seconds)*1000,
         }
 
     # Set the URLs for changing time periods.
     for time_period in ['day','week','month','year']:
         d[time_period+'_url'] = reverse('energyweb.graph.views.detail_graph',
                                         kwargs={'building':building,
+                                                'mode':mode,
                                                 'res':time_period})
+    # Set the URLs for changing modes
+    for mode_setting in ['cycle','diagnostic']:
+        d[mode_setting+'_url'] = reverse('energyweb.graph.views.detail_graph',
+                                        kwargs={'building':building,
+                                                'mode':mode_setting,
+                                                'res':res})
     # Change Building URLs
     for building in ['south','north','west','east',\
                          'sontag','atwood','case','linde']:
         d[building+'_url'] = reverse('energyweb.graph.views.detail_graph' ,
-                                     kwargs={'building':building,'res':res})
+                                     kwargs={'building':building,
+                                             'mode':mode,'res':res})
 
     return render_to_response('graph/detail_graphs.html',d,
         context_instance=RequestContext(request))

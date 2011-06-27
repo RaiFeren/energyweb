@@ -5,7 +5,6 @@ $(function () {
 
     var xy_pairs = {};
     var sensor_groups = null;
-    var mode = 'cycle';
     var desired_first_record = null;
     var first_time = true;
 
@@ -20,6 +19,25 @@ $(function () {
         // remove the graph's loading animation
         $('#graph').empty();
 	
+	var modeSwitch = $("#mode_type");
+	modeSwitch.empty();
+	var modeSettings = 
+	    '<form action=""><select name="mode"' +
+	    'OnChange="location.href=' +
+	    'mode.options[selectedIndex].value">' +
+	    '<option value="'+cycle_url+'"';
+	if (mode == 'cycle') {
+	    modeSettings += 'selected="selected"';
+	}
+	modeSettings += '> Cycle Mode </option>' +
+	    '<option value="'+diagnostic_url+'"';
+	if (mode == 'diagnostic') {
+	    modeSettings += 'selected="selected"';
+	}
+	modeSettings += '> Diagnostic Mode </option>'+
+		'</select></form>'
+	modeSwitch.append(modeSettings);
+
 	var options = $("#mode_settings");
 	options.empty();
 	// Enable the form for switching resolutions
@@ -144,7 +162,6 @@ $(function () {
 			setInterval(function() {
 			    
 			    $.getJSON(data_url, function(data) {
-				write_table(data);
 				// get the data from each cycle or sensor
 				/*switch(mode) {
 				case 'cycle':
@@ -231,7 +248,7 @@ $(function () {
 		    }
 		}
 	    },
-	    series: data_series, // Set data from the json data
+	    //series: data_series, // Set data from the json data
 	});
     }
 
