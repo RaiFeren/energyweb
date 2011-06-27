@@ -205,7 +205,7 @@ def static_graph_data(request, start, end, res):
 def download_csv(request, start, end, res):
     return data.download_csv(request, start, end, res)
 
-def detail_graphs(request, building, res):
+def detail_graph(request, building, res):
     '''
     A view returning the HTML for the Detailed Building graph.
     (This graph represents the last three hours and updates
@@ -214,9 +214,13 @@ def detail_graphs(request, building, res):
     # Get the current date.
     (start_data, junk) = data._generate_start_data( datetime.timedelta(0,0,0) )
 
-    d = {'data_url': reverse('energyweb.graph.views.detail_graphs_data', 
+    d = {'data_url': reverse('energyweb.graph.views.detail_graph_data', 
                              kwargs={'building': building,
-                                     'mode':'cycle',
+                                     'resolution':res,
+                                     'start_time':start_data}) +\
+         '?junk=' + junk,
+         'table_url': reverse('energyweb.graph.views.detail_table_data', 
+                             kwargs={'building': building,
                                      'resolution':res,
                                      'start_time':start_data}) +\
          '?junk=' + junk,
@@ -228,25 +232,36 @@ def detail_graphs(request, building, res):
 
     # Set the URLs for changing time periods.
     for time_period in ['day','week','month','year']:
-        d[time_period+'_url'] = reverse('energyweb.graph.views.detail_graphs',
+        d[time_period+'_url'] = reverse('energyweb.graph.views.detail_graph',
                                         kwargs={'building':building,
                                                 'res':time_period})
     # Change Building URLs
     for building in ['south','north','west','east',\
                          'sontag','atwood','case','linde']:
-        d[building+'_url'] = reverse('energyweb.graph.views.detail_graphs' ,
+        d[building+'_url'] = reverse('energyweb.graph.views.detail_graph' ,
                                      kwargs={'building':building,'res':res})
 
     return render_to_response('graph/detail_graphs.html',d,
         context_instance=RequestContext(request))
 
 
-def detail_graphs_data(request, building, mode, resolution, start_time):
+def detail_graph_data(request, building, resolution, start_time):
     '''
     A view returning the JSON data used to populate the Detailed graph.
     '''
     returnDictionary = data._get_detail_data(building,
-                                             mode,
+                                             resolution,
+                                             start_time)
+
+    json_serializer = serializers.get_serializer("json")()
+    return HttpResponse(simplejson.dumps(returnDictionary),
+                        mimetype='application/json')
+
+def detail_table_data(request, building, resolution, start_time):
+    '''
+    A view returning the JSON data used to populate the Detailed graph.
+    '''
+    returnDictionary = data._get_detail_table(building,
                                              resolution,
                                              start_time)
 

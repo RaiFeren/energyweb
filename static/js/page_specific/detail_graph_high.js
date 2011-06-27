@@ -13,17 +13,6 @@ $(function () {
 		  'ShortDash', 'ShortDot', 'ShortDashDot'];
     var colorchanges = [0, 10, -20, -10, 20, -30];
 
-    function rnd(x)
-    {
-	// (Used to format numbers in the table)
-        if (x) {
-            return x.toFixed(2);
-        }
-        else {
-            return x;
-        }
-    }
-
     // Clear the graph and put the options up
     function set_mode_settings(data)
     {
@@ -70,79 +59,6 @@ $(function () {
 	}
     }
     
-    function write_table(data)
-    {
-        var table = $('#energystats');
-        switch (mode) 
-	{
-        case 'diagnostic':
-            var data_source = data.diagnosticTable;
-            var data_row = data.diagnosticRow;
-            break;
-        case 'cycle':
-            var data_source = data.cycleTable;
-            var data_row = data.cycleRow;
-            break;
-        }
-        
-
-        if (first_time) {
-            table.empty();
-            var table_head = $('#trhead');
-            table_head.empty();
-            switch (mode) 
-	    {
-            case 'cycle':
-                table_head.append('<th>Cycle</th>'+
-                    '<th>Average This Cycle (kW)</th>'+
-                    '<th>Integrated Power This Cycle (kW*hr)</th>');
-		break;
-            case 'diagnostic':
-                table_head.append('<th>Sensor</th>'+
-                    '<th>Average This Minute (kW)</th>'+
-	            '<th>Average This Interval (kW)</th>'+
-	            '<th>Integrated Power This Interval (kW*hr)</th>');
-                break;
-            }
-        }
-   
-        // Write data to each row
-	$.each(data_source, function(source,values) {
-	    // Make the row
-	    if (first_time) {
-		table.append('<tr id="row'+source+'"></tr>');
-                var table_row = $('#row'+source);
-		var source_name = ''
-		switch(mode)
-		{
-		case 'cycle':
-		    $.each(cycle_names, function(index,value) {
-			if (index == parseInt(source)) {
-			    source_name = value;
-			}
-		    });
-		    break;
-		default:
-		    source_name = source;
-		}
-
-                table_row.append(
-                    '<td id="name'+source+'">'
-                        +data.building + ' ' + source_name
-                        +'</td>');
-                $.each(data_row, function(index,type) {
-                    table_row.append(
-                        '<td id="'+type+source+'">&nbsp;</td>');
-                });
-	    }
-	    
-	    // Insert data values
-	    $.each(values, function(type,statistic) {
-		$('#'+type+source).empty();
-		$('#'+type+source).append( rnd(statistic) );
-	    });
-	});
-    }
 
     function getdata_json_cb(data) {
         // Given data from the server, make a graph.
@@ -158,8 +74,6 @@ $(function () {
 	sensor_groups = data.sensor_groups;
 
         set_mode_settings(data);
-        write_table(data);
-
 
 	switch(mode)
 	{
@@ -324,12 +238,12 @@ $(function () {
 
     function refreshdata() {
         // Calls built in functions to get JSON data then pass it to a parsing function
+        refresh_table_data(); // See detail_table.js
         $.getJSON(data_url, getdata_json_cb);
     }
 
     function mainloop() {
         refreshdata()
-        //setTimeout(mainloop, 10000);
     }
 
     // Make the mode selector work

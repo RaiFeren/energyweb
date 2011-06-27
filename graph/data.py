@@ -401,7 +401,7 @@ def download_csv(request, start, end, res):
     return HttpResponse(data,
                         mimetype='application/csv')
 
-def _get_detail_data(building, mode, resolution, start_time):
+def _get_detail_data(building, resolution, start_time):
     '''
     Creates the dictionary for detail view
     '''
@@ -417,9 +417,6 @@ def _get_detail_data(building, mode, resolution, start_time):
                         'building_color': cur_building[2],
                         'res': resolution,
                         }
-
-    # Modify the return Dictionary with data to make the tables.
-    _get_detail_table(returnDictionary, cur_building, resolution, start_time)
 
     for start_time_delta in range(len(CYCLE_START_DELTAS[resolution])):
 
@@ -488,7 +485,7 @@ def _get_detail_data(building, mode, resolution, start_time):
 
     return returnDictionary
 
-def _get_detail_table(dataDictionary, building, resolution, start_time):
+def _get_detail_table(building, resolution, start_time):
     '''
     Returns two data tables.
     Cycle Table:
@@ -496,6 +493,18 @@ def _get_detail_table(dataDictionary, building, resolution, start_time):
     Diagnostic Table:
         Sensor ID | Avg. This Minute | Avg. This Interval | Integrated Value
     '''
+    # Because transferring non-strings over gets annoying,
+    # this is how we'll get buildings
+    cur_building = None
+    for sg in SENSOR_GROUPS:
+        if sg[1].lower() == str(building): # check if identical names
+            cur_building = sg
+            
+    dataDictionary = {'graph_data':[],
+                      'building': building.capitalize(),
+                      'res': resolution,
+                      }
+    
     dataDictionary['cycleTable'] = {}
     dataDictionary['diagnosticTable'] = {}
 
