@@ -106,7 +106,7 @@ $(function () {
 		    curStyle = styles.shift();
 		    styles.push(curStyle);
 		}
-		alert(cycleData['total'][0][0] + ", " + cycleData['total'][0][1]);
+
 		data_series.push({
 		    name: cur_label,			    
 		    data: cycleData['total'],
@@ -194,7 +194,7 @@ $(function () {
 		    text: 'Time'
 		},
 		type: 'datetime',
-		min: data.desired_first_record,
+		//min: data.desired_first_record,
 		tickInterval: newTickOptions[0],
 		gridLineWidth: 2,
 		minorTickInterval: newTickOptions[1],
@@ -248,7 +248,7 @@ $(function () {
 		    }
 		}
 	    },
-	    //series: data_series, // Set data from the json data
+	    series: data_series, // Set data from the json data
 	});
     }
 
