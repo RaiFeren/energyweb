@@ -54,9 +54,10 @@ How to use git:
 
 How to Run:
 ---------
-    First off, make sure you are logged into the server as energy.
-    May need to execute
-        sudo su - energy
+    All files are kept in /var/local/energyweb
+    In order to access the database, use 
+       psql energy
+    while logged in as energy (sudo su - energy)       
 
     Once you're in...
 
@@ -69,32 +70,72 @@ How to Run:
         Stops all monitors
     ./dev.sh restart
         Restarts all monitors
+    NOTE: Any functions that edit the database (namely init) must be
+        run as energy.
 
     If the monitors stop working, do hard resets, then ssh in and
     ./dev restart
 
     manage.py is for interacting with the Django framework. As you
     might notice by looking at dev.sh, dev.sh simply calls manage.py
-    with various arguments. Look up Django to see how manage.py
-    works...
+    with various arguments.
 
-    ./backup.sh
-        Will backup the PostgreSQL database on the machine. 
-        Then saves the data in the format
-        energy.TIME.sql.gz where TIME is
-            4 digits for year
-            2 digits for month
-            2 digits for day
-            2 digits for minute
-            2 digits for hour
+    When any changes have been made to the model or views layer, must
+    run /etc/init.d/apache2 restart
+    This commend is unnecessary for Templates layer (html/css/js)
+
+   use the pg_dump function to dump the database into a file
 
 ==========
 STRUCTURE
 ==========
 
     -----
+    Overall:
+    -----
+        Diagram:
+
+        PostgreSQL database <-- Python (energymon.py)
+        \/
+        Python (data.py) <--> Python (views.py) <-- Python (urls.py)
+                                            \/
+        Javascript and CSS (static) <--  HTML (templates)
+
+        The system has three essential layers
+            Model - the PostgreSQL database
+            Views - the Django that handles the interaction between
+                the Models and Template. Determines what data users
+                can see.           
+            Template - HTML, CSS, and Javascript for rendering the
+                website. This is the only bit users directly interact with.
+            
+    -----
     Files:        
     -----
+
+        -----
+        Critical Files to Edit:
+        -----
+
+        settings.py
+
+        graph/management/commands/energymon.py
+
+        graph/constants.py
+        graph/views.py
+        graph/data.py
+        graph/urls.py
+        graph/context_processors.py
+ 
+        All html files in template/graph/
+        All css files in static/css/
+        All js files in static/js/page_specific/
+
+        See below for a description of what they do.
+
+        -----
+        All Files:
+        -----
 
         .gitignore - Lists the regexps for file names to ignore when
             committing to git.
@@ -106,15 +147,14 @@ STRUCTURE
         copy_to_django.sql - Apparently exists to transition from an
             older version of energyweb to the Django database. Unsure
             if it still has any purposeful functionality.
-        backup.sh - Script for backing up the server.
+        django.wsgi - Script that allows the django to interact
+            correctly with apache.
         dev.sh - Script for managing the server. Able to start, stop,
             and restart the monitors. Also can boot into testing mode.
         initial_data.json - Associates Dorms with colors, as well as
             identifying which sensors are with which dorms, what IP
             addresses each sensor has, and what the multiplicative
             factor is.
-
-        --- The following files are created by Django ---
 
         __init__.py - Must remain empty. Tells Python that directory
             should be considered a Python package. 
@@ -133,20 +173,27 @@ STRUCTURE
                 Python package.
             admin.py - Manages Administration part of the
                 database. Allows editing from within Django.
-            context_processors.py - Contains Regular Expressions so
-                Django can process URLs.
+            constants.py - contains exactly what the name says.
+            context_processors.py - Used to create global
+                contexts. Used to generate global variables such as
+                the URLs for the linkbar on top of all pages.
             daemon.py - Enables the Energy Monitor system to run in
                 the background.
+            data.py - Queries the database and organizes data into
+                formats usable by javascript plotting libraries, data
+                tables, etc.
             fake_rhizome_profiles.py - Contains dummied data for
                 testing. Resembles data from an Energy Monitor.
-            models.py - Defines database layout
+            models.py - Defines database layout.
             tests.py - Holds tests for use by manage.py in the root
-                folder. Is effectively ignorable, just created
-                by Django.
+                folder. Is effectively ignorable.
             urls.py - Contains regular expressions for parsing URLS
                 such that they can access the database
                 appropriately. 
-            views.py - Contains information on creating the webpages
+            views.py - Contains information on creating page specific
+                contexts and tells django which template to
+                render. Calls data.py to get information to fill in
+                these templates.
 
             --- --- ---
 
@@ -218,15 +265,6 @@ STRUCTURE
     ---------------
     Data Structures: 
     ---------------
-
-        The system has three essential layers
-            Model - the PostgreSQL database
-            Template - HTML, CSS, and Javascript for rendering the
-                website
-            Views - the Django that handles the interaction between
-                the Models and Template.
-
-        ----        
 
         Inside the Database, there are the following tables,
 
@@ -316,9 +354,6 @@ LIMITATIONS
 
     Revisable:
     ----
-        To download graph data from the web, user must input
-            timestamps and desired resolution by hand.
-        When downloading the data, json format is not human readable.
         Data is currently only stored on the server itself without backups.
         System is unable to recognize when a sensor is down, causing
             delays in troubleshooting
@@ -327,13 +362,10 @@ LIMITATIONS
 POSSIBLE IMPROVEMENTS
 ==========
 
-    Update software packages used (e.g. Python 2.6 change
-        to Python 2.7) 
     Make the code more modular for expand to more sensors 
 
     Re-design the website with all features in mind to create a
         efficient user experience 
-    Rework the download data script 
 
     Watch the data coming in and figure out if a sensor has gone
         crazy/offline then send notification in some way.
