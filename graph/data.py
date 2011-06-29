@@ -214,7 +214,13 @@ def _get_sensor_groups():
 ##############################
 
 def _query_averages(res,start_offset = 0):
-    all_averages = dict([[sid,None] for sid in SENSOR_IDS])
+    """
+    Gets the averages for a string res (needs to be a resolution type)
+    Returns them for all Sensors, in a dictionary with sensor ID as keys.
+    Start_offset is to be used for cycle_view. This should be the key of 
+    the list to use.
+    """
+    all_averages = dict([[sid,0] for sid in SENSOR_IDS])
 
     trunc_reading_time = None
         
@@ -253,8 +259,10 @@ def _get_averages():
 def _get_detail_averages(res):
     '''
     Gets the averages for detail graphs.
+    Gets it both for cycle and diagnostic modes.
     '''
     all_averages = dict([[sid,{}] for sid in SENSOR_IDS])
+    # Use start_offsets to mark each cycle
     for start_offset in range(len(CYCLE_START_DIFFS[res])):
         results = _query_averages(res,start_offset)
         for sid,value in results.iteritems():
@@ -282,7 +290,10 @@ def _integrate(start_dt,end_dt,res,splitSensors=True):
         def _acc_call(sg,x,y,rtn_obj):
             pass
         def _snr_call(sid,x,y,rtn_obj):
-            rtn_obj[sid] += y
+            try:
+                rtn_obj[sid] += y
+            except:
+                rtn_obj[sid] += 0
 
     else:
         watt_totals = dict([ [sg[0], 0] for sg in SENSOR_GROUPS])
@@ -443,26 +454,24 @@ def _get_detail_data(building, resolution, start_time):
 
         def _snr_call(sid,x,y,rtn_obj):
             if sid in rtn_obj.keys():
+                index = len(rtn_obj[sid])
+                for snr in rtn_obj.keys():
+                    try:
+                        y = y - rtn_obj[snr][index][-1]
+                    except:
+                        pass
                 rtn_obj[sid].append([x,y])
 
         def _acc_call(sg_id,x,y,rtn_obj):
-            try:
-                for sid in rtn_obj.keys():
-                    if not sid is 'total':
-                        rtn_obj['total'][-1][-1] += rtn_obj[sid][-1][-1]
-            except:
-                pass
+            if sg_id == cur_building[0]:
+                rtn_obj['total'][-1][1] += y
 
         _build_db_results(AUTO_RES_CONVERT[resolution],
                           start_dt, start_dt+RESOLUTION_DELTAS[resolution],
                           xy_pairs,
                           _x_call,_acc_call,_snr_call)
-        hadValues = False
-        for val in xy_pairs['total']:
-            if val[-1]:
-                hadValues = True
-                break
-        if len(xy_pairs['total']) > 0 and hadValues:
+
+        if len(xy_pairs['total']) > 0:
             returnDictionary['graph_data'].append(xy_pairs)
         
     # desired_first_record is our start_time in seconds
@@ -520,8 +529,23 @@ def _get_detail_table(building, resolution, start_time):
         dataDictionary['cycleTable'][str(cycle_id)] = \
             dict([['avg',0],['integrated',0]])
 
-    average_cycles = _get_detail_averages(resolution)
+    # Input all of the "Now" averages for Diagnostic
+    cur_cycles = _get_detail_averages('minute')
+    for sid in SENSOR_IDS_BY_GROUP[cur_building[0]]:
+        dataDictionary['diagnosticTable'][str(sid)]['now'] = \
+            cur_cycles[sid][0]
 
+    dataDictionary['debug'] = {}
+    # Input all of the "This Interval" for diagostic table.
+    average_cycles = _get_detail_averages(resolution)
+    for sid in SENSOR_IDS_BY_GROUP[cur_building[0]]:
+        dataDictionary['diagnosticTable'][str(sid)]['interval'] = \
+            average_cycles[sid][0]
+        dataDictionary['debug'][sid] = average_cycles[sid]
+
+
+
+    # Input Cycle Table's Values
     for cycle_id in dataDictionary['cycleTable'].keys():
         cid = int(cycle_id)
 
@@ -530,22 +554,20 @@ def _get_detail_table(building, resolution, start_time):
             CYCLE_START_DELTAS[resolution][cid].seconds - 
             CYCLE_START_DELTAS[resolution][cid].days*3600*24 )
 
+        # Integrate gives information back by building.
         integValues = _integrate(start_dt,
                                  start_dt+RESOLUTION_DELTAS[resolution],
                                  AUTO_RES_CONVERT[resolution],
                                  False)
         try:
             dataDictionary['cycleTable'][cycle_id]['integrated'] = \
-                integValues[building[0]]
+                integValues[cur_building[0]]
         except:
             dataDictionary['cycleTable'][cycle_id]['integrated'] = 0
-
+        # The Average getter gets by sensor group. Thus need to sum.
         for sid in SENSOR_IDS_BY_GROUP[cur_building[0]]:
-            try:
-                dataDictionary['cycleTable'][cycle_id]['avg'] += \
-                    average_cycles[sid][int(cycle_id)]
-            except:
-                dataDictionary['cycleTable'][cycle_id]['avg'] += 0
+            dataDictionary['cycleTable'][cycle_id]['avg'] += \
+                average_cycles[sid][int(cycle_id)]
         
     # Python doesn't shuffle order of lists...
     dataDictionary['cycleRow'] = ['avg',
