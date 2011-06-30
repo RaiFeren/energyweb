@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+'''
+    Holds data for the energyfakers.
+    Data is structured the same as a Rhizome Sensor output.
+    Each entry in the dictionary corresponds to a different sensor ID.
+'''
+
 FAKE_RHIZOME_PROFILES = {
     1: (
         '525453440006c706c80588046d029602d3081f0768064207b5a2074dd605e3d308d29908d70808d55b03c0e000',

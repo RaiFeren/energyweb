@@ -1,11 +1,12 @@
 """
-Contains regexs for the URLS.
-Used so the graphs can parse URL into input for the graphing functions
+    Contains regexs for the URLS.
+    Used so the graphs can parse URL into input for the graphing functions.
 """
 
 from django.conf.urls.defaults import *
 from django.conf import settings
 
+# $ allows for any thing to follow. Most notably junk fields to avoid cache issues
 urlpatterns = patterns('energyweb.graph.views',
     (r'^$', 'dynamic_graph_res'), # home page -- Dynamic graph
     (r'^dynamic_ac/$', 'dynamic_graph_ac'),

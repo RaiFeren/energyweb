@@ -4,7 +4,8 @@
     "model": "graph.sensorgroup",
     "fields": {
         "color": "00bd39",
-        "name": "Atwood"
+        "name": "Atwood",
+        "scope": "residential",
         }
     },
     {
@@ -12,7 +13,8 @@
         "model": "graph.sensorgroup",
 	"fields": {
 	    "color": "d100a0",
-	    "name": "Case"
+	    "name": "Case",
+            "scope": "residential",
 	}
     },
     {
@@ -20,7 +22,8 @@
 	"model": "graph.sensorgroup",
 	"fields": {
 	    "color": "B700FF",
-	    "name": "East"
+	    "name": "East",
+            "scope": "residential",
 	}
     },
     {
@@ -28,7 +31,8 @@
 	"model": "graph.sensorgroup",
 	"fields": {
 	    "color": "02BCFF",
-	    "name": "Linde"
+	    "name": "Linde",
+            "scope": "residential",
 	}
     },
     {
@@ -36,7 +40,8 @@
 	"model": "graph.sensorgroup",
 	"fields": {
 	    "color": "ff0000",
-	    "name": "North"
+	    "name": "North",
+            "scope": "residential",
 	}
     },
     {
@@ -44,7 +49,8 @@
 	"model": "graph.sensorgroup",
 	"fields": {
 	    "color": "FFDD02",
-	    "name": "Sontag"
+	    "name": "Sontag",
+            "scope": "residential",
 	}
     },
     {
@@ -52,7 +58,8 @@
 	"model": "graph.sensorgroup",
 	"fields": {
 	    "color": "a63f00",
-	    "name": "South"
+	    "name": "South",
+            "scope": "residential",
 	}
     },
     {
@@ -60,7 +67,8 @@
 	"model": "graph.sensorgroup",
 	"fields": {
 	    "color": "000000",
-	    "name": "West"
+	    "name": "West",
+            "scope": "residential",
 	}
     },
     {
@@ -68,7 +76,8 @@
         "model": "graph.sensorgroup",
         "fields": {
             "color": "EE7D05",
-	    "name": "AcTest0"
+	    "name": "AcTest0",
+            "scope": "academic",
 	}
     },
     {
@@ -76,7 +85,8 @@
 	"model": "graph.sensorgroup",
 	"fields": {
 	    "color": "0B5F00",
-	    "name": "AcTest1"
+	    "name": "AcTest1",
+            "scope": "academic",
 	}
     },
     {
@@ -84,7 +94,8 @@
 	"model": "graph.sensorgroup",
 	"fields": {
 	    "color": "909090",
-	    "name": "AcTest2"
+	    "name": "AcTest2",
+            "scope": "academic",
 	}
     },
     {
@@ -92,7 +103,8 @@
 	"model": "graph.sensorgroup",
 	"fields": {
 	    "color": "0202FF",
-	    "name": "AcTest3"
+	    "name": "AcTest3",
+            "scope": "academic",
 	}
     },
     {

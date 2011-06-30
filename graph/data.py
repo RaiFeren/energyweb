@@ -1,3 +1,10 @@
+'''
+    Queries the database, and returns data for rendering to websites.
+
+    Usage:
+    User requests a URL. URL is parsed by urls.py into arguments for views.py.
+    Views then forwards these arguments to these functions to get the data.
+'''
 from functools import wraps
 
 from django.core.urlresolvers import reverse

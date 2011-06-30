@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-
 '''
 This is a slight modification of a daemonizing class written by Sander
 Marechal:
@@ -15,7 +14,6 @@ he made:
 The only real alteration made was the addition of argument-passing 
 capability between __init__ and run, and that was only a line or two.
 '''
-
 
 import sys, os, time, atexit
 from signal import SIGTERM 

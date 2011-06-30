@@ -1,3 +1,15 @@
+'''
+    Defines contexts shared across all templates.
+    (definition- Context: Variables for the Django Templates)
+    Can be overwritten by contexts generated in views.py.
+
+    important functions:
+        reverse(FUNCTION_NAME_IN_views.py, KWARGS_dictionary)
+            generates the URL. reverse as in "Reverse the regular expression"
+            to generate instead of matching patterns.
+            See urls.py for the regexs.
+'''
+
 def media_url(request):
     '''
     Return the URL used for site media.
@@ -29,4 +41,3 @@ def nav_urls(request):
             'table_all_url': reverse('energyweb.graph.views.energy_table_all'),
             'table_res_url': reverse('energyweb.graph.views.energy_table_res'),
             }
-

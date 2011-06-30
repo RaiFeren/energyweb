@@ -1,11 +1,30 @@
+'''
+    Defines the database tables.
+
+    Lists all of the various fields of each table.
+
+    Member functions are generally convenience functions for
+    inputting data or querying data.
+
+'''
+
 from django.db import models
 from django.conf import settings
 from datetime import datetime, timedelta
 
 
 class SensorGroup(models.Model):
+    '''
+    Stores information about a sensor group (aka: building).
+    Does NOT store what sensors belong to it.
+    '''
+    SCOPE_TYPES = ['residential','academic']
+    
     name = models.CharField(max_length=32, unique=True)
     color = models.CharField(max_length=6) # color rendered on graph
+    scope = models.CharField(max_length=20,
+                             choices=[(t, t) for t in SCOPE_TYPES])
+    # choices needs a short name and verbose name.
 
     def __unicode__(self):
         return self.name

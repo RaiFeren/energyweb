@@ -1,5 +1,5 @@
 '''
-Used for various constants
+Used for various constants shared across the files.
 '''
 
 import calendar, datetime, simplejson, time
