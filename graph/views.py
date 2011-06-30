@@ -32,8 +32,70 @@ def energy_table(request):
     return render_to_response('graph/energy_table.html', 
         {'sensor_groups': data.SENSOR_GROUPS,
          'data_url': reverse('energyweb.graph.views.statistics_table_data'
-                             ) + '?junk=' + junk},
+                             ) + '?junk=' + junk,
+         'scope': 'residential'},
         context_instance=RequestContext(request))
+
+def energy_table_ac(request):
+    '''
+    A view returning the html for the dynamic table with only
+    academic buildings
+    '''
+    (startTime, junk) = \
+        data._generate_start_data( datetime.timedelta(0,3600*3,0) )
+
+    if SHOW_ACADEMIC:
+        return render_to_response('graph/table_all.html',
+                                  {'sensor_groups': data.ACADEMIC_SENSORGROUPS,
+                                   'data_url': reverse('energyweb.graph.views.statistics_table_data'
+                                                       ) + '?junk=' + junk,
+                                   'scope': 'academic',
+                                   'dynamic_graph_url': reverse('energyweb.graph.views.dynamic_graph_ac'),
+                                   'energy_table_url':reverse('energyweb.graph.views.energy_table_ac')},
+                                  context_instance=RequestContext(request))
+    else:
+        return energy_table(request)
+
+def energy_table_all(request):
+    '''
+    A view returning the html for the dynamic table with all
+    buildings
+    '''
+    (startTime,junk) =\
+        data._generate_start_data( datetime.timedelta(0,3600*3,0) )
+
+    if SHOW_ACADEMIC:
+        return render_to_response('graph/table_all.html',
+                                  {'sensor_groups': data.SENSOR_GROUPS,
+                                   'data_url': reverse('energyweb.graph.views.statistics_table_data'
+                                                       ) + '?junk=' + junk,
+                                   'scope':'all',
+                                   'dynamic_graph_url': reverse('energyweb.graph.views.dynamic_graph_all'),
+                                   'energy_table_url':reverse('energyweb.graph.views.energy_table_all')},
+                                  context_instance=RequestContext(request))
+    else:
+        return energy_table(request)
+
+def energy_table_res(request):
+    '''
+    A view returning the html for the dynamic table with only
+    residential buildings
+    '''
+    (startTime,junk) =\
+        data._generate_start_data( datetime.timedelta(0,3600*3,0) )
+
+    if SHOW_ACADEMIC:
+        return render_to_response('graph/table_all.html',
+                                  {'sensor_groups': data.RESIDENTIAL_SENSORGROUPS,
+                                   'data_url': reverse('energyweb.graph.views.statistics_table_data'
+                                                       ) + '?junk=' + junk,
+                                   'scope': 'residential',
+                                   'dynamic_graph_url': reverse('energyweb.graph.views.dynamic_graph_res'),
+                                   'energy_table_url':reverse('energyweb.graph.views.energy_table_res')},
+                                  context_instance=RequestContext(request))
+    else:
+        return energy_table(request)
+
 
 def statistics_table_data(request):
     '''
@@ -73,8 +135,78 @@ def dynamic_graph(request):
         {'sensor_groups': data.SENSOR_GROUPS,
          'data_url': reverse('energyweb.graph.views.dynamic_graph_data', 
                              kwargs={'input_data': start_date}) +\
-             '?junk=' + junk},
+             '?junk=' + junk,
+         'scope':'residential'},
         context_instance=RequestContext(request))
+
+def dynamic_graph_ac(request):
+    '''
+    Returns the HTML for the dynamic graph with only academic
+    buildings.
+    '''
+    # Get all data from last three hours until now
+    (start_date, junk) = \
+        data._generate_start_data( datetime.timedelta(0,3600*2,0) )
+
+    if SHOW_ACADEMIC:
+        return render_to_response('graph/dynamic_all.html',
+                                  {'sensor_groups': data.SENSOR_GROUPS,
+                                   'data_url': reverse('energyweb.graph.views.dynamic_graph_data',
+                                                       kwargs={'input_data': start_date}) +\
+                                       '?junk=' + junk,
+                                   'scope':'academic',
+                                   'dynamic_graph_url': reverse('energyweb.graph.views.dynamic_graph_ac'),
+                                   'energy_table_url':reverse('energyweb.graph.views.energy_table_ac')},
+                                  context_instance=RequestContext(request))
+    else:
+        return dynamic_graph(request)
+
+def dynamic_graph_all(request):
+    '''
+    Returns the HTML for the dynamic graph with all
+    buildings.
+    '''
+    # Get all data from last three hours until now
+    (start_date, junk) = \
+        data._generate_start_data( datetime.timedelta(0,3600*2,0) )
+
+    if SHOW_ACADEMIC:
+        return render_to_response('graph/dynamic_all.html',
+                                  {'sensor_groups': data.SENSOR_GROUPS,
+                                   'data_url': reverse('energyweb.graph.views.dynamic_graph_data',
+                                                       kwargs={'input_data': start_date}) +\
+                                       '?junk=' + junk,
+                                   'scope':'all',
+                                   'dynamic_graph_url': reverse('energyweb.graph.views.dynamic_graph_all'),
+                                   'energy_table_url':reverse('energyweb.graph.views.energy_table_all')},
+                                  context_instance=RequestContext(request))
+    else:
+        return dynamic_graph(request)
+
+def dynamic_graph_res(request):
+    '''
+    Returns the HTML for the dynamic graph with only academic
+    buildings.                                                                                  
+    '''
+    # Get all data from last three hours until now
+    (start_date, junk) = \
+        data._generate_start_data( datetime.timedelta(0,3600*2,0) )
+
+    if SHOW_ACADEMIC:
+        return render_to_response('graph/dynamic_all.html',
+                                  {'sensor_groups': data.SENSOR_GROUPS,
+                                   'data_url': reverse('energyweb.graph.views.dynamic_graph_data',
+                                                       kwargs={'input_data': start_date}) +\
+                                       '?junk=' + junk,
+                                   'scope':'residential',
+                                   'dynamic_graph_url': reverse('energyweb.graph.views.dynamic_graph_res'),
+                                   'energy_table_url':reverse('energyweb.graph.views.energy_table_res')},
+                                  context_instance=RequestContext(request))
+    else:
+        return dynamic_graph(request)
+
+
+
 
 
 def dynamic_graph_data(request, input_data):
@@ -467,8 +599,3 @@ if settings.DEBUG:
 
     dynamic_graph_data_html = _html_wrapper('dynamic_graph_data')
     static_graph_data_html = _html_wrapper('static_graph_data')
-
-
-def map_test(request):
-    ''' Testing for map workingnes...'''
-    return render_to_response('graph/map_test.html', context_instance=RequestContext(request));

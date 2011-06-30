@@ -163,6 +163,10 @@ class EnergyMonDaemon(Daemon):
         (See file and class docstrings.)
         '''
             
+        def readingFilter(value):
+            ''' Filters out excessively high readings '''
+            return value*(value<settings.THRESHOLD)
+
         logging.basicConfig(filename=(settings.MON_LOG_FILE_TEMPL % sensor_id),
             format=settings.LOG_FORMAT, datefmt=settings.LOG_DATEFMT)
         self.set_debugging()

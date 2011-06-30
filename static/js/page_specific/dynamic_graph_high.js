@@ -6,6 +6,11 @@ $(function () {
     var sg_xy_pairs = {};
     var sensor_groups = null;
 
+    // TODO: Get these keys from the database!
+    // Must be a map to use the "in" functionality efficiently.
+    var ac_groups = {"9":0,"10":0,"11":0,"12":0};
+    var res_groups = {"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0};
+
     function getdata_json_cb(data) {
         // Given data from the server, make a graph.
 	if (data.no_results) {
@@ -21,20 +26,41 @@ $(function () {
 
 	// Get the xy points, color, and label for each sensor group	
         $.each(sensor_groups, function(index,cur_sg) {
-            group_id = cur_sg[0];
-            sg_xy_pairs[group_id] = data.sg_xy_pairs[group_id];
-	    
-	    data_series.push({
-		name: cur_sg[1],
-		data: sg_xy_pairs[group_id]
-	    });
-	    data_colors.push('#' + cur_sg[2]);
+	    var plot = false;
+	    switch(scope) {
+	    case 'all':
+		plot = true; break;
+	    case 'academic':
+		if (cur_sg[0] in ac_groups)
+		{ 
+		    plot = true; 
+		}
+		break;
+	    case 'residential':
+		if (cur_sg[0] in res_groups)
+		{ 
+		    plot = true; 
+		}
+		break;
+	    }	    
+
+	    if (plot) {
+		group_id = cur_sg[0];
+		sg_xy_pairs[group_id] = data.sg_xy_pairs[group_id];
+		
+		data_series.push({
+		    name: cur_sg[1],
+		    data: sg_xy_pairs[group_id]
+		});
+		data_colors.push('#' + cur_sg[2]);
+	    }
         });
 
 	// Clear the loading animation now
 	// that we are about to show the graph:
 	$('#graph').empty();
 
+	// MAGIC: 2 hours is the start time.
 	var newTickOptions = tickhelper(2*3600*1000);
 
 	// Actually make the graph:
@@ -53,9 +79,13 @@ $(function () {
 
 			    $.getJSON(data_url, function(data) {
 				// Replace data for each sensor
+				
 				$.each(sensor_groups, function(index, cur_sg) {
 				    group_id = cur_sg[0];
-				    chart_series[index].addPoint(data.sg_xy_pairs[group_id].pop());
+				    if (chart_series[index]) {
+					chart_series[index].addPoint(
+					    data.sg_xy_pairs[group_id].pop());
+				    }
 				});
 			    });
 			}, 10000); // time between redraws in milliseconds
@@ -92,6 +122,7 @@ $(function () {
 		title: {
 		    text: 'Power (kW)'
 		},
+		min: 0,
 		plotLines: [{
 		    value: 0,
 		    width: 1,

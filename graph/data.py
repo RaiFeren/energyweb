@@ -71,10 +71,6 @@ class CustomGraphForm(forms.Form):
         + [(res_choice, PowerAverage.AVERAGE_TYPE_DESCRIPTIONS[res_choice])
            for res_choice in RES_LIST]
     )
-
-
-
-        
     
     start = forms.SplitDateTimeField(
         input_date_formats=DATE_INPUT_FORMATS,
@@ -464,7 +460,10 @@ def _get_detail_data(building, resolution, start_time):
 
         def _acc_call(sg_id,x,y,rtn_obj):
             if sg_id == cur_building[0]:
-                rtn_obj['total'][-1][1] += y
+                try:
+                    rtn_obj['total'][-1][1] += y
+                except:
+                    rtn_obj['total'][-1][1] += 0
 
         _build_db_results(AUTO_RES_CONVERT[resolution],
                           start_dt, start_dt+RESOLUTION_DELTAS[resolution],
@@ -667,3 +666,5 @@ def _build_db_results(res,start_dt,end_dt,
 
 
 (SENSOR_GROUPS, SENSOR_IDS, SENSOR_IDS_BY_GROUP) = _get_sensor_groups()
+RESIDENTIAL_SENSORGROUPS = SENSOR_GROUPS[:8]
+ACADEMIC_SENSORGROUPS = SENSOR_GROUPS[8:]

@@ -1,5 +1,10 @@
 # Django settings for energyweb project.
 
+# TODO: Magic number. Need the actual max reasonable value for Watts drawn
+# Number chosen because its approximately 2^{17} 
+# And Filters are necessary when unsigned ints are negative.
+THRESHOLD = 130000
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 

@@ -10,10 +10,10 @@ def nav_urls(request):
     Return URLs used in generating the navigation bar.
     '''
     from django.core.urlresolvers import reverse
-    return {'dynamic_graph_url': reverse('energyweb.graph.views.dynamic_graph'),
+    return {'dynamic_graph_url': reverse('energyweb.graph.views.dynamic_graph_res'),
             'static_graph_url': reverse('energyweb.graph.views.static_graph'),
             'status_url': reverse('energyweb.graph.views.mon_status'),
-            'energy_table_url': reverse('energyweb.graph.views.energy_table'),
+            'energy_table_url': reverse('energyweb.graph.views.energy_table_res'),
             'detail_url': reverse('energyweb.graph.views.detail_graph' ,
                                   kwargs={'building':'east','mode':'cycle',
                                           'res':'day'}),
@@ -22,5 +22,11 @@ def nav_urls(request):
             'admin_url': '/admin/',
             'logout_url': reverse('energyweb.graph.views.logout'),
             'change_password_url': reverse('energyweb.graph.views.change_password'),
+            'dynamic_ac_url': reverse('energyweb.graph.views.dynamic_graph_ac'),
+            'dynamic_all_url': reverse('energyweb.graph.views.dynamic_graph_all'),
+            'dynamic_res_url': reverse('energyweb.graph.views.dynamic_graph_res'),
+            'table_ac_url': reverse('energyweb.graph.views.energy_table_ac'),
+            'table_all_url': reverse('energyweb.graph.views.energy_table_all'),
+            'table_res_url': reverse('energyweb.graph.views.energy_table_res'),
             }
 

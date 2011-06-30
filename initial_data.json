@@ -1,68 +1,100 @@
 [
     {
-        "pk": 1, 
-        "model": "graph.sensorgroup", 
-        "fields": {
-            "color": "00bd39", 
-            "name": "Atwood"
+    "pk": 1,
+    "model": "graph.sensorgroup",
+    "fields": {
+        "color": "00bd39",
+        "name": "Atwood"
         }
-    }, 
+    },
     {
-        "pk": 2, 
-        "model": "graph.sensorgroup", 
-        "fields": {
-            "color": "0776a0", 
-            "name": "Case"
-        }
-    }, 
+        "pk": 2,
+        "model": "graph.sensorgroup",
+	"fields": {
+	    "color": "d100a0",
+	    "name": "Case"
+	}
+    },
     {
-        "pk": 3, 
-        "model": "graph.sensorgroup", 
-        "fields": {
-            "color": "6600cc", 
-            "name": "East"
-        }
-    }, 
+        "pk": 3,
+	"model": "graph.sensorgroup",
+	"fields": {
+	    "color": "B700FF",
+	    "name": "East"
+	}
+    },
     {
-        "pk": 4, 
-        "model": "graph.sensorgroup", 
-        "fields": {
-            "color": "d100a0", 
-            "name": "Linde"
-        }
-    }, 
+        "pk": 4,
+	"model": "graph.sensorgroup",
+	"fields": {
+	    "color": "02BCFF",
+	    "name": "Linde"
+	}
+    },
     {
-        "pk": 5, 
-        "model": "graph.sensorgroup", 
-        "fields": {
-            "color": "ff0000", 
-            "name": "North"
-        }
-    }, 
+        "pk": 5,
+	"model": "graph.sensorgroup",
+	"fields": {
+	    "color": "ff0000",
+	    "name": "North"
+	}
+    },
     {
-        "pk": 6, 
-        "model": "graph.sensorgroup", 
-        "fields": {
-            "color": "ffa000", 
-            "name": "Sontag"
-        }
-    }, 
+        "pk": 6,
+	"model": "graph.sensorgroup",
+	"fields": {
+	    "color": "FFDD02",
+	    "name": "Sontag"
+	}
+    },
     {
-        "pk": 7, 
-        "model": "graph.sensorgroup", 
-        "fields": {
-            "color": "a63f00", 
-            "name": "South"
-        }
-    }, 
+        "pk": 7,
+	"model": "graph.sensorgroup",
+	"fields": {
+	    "color": "a63f00",
+	    "name": "South"
+	}
+    },
     {
-        "pk": 8, 
-        "model": "graph.sensorgroup", 
+        "pk": 8,
+	"model": "graph.sensorgroup",
+	"fields": {
+	    "color": "000000",
+	    "name": "West"
+	}
+    },
+    {
+        "pk": 9,
+        "model": "graph.sensorgroup",
         "fields": {
-            "color": "000000", 
-            "name": "West"
-        }
-    }, 
+            "color": "EE7D05",
+	    "name": "AcTest0"
+	}
+    },
+    {
+        "pk": 10,
+	"model": "graph.sensorgroup",
+	"fields": {
+	    "color": "0B5F00",
+	    "name": "AcTest1"
+	}
+    },
+    {
+        "pk": 11,
+	"model": "graph.sensorgroup",
+	"fields": {
+	    "color": "909090",
+	    "name": "AcTest2"
+	}
+    },
+    {
+        "pk": 12,
+	"model": "graph.sensorgroup",
+	"fields": {
+	    "color": "0202FF",
+	    "name": "AcTest3"
+	}
+    },
     {
         "pk": 1, 
         "model": "graph.sensor", 
@@ -218,6 +250,54 @@
             "factor": 6.0, 
             "port": 4001
         }
+    },
+    {
+        "pk": 14,
+	"model": "graph.sensor",
+	"fields": {
+	    "three_phase": false,
+	        "name": "1",
+		    "ip": "72.31.10.74",
+		        "sensor_group": 9,
+			    "factor": 6.0,
+			        "port": 4001
+				}
+    },
+    {
+        "pk": 15,
+	"model": "graph.sensor",
+	"fields": {
+	    "three_phase": false,
+	        "name": "1",
+		    "ip": "72.31.10.75",
+		        "sensor_group": 10,
+			    "factor": 6.0,
+			        "port": 4001
+				}
+    },
+    {
+        "pk": 16,
+	"model": "graph.sensor",
+	"fields": {
+	    "three_phase": false,
+	        "name": "1",
+		    "ip": "72.31.10.76",
+		        "sensor_group": 11,
+			    "factor": 6.0,
+			        "port": 4001
+				}
+    },
+    {
+        "pk": 17,
+	"model": "graph.sensor",
+	"fields": {
+	    "three_phase": false,
+	        "name": "1",
+		    "ip": "72.31.10.77",
+		        "sensor_group": 12,
+			    "factor": 6.0,
+			        "port": 4001
+				}
     },
     {
         "pk": 1, 

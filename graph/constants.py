@@ -5,7 +5,10 @@ Used for various constants
 import calendar, datetime, simplejson, time
 
 # Whether or not to report any academic data or not:
-SHOW_ACADEMIC = False
+SHOW_ACADEMIC = True
+
+RESIDENTIAL_SENSORGROUP_IDS = [1, 2, 3, 4, 5, 6, 7, 8]
+ACADEMIC_SENSORGROUP_IDS = [9, 10, 11, 12]
 
 # If a full graph has this many points or fewer, show the individual
 # points.  (Otherwise only draw the lines.)

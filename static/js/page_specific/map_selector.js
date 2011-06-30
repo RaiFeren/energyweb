@@ -3,7 +3,8 @@ $(function () {
 
     // Buildings are defined as rectangles. 
     // Defined as xy pairs, [Top Left, Bottom Right, redirectURL, HOVER]
-    // HOVER gives the top left corner of the hover image, and its URL.
+    // HOVER gives the center of the hover indicator, and its color in hex.
+
     var buildings = {
 	'Olin':[[10,35],[22,75],null,null],
 	'Beckman':[[23,45],[44,65],null,null],
@@ -16,24 +17,24 @@ $(function () {
 	'Platt':[[210,5],[255,40], null,null],
 	'Hoch':[[210,65],[255,100],null,null],
 	'South':[[283,10],[320,40], south_url,
-		 [[272,0],MEDIA_URL + 'img/south.png']],
+		 [[300,23],'#A63F00']],
 	'West': [[283,60],[320,100], west_url,
-		 [[270,54],MEDIA_URL + 'img/west.png']],
+		 [[300,80],'#000000']],
 	'North':[[335,10],[370,40], north_url,
-		 [[323,0],MEDIA_URL + 'img/north.png']],
+		 [[350,23],'#FF0000']],
 	'East': [[335,60],[370,100], east_url,
-		 [[323,57],MEDIA_URL + 'img/east.png']],
+		 [[350,80],'#B700FF']],
 	'LAC': [[380,10],[425,45], null,null],
 	'Sontag': [[450,10],[490,50], sontag_url,
-		   [[441,5],MEDIA_URL + 'img/sontag.png']],
+		   [[468,30],'#FFDD02']],
 	'Atwood': [[450,75],[488,110], atwood_url,
-		   [[438,65],MEDIA_URL + 'img/atwood.png']],
+		   [[468,92],'#00bd39']],
 	'Linde':[[538,35],[567,75], linde_url,
-		 [[525,23],MEDIA_URL + 'img/linde.png']],
+		 [[552,52],'#02BCFF']],
 	'Case': [[508,75],[547,115], case_url,
-		 [[494,68],MEDIA_URL + 'img/case.png']],
+		 [[526,96],'#D100A0']],
     };
-    
+    var cur_build = null;
   
     function array_index_of(ar, x) {
         // (IE doesn't have Array.indexOf)
@@ -87,49 +88,68 @@ $(function () {
 	return [x,y]
     }
 
+    function unhexify(color) {
+	// Converts a hex color to rgba tuple.
+	var r = parseInt(color.slice(1,3),16);
+	var g = parseInt(color.slice(3,5),16);
+	var b = parseInt(color.slice(5,7),16);
+	return 'rgba(' +r+ ',' +g+ ',' +b+ ',0.5)';
+    }
 
     function draw_map(camp_map) {
 	// Declare that we're using a 2d canvas.
 	var context = camp_map.getContext("2d");
         // resets the map
-	context.width = context.width; 
+	context.clearRect(0, 0, camp_map.width, camp_map.height);
+	context.beginPath();
         // Draw the map itself
 	var img = new Image();
 	img.src =  MEDIA_URL + 'img/MuddMap.png';
 	img.onload = function() {
 	    context.drawImage(img,0,0);
 	};
+/*	$.each(buildings, function(name,dimensions) {
+	    if (name == building) {
+		context.fillStyle = unhexify(dimensions[3][1]);
+		context.arc(dimensions[3][0][0],dimensions[3][0][1],
+			    25,0,2*Math.PI,true);
+		context.fill();
+	    }});*/
     }
 
     function map_hover_handler(e){
 	var draw = false;
-
 	var camp_map = document.getElementById("campMap");
 	var context = camp_map.getContext("2d");
 
 	var spot = getCursorPosition(e);
 	$.each(buildings, function(name,dimensions) {
+	    if (name == building) {
+
+	    }
 	    if (spot[0] > dimensions[0][0]
 		&& spot[0] < dimensions[1][0] 
 		&& spot[1] > dimensions[0][1] 
 		&& spot[1] < dimensions[1][1]) {
-
-		context.font = "bold 12px sans-serif";
-		context.fillText(name, 25, 125);
 		draw = true;
-		if (dimensions[3] != null) {
-		    var img = new Image();
-		    img.src =  dimensions[3][1]
-		    img.onload = function() {
-			context.drawImage(img,
-					  dimensions[3][0][0],
-					  dimensions[3][0][1]);
-		    };
+		if (cur_build != name) {
+		    context.font = "bold 12px sans-serif";
+		    context.fillText(name, 25, 125);
+
+		    if (dimensions[3] != null) {
+			context.fillStyle = unhexify(dimensions[3][1]);
+			context.arc(dimensions[3][0][0],dimensions[3][0][1],
+				    25,0,2*Math.PI,true);
+			context.fill();
+		    }
+		    cur_build = name;
 		}
 	    }
 	});
 	if (draw == false) {
 	    draw_map(camp_map);
+	    cur_build = null;
+	    context.fillStyle = '#000000';
 	}
     }
 
@@ -149,7 +169,7 @@ $(function () {
 		if (dimensions[2]) {
 		    window.location = dimensions[2];
 		} else {
-		    alert("This building doesn't have a page yet!");
+		    alert(name + " doesn't have a page yet!");
 		}
 	    }
 	});

@@ -55,6 +55,11 @@ ul#subnavbar li
     display: inline;
     list-style-type: none;
 }
+
+ul#subnavbar *
+{
+    font-size: 14px;
+}
 /* END Navigation css */
 
 ul#navbar2

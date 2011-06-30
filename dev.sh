@@ -30,7 +30,7 @@ if [ "$1" == "init" ] ; then
         && echo_and_do "python manage.py syncdb" \
         && echo_and_do "python manage.py develdb"
 else
-    for i in {1..13} ; do
+    for i in {1..17} ; do
         echo_and_do "python manage.py energymon $i $1"
         echo_and_do "python manage.py energyfaker $i $1"
     done

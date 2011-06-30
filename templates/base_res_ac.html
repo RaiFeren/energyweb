@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block morehead %}
+{% endblock %}
+{% block content %}
+<ul id="subnavbar">
+  <li><a href="{% block academic_url %}{% endblock %}">Academics</a></li>
+  | <li><a href ="{% block residential_url %}{% endblock %}">Residential</a></li>
+  | <li><a href="{% block everything_url %}{% endblock %}">All</a></li>
+</ul>
+{% block mainbody %}
+{% endblock %}
+{% endblock %}

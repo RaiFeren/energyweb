@@ -1,0 +1,26 @@
+{% extends "base_res_ac.html" %}
+
+{% block title %}Energy Usage at Mudd{% endblock %}
+
+{% block morehead %}
+<link rel="stylesheet" href="{{ MEDIA_URL }}css/graph.css" type="text/css" media="screen" />
+<script language="javascript" type="text/javascript">
+    var MEDIA_URL = "{{ MEDIA_URL }}";
+    var data_url = "{{ data_url }}";
+    var sensor_group_length = "{{ sensor_groups|length }}";
+    var scope = "{{ scope }}";
+</script>
+<!-- <script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}js/page_specific/dynamic_graph.js"></script> -->
+<script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}js/page_specific/tickhelper.js"></script>
+<script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}js/page_specific/dynamic_graph_high.js"></script>
+{% endblock %}
+
+{% block academic_url %}{{ dynamic_ac_url }}{% endblock %}
+{% block residential_url %}{{ dynamic_res_url }}{% endblock %}
+{% block everything_url %}{{ dynamic_all_url }}{% endblock %}
+
+{% block mainbody %}
+
+<div id="graph"></div>
+
+{% endblock %}
