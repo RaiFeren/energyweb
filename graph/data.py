@@ -316,7 +316,7 @@ def _integrate(start_dt,end_dt,res,splitSensors=True):
     if not watt_totals:
         return None
          
-    for reading in watt_totals.keys():
+    for reading in watt_totals.iterkeys():
         watt_totals[reading] = watt_totals[reading]*corrections[res]
 
     return watt_totals
@@ -456,9 +456,9 @@ def _get_detail_data(building, resolution, start_time):
             return value
 
         def _snr_call(sid,x,y,rtn_obj):
-            if sid in rtn_obj.keys():
+            if sid in rtn_obj:
                 index = len(rtn_obj[sid])
-                for snr in rtn_obj.keys():
+                for snr in rtn_obj.iterkeys():
                     try:
                         y = y - rtn_obj[snr][index][-1]
                     except:
@@ -552,7 +552,7 @@ def _get_detail_table(building, resolution, start_time):
 
 
     # Input Cycle Table's Values
-    for cycle_id in dataDictionary['cycleTable'].keys():
+    for cycle_id in dataDictionary['cycleTable'].iterkeys():
         cid = int(cycle_id)
 
         start_dt = datetime.datetime.utcfromtimestamp(
@@ -589,7 +589,7 @@ def _get_detail_table(building, resolution, start_time):
         results = _query_averages(average_type,0)
 
         for sid,value in results.iteritems():
-            if sid in dataDictionary['diagnosticTable'].keys():
+            if sid in dataDictionary['diagnosticTable']:
                 dataDictionary['diagnosticTable']\
                                 [sid][CONVERT[average_type]] \
                                 = value
@@ -605,7 +605,7 @@ def _get_detail_table(building, resolution, start_time):
                                      RESOLUTION_DELTAS[resolution],
                                  AUTO_RES_CONVERT[resolution],
                                  True)
-    for ID in dataDictionary['diagnosticTable'].keys():
+    for ID in dataDictionary['diagnosticTable'].iterkeys():
         dataDictionary['diagnosticTable'][ID]['integrated'] = \
             all_watthr_data[int(ID)]
     
