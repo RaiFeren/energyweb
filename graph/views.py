@@ -333,7 +333,6 @@ def static_graph(request):
                               final_args,
                               context_instance=RequestContext(request))
 
-
 def static_graph_data(request, start, end, res):
     '''
     A view returning the JSON data used to populate the static graph.

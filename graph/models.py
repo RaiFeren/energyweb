@@ -22,7 +22,7 @@ class SensorGroup(models.Model):
     
     name = models.CharField(max_length=32, unique=True)
     color = models.CharField(max_length=6) # color rendered on graph
-    scope = models.CharField(max_length=20,
+    scope = models.CharField(max_length=32,
                              choices=[(t, t) for t in SCOPE_TYPES])
     # choices needs a short name and verbose name.
 

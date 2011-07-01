@@ -5,7 +5,7 @@
     "fields": {
         "color": "00bd39",
         "name": "Atwood",
-        "scope": "residential",
+        "scope": "residential"
         }
     },
     {
@@ -14,7 +14,7 @@
 	"fields": {
 	    "color": "d100a0",
 	    "name": "Case",
-            "scope": "residential",
+            "scope": "residential"
 	}
     },
     {
@@ -23,7 +23,7 @@
 	"fields": {
 	    "color": "B700FF",
 	    "name": "East",
-            "scope": "residential",
+            "scope": "residential"
 	}
     },
     {
@@ -32,7 +32,7 @@
 	"fields": {
 	    "color": "02BCFF",
 	    "name": "Linde",
-            "scope": "residential",
+            "scope": "residential"
 	}
     },
     {
@@ -41,7 +41,7 @@
 	"fields": {
 	    "color": "ff0000",
 	    "name": "North",
-            "scope": "residential",
+            "scope": "residential"
 	}
     },
     {
@@ -50,7 +50,7 @@
 	"fields": {
 	    "color": "FFDD02",
 	    "name": "Sontag",
-            "scope": "residential",
+            "scope": "residential"
 	}
     },
     {
@@ -59,7 +59,7 @@
 	"fields": {
 	    "color": "a63f00",
 	    "name": "South",
-            "scope": "residential",
+            "scope": "residential"
 	}
     },
     {
@@ -68,7 +68,7 @@
 	"fields": {
 	    "color": "000000",
 	    "name": "West",
-            "scope": "residential",
+            "scope": "residential"
 	}
     },
     {
@@ -77,7 +77,7 @@
         "fields": {
             "color": "EE7D05",
 	    "name": "AcTest0",
-            "scope": "academic",
+            "scope": "academic"
 	}
     },
     {
@@ -86,7 +86,7 @@
 	"fields": {
 	    "color": "0B5F00",
 	    "name": "AcTest1",
-            "scope": "academic",
+            "scope": "academic"
 	}
     },
     {
@@ -95,7 +95,7 @@
 	"fields": {
 	    "color": "909090",
 	    "name": "AcTest2",
-            "scope": "academic",
+            "scope": "academic"
 	}
     },
     {
@@ -104,7 +104,7 @@
 	"fields": {
 	    "color": "0202FF",
 	    "name": "AcTest3",
-            "scope": "academic",
+            "scope": "academic"
 	}
     },
     {

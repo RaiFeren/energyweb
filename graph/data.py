@@ -190,6 +190,9 @@ def _get_sensor_groups():
     sensor_ids_by_group = {}
     sg_id = None # Keep track of last seen id for grouping purposes
 
+    academic_sensorgroups = []
+    residential_sensorgroups = []
+
     for sensor in sensors:
         # Mark all seen sensors
         sensor_ids.append(sensor.pk)
@@ -209,12 +212,13 @@ def _get_sensor_groups():
                          ]
                      ])
             sensor_ids_by_group[sg_id] = [sensor.pk]
-            if sensor.scope == 'academic':
-                ACADEMIC_SENSORGROUPS.append(sensor_groups[-1])
-            elif sensor.scope == 'residential':
-                RESIDENTIAL_SENSORGROUPS.append(sensor_groups[-1])
+            if sensor.sensor_group.scope == 'academic':
+                academic_sensorgroups.append(sensor_groups[-1])
+            elif sensor.sensor_group.scope == 'residential':
+                residential_sensorgroups.append(sensor_groups[-1])
             
-    return (sensor_groups, sensor_ids, sensor_ids_by_group)
+    return (sensor_groups, sensor_ids, sensor_ids_by_group,\
+                (academic_sensorgroups,residential_sensorgroups))
 
 ##############################
 # Average Collecting
@@ -676,6 +680,5 @@ def _build_db_results(res,start_dt,end_dt,
     return rtn_obj
 
 # These constants are set when call _get_sensor_groups()
-RESIDENTIAL_SENSORGROUPS = []
-ACADEMIC_SENSORGROUPS = []
-(SENSOR_GROUPS, SENSOR_IDS, SENSOR_IDS_BY_GROUP) = _get_sensor_groups()
+(SENSOR_GROUPS, SENSOR_IDS, SENSOR_IDS_BY_GROUP,\
+     (ACADEMIC_SENSORGROUPS,RESIDENTIAL_SENSORGROUPS)) = _get_sensor_groups()
