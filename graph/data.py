@@ -209,6 +209,10 @@ def _get_sensor_groups():
                          ]
                      ])
             sensor_ids_by_group[sg_id] = [sensor.pk]
+            if sensor.scope == 'academic':
+                ACADEMIC_SENSORGROUPS.append(sensor_groups[-1])
+            elif sensor.scope == 'residential':
+                RESIDENTIAL_SENSORGROUPS.append(sensor_groups[-1])
             
     return (sensor_groups, sensor_ids, sensor_ids_by_group)
 
@@ -671,7 +675,7 @@ def _build_db_results(res,start_dt,end_dt,
 
     return rtn_obj
 
-
+# These constants are set when call _get_sensor_groups()
+RESIDENTIAL_SENSORGROUPS = []
+ACADEMIC_SENSORGROUPS = []
 (SENSOR_GROUPS, SENSOR_IDS, SENSOR_IDS_BY_GROUP) = _get_sensor_groups()
-RESIDENTIAL_SENSORGROUPS = SENSOR_GROUPS[:8]
-ACADEMIC_SENSORGROUPS = SENSOR_GROUPS[8:]
