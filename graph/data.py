@@ -234,6 +234,17 @@ def _query_averages(res,start_offset = 0):
     all_averages = dict([[sid,0] for sid in SENSOR_IDS])
 
     trunc_reading_time = None
+
+    #from django.db import connection, transaction
+
+    #cur = connection.cursor()
+    #PowerAverage.graph_data_execute(cur, res, start_dt, end_dt)
+
+    #r = cur.fetchone()
+    #while r is not None:
+    #    for sid in sorted(SENSOR_IDS):
+    #        all_averages[sid] = r[0]
+    #        r = cur.fetchone()
         
     for average in PowerAverage.objects.filter(average_type=res
                     ).order_by('-trunc_reading_time')[len(SENSOR_IDS)*(
@@ -352,7 +363,7 @@ def _make_data_dump(start, end=None, res='second*10'):
     if end:
         end_dt = datetime.datetime.utcfromtimestamp(int(end))
     else:
-        end_dt = None
+        end_dt = datetime.datetime.utcnow()
 
     sg_xy_pairs = dict([[sg[0], []] for sg in SENSOR_GROUPS])
         
@@ -549,16 +560,13 @@ def _get_detail_table(building, resolution, start_time):
         dataDictionary['diagnosticTable'][str(sid)]['now'] = \
             cur_cycles[sid][0]
 
-    dataDictionary['debug'] = {}
     # Input all of the "This Interval" for diagostic table.
     average_cycles = _get_detail_averages(resolution)
     for sid in SENSOR_IDS_BY_GROUP[cur_building[0]]:
         dataDictionary['diagnosticTable'][str(sid)]['interval'] = \
             average_cycles[sid][0]
-        dataDictionary['debug'][sid] = average_cycles[sid]
 
-
-
+    dataDictionary['debugFull'] = average_cycles
     # Input Cycle Table's Values
     for cycle_id in dataDictionary['cycleTable'].iterkeys():
         cid = int(cycle_id)
@@ -592,6 +600,7 @@ def _get_detail_table(building, resolution, start_time):
     ####
     # get averages for the diagnostic table
     all_averages = {}
+
     for average_type in ('minute',resolution):
 
         results = _query_averages(average_type,0)
@@ -649,9 +658,9 @@ def _build_db_results(res,start_dt,end_dt,
             # Pass the return object in case they want to do something odd
             x = x_call(per.timetuple(), rtn_obj)
 
-            for sg in SENSOR_GROUPS:
+            for sg in sorted(SENSOR_GROUPS):
                 y = 0 # Always starts at 0
-                for sid in SENSOR_IDS_BY_GROUP[sg[0]]:
+                for sid in sorted(SENSOR_IDS_BY_GROUP[sg[0]]):
                     # If this sensor has a reading for the current per,
                     # update y.  There are three ways the sensor might
                     # not have such a reading:
@@ -666,7 +675,7 @@ def _build_db_results(res,start_dt,end_dt,
                         # Increase y if its there.
                         # Then get the next data point
                         if y is not None:
-                            y += float(r[0])
+                            y += float(r[0]) 
                         r = cur.fetchone()
                     else:
                         y = None
