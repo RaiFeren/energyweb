@@ -69,6 +69,7 @@ $(function () {
 		},
 		type: 'datetime',
 		min: start, // Don't autoscale the axis
+		max: end,
 		tickInterval: newTickOptions[0],
 		gridLineWidth: 2,
 		minorTickInterval: newTickOptions[1],
@@ -86,6 +87,7 @@ $(function () {
 		title: {
 		    text: 'Power (kW)'
 		},
+		min: 0,
 		plotLines: [{
 		    value: 0,
 		    width: 1,

@@ -12,12 +12,6 @@ div#content
     margin: auto;
 }
 
-table#base_table
-{
-    margin-right: auto;
-    margin-left: auto;
-}
-
 /* Image loading css */
 img.loading
 {

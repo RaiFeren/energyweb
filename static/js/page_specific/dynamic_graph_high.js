@@ -63,6 +63,9 @@ $(function () {
 	// MAGIC: 2 hours is the start time.
 	var newTickOptions = tickhelper(2*3600*1000);
 
+	alert("desired start time is: " + data.desired_first_record);
+	alert("end time is: " + data.last_record);
+
 	// Actually make the graph:
 	chart = new Highcharts.Chart({
 	    chart: {
@@ -78,7 +81,7 @@ $(function () {
 			setInterval(function() {
 
 			    $.getJSON(data_url, function(data) {
-				// Replace data for each sensor
+				// Add a datapoint for each sensor
 				
 				$.each(sensor_groups, function(index, cur_sg) {
 				    group_id = cur_sg[0];

@@ -224,43 +224,27 @@ def _get_sensor_groups():
 # Average Collecting
 ##############################
 
-def _query_averages(res,start_offset = 0):
+def _query_averages(res,orig_dt):
     """
     Gets the averages for a string res (needs to be a resolution type)
     Returns them for all Sensors, in a dictionary with sensor ID as keys.
     Start_offset is to be used for cycle_view. This should be the key of 
     the list to use.
     """
+    from django.db import connection, transaction
     all_averages = dict([[sid,0] for sid in SENSOR_IDS])
 
-    trunc_reading_time = None
+    cur = connection.cursor()
+    PowerAverage.graph_data_execute(cur, res,
+                                    orig_dt - RESOLUTION_DELTAS[res], orig_dt)
 
-    #from django.db import connection, transaction
+    r = cur.fetchone()
+    while r is not None:
+        for sid in sorted(SENSOR_IDS):
+            if r and r[1] == sid:
+                all_averages[sid] = r[0]
+            r = cur.fetchone()
 
-    #cur = connection.cursor()
-    #PowerAverage.graph_data_execute(cur, res, start_dt, end_dt)
-
-    #r = cur.fetchone()
-    #while r is not None:
-    #    for sid in sorted(SENSOR_IDS):
-    #        all_averages[sid] = r[0]
-    #        r = cur.fetchone()
-        
-    for average in PowerAverage.objects.filter(average_type=res
-                    ).order_by('-trunc_reading_time')[len(SENSOR_IDS)*(
-        CYCLE_START_DIFFS[res][start_offset]):len(SENSOR_IDS)*(
-        CYCLE_START_DIFFS[res][start_offset]+1)]:
-
-        if trunc_reading_time is None:
-            trunc_reading_time = average.trunc_reading_time
-        if average.trunc_reading_time == trunc_reading_time:
-            # Note that we limited the query by the number of sensors in
-            # the database.  However, there may not be an average for
-            # every sensor for this time period.  If this is the case,
-            # some of the results will be for an earlier time period and
-            # have an earlier trunc_reading_time .
-            all_averages[average.sensor_id] \
-                = average.watts / 1000.0
     return all_averages
 
 def _get_averages():
@@ -274,7 +258,7 @@ def _get_averages():
 
     for average_type in res_choices:
         all_averages[average_type] = \
-                _query_averages(average_type,0)
+                _query_averages(average_type,datetime.datetime.utcnow())
 
     return all_averages
 
@@ -286,7 +270,9 @@ def _get_detail_averages(res):
     all_averages = dict([[sid,{}] for sid in SENSOR_IDS])
     # Use start_offsets to mark each cycle
     for start_offset in range(len(CYCLE_START_DIFFS[res])):
-        results = _query_averages(res,start_offset)
+        results = _query_averages(res,datetime.datetime.utcnow()
+                                  - CYCLE_START_DIFFS[res][start_offset]
+                                  * RESOLUTION_DELTAS[res])
         for sid,value in results.iteritems():
             all_averages[sid][start_offset] = value
 
@@ -373,13 +359,9 @@ def _make_data_dump(start, end=None, res='second*10'):
                       lambda id,x,y,rtn_obj : rtn_obj[id].append((x,y))
                       )
 
-    if not sg_xy_pairs:
-        d = {
-            'no_results': True,
-            'sensor_groups': SENSOR_GROUPS,
-            }
-    else:
-        last_record = sg_xy_pairs[1][-1][0] # get last x value
+    try:
+        # get last x value from some item
+        last_record = sg_xy_pairs[sg_xy_pairs.keys()[0]][-1][0]
         # Says where the graph should start at
         desired_first_record = start*1000
     
@@ -389,6 +371,12 @@ def _make_data_dump(start, end=None, res='second*10'):
              desired_first_record,
              'sensor_groups': SENSOR_GROUPS,
              'last_record':last_record}
+    except:
+        d = {
+            'no_results': True,
+            'sensor_groups': SENSOR_GROUPS,
+            }
+
     return d
 
 def download_csv(request, start, end, res):
@@ -603,7 +591,7 @@ def _get_detail_table(building, resolution, start_time):
 
     for average_type in ('minute',resolution):
 
-        results = _query_averages(average_type,0)
+        results = _query_averages(average_type,datetime.datetime.utcnow())
 
         for sid,value in results.iteritems():
             if sid in dataDictionary['diagnosticTable']:
