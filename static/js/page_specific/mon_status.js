@@ -4,6 +4,7 @@ $(function () {
     var first_time = true;
     var sensor_groups = null;
 
+    // Updates a data cell of ID name to have val
     function update_cell(name, val) {
         if ($(name).text() != val) {
             $(name).empty();
@@ -12,8 +13,7 @@ $(function () {
     }
 
     function refreshdata_json_cb(data) {
-        // Given new data from the server, update the page (graph and
-        // table).
+        // Given new data from the server, update the page
 
         // TODO: what if somehow we get no results and it's not the 
         // first time?
@@ -32,22 +32,29 @@ $(function () {
 	    first_time = false;
         }
     
-        for (var i=0; i < sensor_groups.length; i++) {
-            group_id = sensor_groups[i][0];
-    
-            for (var j=0; j < sensor_groups[i][3].length; j++) {
-                sensor_id = sensor_groups[i][3][j][0];
+        $.each( sensor_groups, function(index, snr_data) {
+            group_id = snr_data[0];
+            
+            $.each( snr_data[3], function(index, readings) {
+                sensor_id = readings[0];
 
                 if (sensor_id in data.sensor_readings) {
                     readDate = new Date(data.sensor_readings[sensor_id][0]);
-                    readDate.setTime(readDate.getTime() + readDate.getTimezoneOffset()*60*1000);
-                    update_cell('#last-reading-' + sensor_id, (readDate).toString(), '#sensor-name-' + sensor_id);
-                    update_cell('#avg-time-' + sensor_id, data.sensor_readings[sensor_id][1]);
-                    update_cell('#min-time-' + sensor_id, data.sensor_readings[sensor_id][2]);
-                    update_cell('#max-time-' + sensor_id, data.sensor_readings[sensor_id][3]);
+                    readDate.setTime(readDate.getTime() + 
+                                     readDate.getTimezoneOffset()*60*1000);
+                    update_cell('#last-reading-' + sensor_id, 
+                                (readDate).toString(), 
+                                '#sensor-name-' + sensor_id);
+                    update_cell('#avg-time-' + sensor_id, 
+                                data.sensor_readings[sensor_id][1]);
+                    update_cell('#min-time-' + sensor_id, 
+                                data.sensor_readings[sensor_id][2]);
+                    update_cell('#max-time-' + sensor_id, 
+                                data.sensor_readings[sensor_id][3]);
                 }
-            }
-        }
+            });
+        });
+
 	$('#monstatus').tablesorter({widgets: ['zebra']}); 
         setTimeout(refreshdata, 10000);
     }

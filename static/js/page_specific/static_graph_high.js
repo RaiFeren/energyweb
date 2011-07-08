@@ -5,6 +5,7 @@ $(function () {
 
     var sg_xy_pairs = {};
     var sensor_groups = null;
+
     function getdata_json_cb(data) {
         // Given data from the server, make a graph.
 	if (data.no_results) {
@@ -38,16 +39,17 @@ $(function () {
 	// Find the x-axis tick options:
 	var newTickOptions = tickhelper(timedelta_ms);
 	
-	// Make the title text:
-	var start_Date = new Date(start);
-	start_Date.setTime(start_Date.getTime()+start_Date.getTimezoneOffset()*60*1000);
-	var end_Date = new Date(end);
-	end_Date.setTime(end_Date.getTime()+end_Date.getTimezoneOffset()*60*1000);
-	var start_time = hour_format(start_Date);
-	var start_date = start_Date.toDateString();
-	var end_time = hour_format(end_Date);
-	var end_date = end_Date.toDateString();
-	var titletext = "Energy Usage at Mudd from "+start_time+", "+start_date+" to "+end_time+", "+end_date;
+        // Turning dates into a readable string:
+        function process_date(date_obj) {
+            var cur_date = new Date(date_obj);
+            cur_date.setTime(cur_date.getTime()+cur_date.getTimezoneOffset()*60*1000);
+            return hour_format(cur_date) + ", " + cur_date.toDateString();
+        }
+
+	// Make the graph title text:
+	var titletext = "Energy Usage at Mudd from " +
+            process_date(start) + " to " + process_date(end);
+
 	// Actually make the graph:
 	chart = new Highcharts.Chart({
 	    chart: {
@@ -132,7 +134,7 @@ $(function () {
     }
 
     // Initially, show a loading animation instead of the graph
-    // and hide the download link.
+    // and hide the download link while we're waiting for data.
     $('#graph').append(
 	'<img class="loading" src="' + MEDIA_URL + 'img/loading.gif" />');
     $('#download').hide();

@@ -1,5 +1,3 @@
-//alert("this alert is in the external javascript file.");
-
 $(function () 
 {
     var first_time = true;
@@ -57,34 +55,27 @@ $(function ()
 	    first_time = false;
         }
 
-	for (var i=0; i < sensor_groups.length; i++)
-	{
+        $.each(sensor_groups, function(index, snr_gp){
             group_current = 0;
 	    group_week_average = 0;
 	    group_month_average = 0;
             missed_min_average = false;
 	    missed_week_average = false;
 	    missed_month_average = false;
-	    group_name = sensor_groups[i][1];
+	    group_name = snr_gp[1];
 
-	    for (var j=0; j < sensor_groups[i][3].length; j++)
-	    {
-		sensor_id = sensor_groups[i][3][j][0];
+            // Increment building values for each sensor that belongs to it
+            $.each( snr_gp[3], function(index, cur_snr){
 
-		// Add sensor's average to the sensor group's average. 
-                if (sensor_id in data.min_averages)
-                {
+		sensor_id = cur_snr[0];
+
+                if (sensor_id in data.min_averages) 
                     group_current += data.min_averages[sensor_id];
-                }
 		if (sensor_id in data.week_averages)
-		{
 		    group_week_average += data.week_averages[sensor_id];
-		}
 		if (sensor_id in data.month_averages)
-		{
 		    group_month_average += data.month_averages[sensor_id];
-		}
-	    }
+	    });
                         
 	    // Update the averages in the table for the sensor group.
 	    // id for placement should be: curr{buildingname}
@@ -105,7 +96,8 @@ $(function ()
 		$('#month' + group_name).empty();
 		$('#month' + group_name).append( rnd( group_month_average) );
 	    }
-	}
+
+        });
 	
         $("#energystats").tablesorter({widgets: ['zebra']}); 
 	setTimeout(refreshdata, 10000);
