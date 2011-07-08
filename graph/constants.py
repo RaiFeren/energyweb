@@ -1,5 +1,5 @@
 '''
-Used for various constants shared across the files.
+    Used for various constants shared across the files.
 '''
 
 import calendar, datetime, simplejson, time
@@ -7,13 +7,18 @@ import calendar, datetime, simplejson, time
 # Whether or not to report any academic data or not:
 SHOW_ACADEMIC = True
 
-RESIDENTIAL_SENSORGROUP_IDS = [1, 2, 3, 4, 5, 6, 7, 8]
-ACADEMIC_SENSORGROUP_IDS = [9, 10, 11, 12]
+# MAGIC CONSTANT: changes whenever a new sensor is added.
+#RESIDENTIAL_SENSORGROUP_IDS = [1, 2, 3, 4, 5, 6, 7, 8]
+#ACADEMIC_SENSORGROUP_IDS = [9, 10, 11, 12]
 
 # If a full graph has this many points or fewer, show the individual
 # points.  (Otherwise only draw the lines.)
 GRAPH_SHOW_POINTS_THRESHOLD = 40
 
+# Used to figure out what resolutions should be used by detail graph.
+# Converts from the key's resolution, to the resolution shown on the graph.
+# Key's resolution is really the Time Interval you're looking over.
+# Based off of static graph's resolution determiner for 'auto'.
 AUTO_RES_CONVERT = {
     'day':'minute*10',
     'week':'hour',
@@ -21,6 +26,7 @@ AUTO_RES_CONVERT = {
     'year':'day',
     }
 
+# Defines how big a resolution is.
 RESOLUTION_DELTAS = {
     'year':datetime.timedelta(365,0,0), # TODO: do we care about leap?
     'month':datetime.timedelta(30,0,0), # TODO: make less of a hack number
@@ -32,34 +38,35 @@ RESOLUTION_DELTAS = {
     'second*10':datetime.timedelta(0,10,0),
     }
 
-# These mark the different previous cycle options
+# These mark the different previous cycle options.
 # Used in the detail graphs page.
-# First one is the Current cycle.
 CYCLE_START_DELTAS = {
     'day':[
-        RESOLUTION_DELTAS['day'],
-        2*RESOLUTION_DELTAS['day'],
-        RESOLUTION_DELTAS['week'],
-        RESOLUTION_DELTAS['month'],
-        RESOLUTION_DELTAS['year']
+        RESOLUTION_DELTAS['day'], # Today
+        2*RESOLUTION_DELTAS['day'], # Yesterday
+        RESOLUTION_DELTAS['week'], # A Week Ago
+        RESOLUTION_DELTAS['month'], # A Month Ago
+        RESOLUTION_DELTAS['year'] # A Year Ago
         ],
     'week':[
-        RESOLUTION_DELTAS['week'],
-        2*RESOLUTION_DELTAS['week'],
-        RESOLUTION_DELTAS['month'],
-        RESOLUTION_DELTAS['year'],
+        RESOLUTION_DELTAS['week'], # This Week
+        2*RESOLUTION_DELTAS['week'], # Last Week
+        RESOLUTION_DELTAS['month'], # A Month Ago
+        RESOLUTION_DELTAS['year'], # A Year Ago
         ],
     'month':[
-        RESOLUTION_DELTAS['month'],
-        2*RESOLUTION_DELTAS['month'],
-        RESOLUTION_DELTAS['year'],
+        RESOLUTION_DELTAS['month'], # This Month
+        2*RESOLUTION_DELTAS['month'], # Last Month
+        RESOLUTION_DELTAS['year'], # A Year Ago
         ],
     'year':[
-        RESOLUTION_DELTAS['year'],
-        2*RESOLUTION_DELTAS['year'],
+        RESOLUTION_DELTAS['year'], # This Year
+        2*RESOLUTION_DELTAS['year'], # Last Year
         ]
     }
 
+# Similar to the above list, used in cycle mode of detail graph.
+# Used to determine start offset for detail graph.
 CYCLE_START_DIFFS = {
     'second*10': [0],
     'minute': [0],

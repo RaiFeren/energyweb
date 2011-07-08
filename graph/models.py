@@ -5,7 +5,6 @@
 
     Member functions are generally convenience functions for
     inputting data or querying data.
-
 '''
 
 from django.db import models

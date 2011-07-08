@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 
 '''
-This is a slight modification of a daemonizing class written by Sander
-Marechal:
+    This is a slight modification of a daemonizing class written by Sander
+    Marechal:
 
  http://www.jejik.com/articles/2007/02/a_simple_unix_linux_daemon_in_python/
 
-...and released to the public domain, at least according to a comment 
-he made:
+    ...and released to the public domain, at least according to a comment 
+    he made:
 
  http://www.jejik.com/articles/2007/02/a_simple_unix_linux_daemon_in_python/#c6
 
-The only real alteration made was the addition of argument-passing 
-capability between __init__ and run, and that was only a line or two.
+    The only real alteration made was the addition of argument-passing 
+    capability between __init__ and run, and that was only a line or two.
 '''
 
 import sys, os, time, atexit
