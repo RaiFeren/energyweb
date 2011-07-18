@@ -63,9 +63,6 @@ $(function () {
 	// MAGIC: 2 hours is the start time.
 	var newTickOptions = tickhelper(2*3600*1000);
 
-	alert("desired start time is: " + data.desired_first_record);
-	alert("end time is: " + data.last_record);
-
 	// Actually make the graph:
 	chart = new Highcharts.Chart({
 	    chart: {
@@ -74,7 +71,7 @@ $(function () {
 		marginRight: 130,
 		marginBottom: 40,
 		events: {
-		    // Refresh the graph!
+		    // Update the graph!
 		    load: function() {
 			var chart_series = this.series; // get the series in scope
 			// Refresh data every 10 seconds
@@ -87,7 +84,7 @@ $(function () {
 				    group_id = cur_sg[0];
 				    if (chart_series[index]) {
 					chart_series[index].addPoint(
-					    data.sg_xy_pairs[group_id].pop());
+					    data.sg_xy_pairs[group_id].pop(), true, true);
 				    }
 				});
 			    });
@@ -107,7 +104,6 @@ $(function () {
 		    text: 'Time'
 		},
 		type: 'datetime',
-		min: data.desired_first_record,
 		tickInterval: newTickOptions[0],
 		gridLineWidth: 2,
 		minorTickInterval: newTickOptions[1],

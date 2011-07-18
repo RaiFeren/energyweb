@@ -8,8 +8,8 @@ import calendar, datetime, simplejson, time
 SHOW_ACADEMIC = True
 
 # MAGIC CONSTANT: changes whenever a new sensor is added.
-#RESIDENTIAL_SENSORGROUP_IDS = [1, 2, 3, 4, 5, 6, 7, 8]
-#ACADEMIC_SENSORGROUP_IDS = [9, 10, 11, 12]
+RESIDENTIAL_SENSORGROUP_IDS = [1, 2, 3, 4, 5, 6, 7, 8]
+ACADEMIC_SENSORGROUP_IDS = [9, 10, 11, 12]
 
 # If a full graph has this many points or fewer, show the individual
 # points.  (Otherwise only draw the lines.)
@@ -94,3 +94,23 @@ CYCLE_START_DIFFS = {
         1
         ]
     }
+
+# These are magic strings representing different pages (or
+# groups of pages) on the website for which page views
+# will be counted.
+CUSTOM = 'Custom Graph Form'
+CUSTOM_GRAPH = 'Custom Graph Data'
+DATA_ACCESS = 'Data Access'
+DATA_DOWNLOAD = 'Data Download (from Custom Graph)'
+DETAILED_VIEW = 'Detailed View'
+DYNAMIC_GRAPH = 'Dynamic Graph'
+DYNAMIC_TABLE = 'Dynamic Table'
+MAINT_DATA_DOWNLOAD = 'Maintenance Data Download'
+MON_STATUS = 'Monitor Statuses'
+SERVER_STATS = 'Server Statistics'
+SIGNAL_PROCESSING = 'Signal Processing'
+SYSTEM_STATUS = 'System Status'
+
+PAGES = [CUSTOM, CUSTOM_GRAPH, DATA_ACCESS, DATA_DOWNLOAD, DETAILED_VIEW, \
+             DYNAMIC_GRAPH, DYNAMIC_TABLE, MAINT_DATA_DOWNLOAD, MON_STATUS, \
+             SERVER_STATS, SIGNAL_PROCESSING, SYSTEM_STATUS]

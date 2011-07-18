@@ -90,6 +90,16 @@ p#poweredby *
 }
 /* END Powered by css */
 
+h1#title
+{
+    font-size: 20px;
+    text-align: center;
+}
+
+p.info
+{
+    text-align: center;
+}
 /* Here is some css that will 'normalize' the webpage by removing the browser
 styling of many HTML tags. It was found here: http://doc.jsfiddle.net/basic/introduction.html#fiddle-settings-sidebar */
 body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,form,fieldset,input,textarea,p,blockquote,th,td { 

@@ -41,6 +41,8 @@ def energy_table(request):
     A view returning the HTML for the dynamic table.
     This table holds curr. use (minute avg) and avg of past week/month.
     '''
+    data.increase_count(DYNAMIC_TABLE)
+
     # Get data from three hours ago until now.
     (startTime, junk) = \
                 data._generate_start_data( DYNAMIC_START_TIME )
@@ -52,75 +54,39 @@ def energy_table(request):
          'scope': 'residential'},
         context_instance=RequestContext(request))
 
-def energy_table_ac(request):
+def energy_table_mode(request,scope):
     '''
-    A view returning the html for the dynamic table with only
-    academic buildings
+    Generates a data table with the ability to set 'scope'
+    Scope refers either to Academic Buildings, Residential Buildings, or All
+    Table reports averages over last minute, week, month.
     '''
+    data.increase_count(DYNAMIC_TABLE)
+
     (startTime, junk) = \
         data._generate_start_data( DYNAMIC_START_TIME )
 
     if SHOW_ACADEMIC:
+        snrgrp = data.SENSOR_GROUPS
+        if str(scope) == 'academic':
+            snrgrp = data.ACADEMIC_SENSORGROUPS
+        elif str(scope) == 'residential':
+            snrgrp = data.RESIDENTIAL_SENSORGROUPS
         return render_to_response('graph/table_all.html',
-                        {'sensor_groups': data.ACADEMIC_SENSORGROUPS,
+                        {'sensor_groups': snrgrp,
                          'data_url': reverse(
                              'energyweb.graph.views.statistics_table_data'
                              ) + '?junk=' + junk,
-                         'scope': 'academic',
+                         'scope': scope,
                          'dynamic_graph_url': reverse(
-                             'energyweb.graph.views.dynamic_graph_ac'),
+                             'energyweb.graph.views.dynamic_graph_mode',
+                             kwargs={'scope':scope}),
                          'energy_table_url':reverse(
-                             'energyweb.graph.views.energy_table_ac')},
+                             'energyweb.graph.views.energy_table_mode',
+                             kwargs={'scope':scope})
+                         },
                     context_instance=RequestContext(request))
     else:
-        return energy_table(request)
-
-def energy_table_all(request):
-    '''
-    A view returning the html for the dynamic table with all
-    buildings
-    '''
-    (startTime,junk) =\
-        data._generate_start_data( DYNAMIC_START_TIME )
-
-    if SHOW_ACADEMIC:
-        return render_to_response('graph/table_all.html',
-                        {'sensor_groups': data.SENSOR_GROUPS,
-                         'data_url': reverse(
-                             'energyweb.graph.views.statistics_table_data'
-                                             ) + '?junk=' + junk,
-                         'scope':'all',
-                         'dynamic_graph_url': reverse(
-                             'energyweb.graph.views.dynamic_graph_all'),
-                         'energy_table_url':reverse(
-                             'energyweb.graph.views.energy_table_all')},
-                    context_instance=RequestContext(request))
-    else:
-        return energy_table(request)
-
-def energy_table_res(request):
-    '''
-    A view returning the html for the dynamic table with only
-    residential buildings
-    '''
-    (startTime,junk) =\
-        data._generate_start_data( DYNAMIC_START_TIME )
-
-    if SHOW_ACADEMIC:
-        return render_to_response('graph/table_all.html',
-                        {'sensor_groups': data.RESIDENTIAL_SENSORGROUPS,
-                         'data_url': reverse(
-                             'energyweb.graph.views.statistics_table_data'
-                             ) + '?junk=' + junk,
-                         'scope': 'residential',
-                         'dynamic_graph_url': reverse(
-                             'energyweb.graph.views.dynamic_graph_res'),
-                         'energy_table_url':reverse(
-                             'energyweb.graph.views.energy_table_res')},
-                    context_instance=RequestContext(request))
-    else:
-        return energy_table(request)
-
+        return energy_table(request)    
 
 def statistics_table_data(request):
     '''
@@ -152,6 +118,8 @@ def dynamic_graph(request):
     (This graph represents the last two hours and updates
     automatically.)
     '''
+    data.increase_count(DYNAMIC_GRAPH)
+
     # Get all data from last two hours until now
     (start_date, junk) = \
         data._generate_start_data( DYNAMIC_START_TIME )
@@ -164,75 +132,32 @@ def dynamic_graph(request):
          'scope':'residential'},
         context_instance=RequestContext(request))
 
-def dynamic_graph_ac(request):
+def dynamic_graph_mode(request,scope):
     '''
-    Returns the HTML for the dynamic graph with only academic
-    buildings.
+    Generates a dynamic graph with the ability to set 'scope'
+    Scope refers either to Academic Buildings, Residential Buildings, or All
     '''
+    data.increase_count(DYNAMIC_GRAPH)
+
     # Get all data from last two hours until now
     (start_date, junk) = \
         data._generate_start_data( DYNAMIC_START_TIME )
 
-    if SHOW_ACADEMIC:
+    if SHOW_ACADEMIC:        
         return render_to_response('graph/dynamic_all.html',
-                        {'sensor_groups': data.ACADEMIC_SENSOR_GROUPS,
-                         'data_url': reverse('energyweb.graph.views.dynamic_graph_data',
-                                             kwargs={'input_data': start_date}
-                                             ) + '?junk=' + junk,
-                         'scope':'academic',
-                         'dynamic_graph_url': reverse(
-                             'energyweb.graph.views.dynamic_graph_ac'),
-                         'energy_table_url':reverse(
-                             'energyweb.graph.views.energy_table_ac')},
-                    context_instance=RequestContext(request))
-    else:
-        return dynamic_graph(request)
-
-def dynamic_graph_all(request):
-    '''
-    Returns the HTML for the dynamic graph with all
-    buildings.
-    '''
-    # Get all data from last two hours until now
-    (start_date, junk) = \
-        data._generate_start_data( DYNAMIC_START_TIME )
-
-    if SHOW_ACADEMIC:
-        return render_to_response('graph/dynamic_all.html',
-                        {'sensor_groups': data.SENSOR_GROUPS,
-                         'data_url': reverse('energyweb.graph.views.dynamic_graph_data',
-                                             kwargs={'input_data': start_date}
-                                             ) + '?junk=' + junk,
-                         'scope':'all',
-                         'dynamic_graph_url': reverse(
-                             'energyweb.graph.views.dynamic_graph_all'),
-                         'energy_table_url':reverse(
-                             'energyweb.graph.views.energy_table_all')},
-                    context_instance=RequestContext(request))
-    else:
-        return dynamic_graph(request)
-
-def dynamic_graph_res(request):
-    '''
-    Returns the HTML for the dynamic graph with only residential
-    buildings.                                                                                  
-    '''
-    # Get all data from last two hours until now
-    (start_date, junk) = \
-        data._generate_start_data( DYNAMIC_START_TIME )
-
-    if SHOW_ACADEMIC:
-        return render_to_response('graph/dynamic_all.html',
-                        {'sensor_groups': data.RESIDENTIAL_SENSOR_GROUPS,
-                         'data_url': reverse('energyweb.graph.views.dynamic_graph_data',
-                                             kwargs={'input_data': start_date}
-                                             ) + '?junk=' + junk,
-                         'scope':'residential',
-                         'dynamic_graph_url': reverse(
-                             'energyweb.graph.views.dynamic_graph_res'),
-                         'energy_table_url':reverse(
-                             'energyweb.graph.views.energy_table_res')},
-                    context_instance=RequestContext(request))
+                {'sensor_groups': data.ACADEMIC_SENSORGROUPS,
+                 'data_url': reverse('energyweb.graph.views.dynamic_graph_data',
+                                     kwargs={'input_data': start_date}
+                                     ) + '?junk=' + junk,
+                 'scope':scope,
+                 'dynamic_graph_url': reverse(
+                    'energyweb.graph.views.dynamic_graph_mode', 
+                    kwargs={'scope':scope}),
+                 'energy_table_url':reverse(
+                    'energyweb.graph.views.energy_table_mode',
+                    kwargs={'scope':scope})
+                 },
+                                  context_instance=RequestContext(request))
     else:
         return dynamic_graph(request)
 
@@ -273,6 +198,8 @@ def static_graph(request):
        3) Input valid data
     They only get a graph back if they have input valid data!
     '''
+    # Increase the viewCount for today
+    data.increase_count(CUSTOM)
 
     def _request_valid(request):
         return request.method == 'GET' \
@@ -355,6 +282,9 @@ def static_graph_data(request, start, end, res):
     '''
     A view returning the JSON data used to populate the static graph.
     '''
+    # Increase the viewCount for today
+    data.increase_count(CUSTOM_GRAPH)
+
     data_dump = data._make_data_dump(start, end, res)
     
     json_serializer = serializers.get_serializer("json")()
@@ -362,6 +292,8 @@ def static_graph_data(request, start, end, res):
                         mimetype='application/json')
 
 def download_csv(request, start, end, res):
+    # Increase the viewCount for today
+    data.increase_count(DATA_DOWNLOAD)
     return data.download_csv(request, start, end, res)
 
 def detail_graph(request, building, mode, res):
@@ -370,6 +302,9 @@ def detail_graph(request, building, mode, res):
     (This graph represents the last three hours and updates
     automatically.)
     '''
+    # Increase the viewCount for today
+    data.increase_count(DETAILED_VIEW)
+
     # Get the current date.
     (start_data, junk) = data._generate_start_data( datetime.timedelta(0,0,0) )
 
@@ -436,7 +371,7 @@ def detail_table_data(request, building, resolution, start_time):
     return HttpResponse(simplejson.dumps(returnDictionary),
                         mimetype='application/json')
 
-def mon_status_data(request):
+def signal_processing_data(request):
     """
     Generates data for the monitor status page
     """
@@ -466,7 +401,7 @@ def mon_status_data(request):
     return HttpResponse(simplejson.dumps({'sensor_readings': sreadings,
                                           'sensor_groups': data.SENSOR_GROUPS,
                                           'data_url': reverse(
-                                              'energyweb.graph.views.mon_status_data')
+                                              'energyweb.graph.views.signal_processing_data')
                                           + '?junk=' + junk}),
                         mimetype='application/json')
 
@@ -487,13 +422,16 @@ def login_required(view_callable):
 
 
 @login_required
-def mon_status(request):
+def signal_processing(request):
     ''' Requires login, shows the status table for sensors. '''
+    # Increase the viewCount for today
+    data.increase_count(SIGNAL_PROCESSING)
+
     junk = str(calendar.timegm(datetime.datetime.now().timetuple()))
-    return render_to_response('graph/maintenance/status.html',
+    return render_to_response('graph/maintenance/processing.html',
                         {'sensor_groups': data._get_sensor_groups()[0],
                          'data_url': reverse(
-                             'energyweb.graph.views.mon_status_data')
+                             'energyweb.graph.views.signal_processing_data')
                          + '?junk=' + junk},
                     context_instance=RequestContext(request))
 
@@ -505,6 +443,8 @@ def data_access(request):
        1) Did not input data yet
        2) Input valid data
     '''
+    # Increase the viewCount for today
+    data.increase_count(DATA_ACCESS)
 
     def _request_valid(request):
         return request.method == 'GET' \
@@ -585,9 +525,48 @@ def data_access_data(request, start, end, res):
     return HttpResponse(simplejson.dumps(data_dump),
                         mimetype='application/json')
 
+import os
 @login_required
-def logs(request):
-    return render_to_response('graph/maintenance/logs.html',
+def system_status(request):
+    # Increase the viewCount for today
+    data.increase_count(SYSTEM_STATUS)
+
+    status_list = data.getLastStatus()
+    load = os.getloadavg()
+    status_data = {
+        'data': status_list,
+        'load': [load[0], load[1], load[2]],}
+    return render_to_response('graph/maintenance/status.html',
+                              status_data,
+                              context_instance=RequestContext(request))
+
+@login_required
+def detaillog(request, id_num, lvl, sens_type):
+    # Increase the viewCount for today
+    data.increase_count(MON_STATUS)
+
+    log_list = data.grabLogs(sens_type, lvl, id_num)
+    loc = Sensor.objects.filter(pk=id_num)[0].sensor_group.name
+    dict_to_render = {
+        'log_data': log_list,
+        'id_num': id_num,
+        'lvl': lvl,
+        'sens_type': sens_type,
+        'location': loc,}
+    return render_to_response('graph/maintenance/generic_log.html',
+                              dict_to_render,
+                              context_instance=RequestContext(request))
+    
+@login_required
+def server_stats(request):
+    # Increase the viewCount for today
+    data.increase_count(SERVER_STATS)
+
+    dict_to_render = data.system_statistics()
+    dict_to_render["numstatlist"] = range(1, len(dict_to_render["mem"]))
+    dict_to_render["viewCounts"] = data.viewCountStats()
+    return render_to_response('graph/maintenance/server.html',
+                              dict_to_render,
                               context_instance=RequestContext(request))
 
 def logout(request):

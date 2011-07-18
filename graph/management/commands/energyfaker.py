@@ -22,7 +22,8 @@ from energyweb.graph.fake_rhizome_profiles import FAKE_RHIZOME_PROFILES
 from SocketServer import TCPServer, BaseRequestHandler
 from random import random, randint
 from binascii import unhexlify
-from energyweb.graph.models import Sensor, Setting
+from energyweb.graph.models import Sensor, Setting, LogMessage
+from django.db import connection, transaction
 
 
 class FakeRhizomeHandler(BaseRequestHandler):
@@ -80,6 +81,10 @@ class FakeRhizomeDaemon(Daemon):
         termination.
         '''
         info('Cleaning up: rolling back, disconnecting, disconnecting.')
+        error_msg = LogMessage(sensor=self.sensor, reading_time=datetime.datetime.now(), \
+                                   sensor_type='F', log_type='S', topic='Closed',\
+                                   details='rolling back and disconnecting.')
+        error_msg.save()
         if hasattr(self, 'sock'):
             self.sock.shutdown()
 
@@ -88,11 +93,26 @@ class FakeRhizomeDaemon(Daemon):
         If a SIGQUIT, SIGTERM, or SIGINT is received, shutdown cleanly.
         '''
         if signum == signal.SIGQUIT:
-            info('Caught SIGQUIT.')
+            quit_msg = LogMessage(sensor=self.sensor, \
+                                      reading_time=datetime.datetime.now(),\
+                                      sensor_type='M', log_type='S', topic="Off",\
+                                      details="Caught Quit Signal")
+            quit_msg.save()
+            logging.info('Caught SIGQUIT.')
         elif signum == signal.SIGTERM:
-            info('Caught SIGTERM.')
+            quit_msg = LogMessage(sensor=self.sensor, \
+                                      reading_time=datetime.datetime.now(),\
+                                      sensor_type='M', log_type='S', topic="Off",\
+                                      details="Caught Terminate Signal")
+            quit_msg.save()
+            logging.info('Caught SIGTERM.')
         elif signum == signal.SIGINT:
-            info('Caught SIGINT.')
+            quit_msg = LogMessage(sensor=self.sensor, \
+                                      reading_time=datetime.datetime.now(),\
+                                      sensor_type='M', log_type='S', topic="Off",\
+                                      details="Caught Interrupt Signal")
+            quit_msg.save()
+            logging.info('Caught SIGINT.')
         # cleanup() will be called since it is registered with atexit
         sys.exit(0)
 
@@ -125,6 +145,10 @@ class FakeRhizomeDaemon(Daemon):
                                       FAKE_RHIZOME_PROFILES[sensor_id]]
         self.sock = TCPServer((self.sensor.ip, self.sensor.port), 
                               FakeRhizomeHandler)
+        status_msg = LogMessage(sensor=self.sensor, reading_time=datetime.datetime.now(), \
+                                   sensor_type='F', log_type='S', topic='Started',\
+                                   details='Started serving data')
+        status_msg.save()
         info('Serving for sensor %d (%s, %s).' % (sensor_id, desc, addr))
         self.sock.serve_forever()
 

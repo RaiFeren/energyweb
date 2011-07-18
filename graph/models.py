@@ -336,3 +336,37 @@ class Signal(models.Model):
 
     def __unicode__(self):
         return u'%s: %s' % (self.name, self.data)
+
+
+class LogMessage(models.Model):
+    ''' Model for Log Messages stored by the energymons and the
+        energyfakers upon encountering interesting things.
+    '''
+    sensor = models.ForeignKey(Sensor)
+    reading_time = models.DateTimeField(db_index=True)
+    
+    SENSOR_TYPE_CHOICES = (
+        ('M', 'Monitor'),
+        ('F', 'Faker'),
+        )
+    sensor_type = models.CharField(max_length=1, choices=SENSOR_TYPE_CHOICES)
+    
+    LOG_TYPE_CHOICES = (
+        ('E', 'Error'),
+        ('W', 'Warning'),
+        ('S', 'Status'),
+        )
+    log_type = models.CharField(max_length=1, choices=LOG_TYPE_CHOICES)
+
+    # Magic number: 32 because we don't know what topics we might put, but they
+    # shouldn't be long anyways since we have details.
+    topic = models.CharField(max_length=32)
+    details = models.TextField()
+
+class viewCount(models.Model):
+    '''
+    Keeps track of page views by page and by day.
+    '''
+    count = models.IntegerField()
+    date = models.DateField()
+    page = models.CharField(max_length=35)

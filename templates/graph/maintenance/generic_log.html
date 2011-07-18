@@ -1,0 +1,49 @@
+{% extends "base_maintenance.html" %}
+
+{% block title %}The Server Speaks{% endblock %}
+
+{% block morehead %}
+<script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}js/jquery.tablesorter.min.js"></script>
+<link rel="stylesheet" href="{{ MEDIA_URL }}css/energy_table.css" type="text/css" media="screen" />
+<script language="javascript" type="text/javascript">
+    var MEDIA_URL = "{{ MEDIA_URL }}";
+    var data_url = "{{ data_url }}";
+    $(function () {
+    $('#monitor_status').tablesorter({widgets: ['zebra']});
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+
+<h1 id="title">Monitor {{ id_num }}, {{ location }}</h1>
+<br>
+<ul id="navbar">
+  <li><a href="/graph/status/{{ id_num }}/{{ sens_type }}/A/">Most Recent</a></li>
+  | <li><a href="/graph/status/{{ id_num }}/{{ sens_type }}/E/">Last 10 Errors</a></li>
+  | <li><a href="/graph/status/{{ id_num }}/{{ sens_type }}/W/">Last 10 Warnings</a></li>
+  | <li><a href="/graph/status/{{ id_num }}/{{ sens_type }}/S/">Last 10 Statuses</a></li>
+</ul>
+<br>
+<table class="tablesorter" id="monitor_status">
+  <thead>
+    <tr id="trhead">
+      <th> Time</th>
+      <th> Level&nbsp&nbsp&nbsp</th>
+      <th> Topic</th>
+      <th> Details</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for mon in log_data %}
+    <tr><!--Make every other row of class even-->
+      <td id="num">{{ mon.0 }}</td>
+      <td id="loc">{{ mon.1 }}</td>
+      <td id="stat">{{ mon.2 }}</td>
+      <td id="time">{{ mon.3 }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% ifequal log_data|length 0 %}<br><p class="info">No data found.</p>{% endifequal %}
+{% endblock %}

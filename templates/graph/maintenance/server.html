@@ -1,0 +1,96 @@
+{% extends "base_maintenance.html" %}
+
+{% block title %}The Server Speaks{% endblock %}
+
+{% block morehead %}
+<script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}js/jquery.tablesorter.min.js"></script>
+<link rel="stylesheet" href="{{ MEDIA_URL }}css/energy_table.css" type="text/css" media="screen" />
+<link rel="stylesheet" href="{{ MEDIA_URL }}css/server.css" type="text/css" media="screen" />
+<script language="javascript" type="text/javascript">
+    var MEDIA_URL = "{{ MEDIA_URL }}";
+    var data_url = "{{ data_url }}";
+    $(function () {
+    $('#mem').tablesorter({widgets: ['zebra']});
+    $('#cpu').tablesorter({widgets: ['zebra']});
+    $('#viewCounts').tablesorter({widgets: ['zebra']});
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+
+<p class="info"> Note: This page does not update automatically. </p>
+<br>
+<h1 id="title"> System Load: {{ load }} </h1>
+<br>
+<table>
+  <tr>
+    <td>
+      <table class="tablesorter" id="mem">
+	<thead>
+	  <tr id="trhead">
+	    <th> {{ mem.0.1 }} &nbsp</th>
+	    <th> {{ mem.0.3 }}&nbsp&nbsp&nbsp&nbsp</th>
+	    <th> {{ mem.0.10 }}</th>
+	  </tr>
+	</thead>
+	<tbody>
+	  {% for proc in mem|slice:"1:" %}
+	  <tr id="proc{{ proc.1 }}">
+	    <td id="id{{ proc.1 }}">{{ proc.1 }}</td>
+	    <td id="mem{{ proc.1 }}">{{ proc.3 }}</td>
+	    <td id="name{{ proc.1 }}">{{ proc.10 }}</td>
+	  </tr>
+	  {% endfor %}
+	</tbody>
+      </table>
+    </td>
+    <td>
+      <table class="tablesorter" id="cpu">
+        <thead>
+          <tr id="trhead">
+	    <th> {{ cpu.0.1 }}</th>
+            <th> {{ cpu.0.2 }}&nbsp&nbsp&nbsp&nbsp</th>
+            <th> {{ cpu.0.10 }} </th>
+          </tr>
+        </thead>
+	<tbody>
+          {% for proc in cpu|slice:"1:" %}
+          <tr id="proc{{ proc.1 }}">
+	    <td id="id{{ proc.1 }}">{{ proc.1 }}</td>
+            <td id="cpu{{ proc.1 }}">{{ proc.2 }}</td>
+            <td id="name{{proc.1 }}">{{ proc.10 }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </td>
+  </tr>
+</table>
+<br>
+<br>
+<h1 id="title">Page Views</h1>
+<br>
+<table class="tablesorter" id="viewCounts">
+  <thead>
+    <tr id="trhead">
+      <th> Page</th>
+      <th> Views Today&nbsp&nbsp&nbsp&nbsp</th>
+      <th> Views Yesterday&nbsp&nbsp&nbsp&nbsp</th>
+      <th> Views a Week Ago&nbsp&nbsp&nbsp&nbsp</th>
+      <th> Views a Month(approx.) Ago&nbsp&nbsp&nbsp&nbsp</th>
+  </thead>
+  <tbody>
+    {% for pages in viewCounts %}
+    <tr id="row{{ pages.0 }}">
+      <td id="name{{ pages.0 }}">{{ pages.0 }} </td>
+      <td id="today{{ pages.0 }}">{{ pages.1 }} </td>
+      <td id="yest{{ pages.0 }}">{{ pages.2 }} </td>
+      <td id="week{{ pages.0 }}">{{ pages.3 }} </td>
+      <td id="month{{ pages.0 }}">{{ pages.4 }} </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}

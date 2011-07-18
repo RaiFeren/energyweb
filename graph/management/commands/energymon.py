@@ -19,7 +19,7 @@ from binascii import hexlify
 from energyweb.graph.daemon import Daemon
 from django.conf import settings
 from energyweb.graph.models import Sensor, PowerAverage, SensorReading, \
-                                   SRProfile, Setting, Signal
+                                   SRProfile, Setting, Signal, LogMessage
 from django.db.models import Avg, Max, Min, Count
 from django.db import connection, transaction
 
@@ -53,6 +53,10 @@ class EnergyMonDaemon(Daemon):
         termination.
         '''
         logging.info('Cleaning up: rolling back, disconnecting, disconnecting.')
+        close_msg = LogMessage(sensor=self.sensor, reading_time=datetime.datetime.now(),\
+                                 sensor_type='M', log_type='S', topic="Off",\
+                                 details="Rolling back and disconnecting.")
+        close_msg.save()
         transaction.rollback()
         if hasattr(self, 'sock'):
             self.sock.close()
@@ -62,10 +66,25 @@ class EnergyMonDaemon(Daemon):
         If a SIGQUIT, SIGTERM, or SIGINT is received, shutdown cleanly.
         '''
         if signum == signal.SIGQUIT:
+            quit_msg = LogMessage(sensor=self.sensor, \
+                                      reading_time=datetime.datetime.now(),\
+                                      sensor_type='M', log_type='S', topic="Off",\
+                                      details="Caught Quit Signal")
+            quit_msg.save()
             logging.info('Caught SIGQUIT.')
         elif signum == signal.SIGTERM:
+            quit_msg = LogMessage(sensor=self.sensor, \
+                                      reading_time=datetime.datetime.now(),\
+                                      sensor_type='M', log_type='S', topic="Off",\
+                                      details="Caught Terminate Signal")
+            quit_msg.save()
             logging.info('Caught SIGTERM.')
         elif signum == signal.SIGINT:
+            quit_msg = LogMessage(sensor=self.sensor, \
+                                      reading_time=datetime.datetime.now(),\
+                                      sensor_type='M', log_type='S', topic="Off",\
+                                      details="Caught Interrupt Signal")
+            quit_msg.save()
             logging.info('Caught SIGINT.')
         # cleanup() will be called since it is registered with atexit
         sys.exit(0)
@@ -74,10 +93,18 @@ class EnergyMonDaemon(Daemon):
         '''
         Open a socket to the device, looping until success.
         '''
+        had_issue = False
         while True:
             try:
                 self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.sock.connect((self.sensor.ip, self.sensor.port))
+                connect_msg = LogMessage(sensor=self.sensor, \
+                                             reading_time=datetime.datetime.now(),\
+                                             sensor_type='M', log_type='S', \
+                                             topic="Running",\
+                                             details="Socket connected to %s:%d." \
+                                             % (self.sensor.ip, self.sensor.port))
+                connect_msg.save()
                 logging.info('Socket connected to %s:%d.' 
                      % (self.sensor.ip, self.sensor.port))
                 break
@@ -85,6 +112,14 @@ class EnergyMonDaemon(Daemon):
                 logging.error(str(detail))
                 logging.error('Socket error.')
                 logging.error('Pausing, reopening socket.')
+                if not had_issue:
+                    error_msg = LogMessage(sensor=self.sensor, \
+                                               reading_time=datetime.datetime.now(),\
+                                               sensor_type='M', log_type='E', \
+                                               topic="No conection",\
+                                               details="Socket Error")
+                    error_msg.save()
+                    has_issue = True # Prevent extra copies of this
                 time.sleep(settings.ERROR_PAUSE)
 
     def init_power_averages(self):
@@ -182,6 +217,11 @@ class EnergyMonDaemon(Daemon):
         self.sensor = Sensor.objects.get(pk=sensor_id)
 
         logging.debug('Initializing power averages.')
+        open_msg = LogMessage(sensor=self.sensor, reading_time=datetime.datetime.now(), \
+                                  sensor_type='M', log_type='S', topic='Starting up',\
+                                  details='Initializing Power Averages')
+        open_msg.save()
+                           
         self.init_power_averages()
         transaction.commit()
 
@@ -201,6 +241,11 @@ class EnergyMonDaemon(Daemon):
             while len(data) < 45:
                 data_recvd = self.sock.recv(1024)
                 if data_recvd == '':
+                    detail_string ='Closing/Reopening socket. Data was: '+hexlify(data) +'.'
+                    error_msg = LogMessage(sensor=self.sensor, reading_time=datetime.datetime.now(), \
+                                           sensor_type='M', log_type='W', topic='Socket died during transmission',\
+                                           details=detail_string)
+                    error_msg.save()
                     logging.error('Socket died.  Printing data, closing, reopening.')
                     logging.error(hexlify(data) + '.')
                     self.sock.close()
@@ -210,6 +255,11 @@ class EnergyMonDaemon(Daemon):
                     data += data_recvd
             logging.debug('Data received.  (45 bytes)')
             if data[0:4] != 'RTSD': # 52 54 53 44 in hex
+                detail_string = 'Closing/Reopening socket. Data was: '+ hexlify(data) + '.'
+                error_msg = LogMessage(sensor=self.sensor, reading_time=datetime.datetime.now(), \
+                                  sensor_type='M', log_type='W', topic='Bad data',\
+                                  details=detail_string)
+                error_msg.save()
                 logging.error('Bad data.  Printing data, closing socket, reopening.')
                 logging.error(hexlify(data) + '.')
                 self.sock.close()
@@ -316,7 +366,12 @@ class EnergyMonDaemon(Daemon):
                     transaction.commit()
                     logging.info('Stop requested.')
                     break
-    
+
+        quit_msg = LogMessage(sensor=self.sensor, \
+                                  reading_time=datetime.datetime.now(),\
+                                  sensor_type='M', log_type='S', topic="Off",\
+                                  details="Past main loop. Exiting.")
+        quit_msg.save()    
         logging.info('Past main loop.  Exiting.')
         sys.exit(0)
 

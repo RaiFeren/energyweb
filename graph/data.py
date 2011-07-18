@@ -16,8 +16,9 @@ from django import forms
 from django.db.models import Avg, Max, Min, Count
 
 from energyweb.graph.models import SensorGroup, SensorReading, Sensor, \
-                                   PowerAverage, SRProfile
-import calendar, datetime, simplejson, time
+                                   PowerAverage, SRProfile, LogMessage, \
+                                   viewCount
+import calendar, datetime, simplejson, time, os, subprocess
 
 from constants import *
 
@@ -178,9 +179,9 @@ def _query_averages(res,orig_dt):
     all_averages = dict([[sid,0] for sid in SENSOR_IDS])
 
     cur = connection.cursor()
+    start_dt = orig_dt - RESOLUTION_DELTAS[res]
     # Search for data averages
-    PowerAverage.graph_data_execute(cur, res,
-                                    orig_dt - RESOLUTION_DELTAS[res], orig_dt)
+    PowerAverage.graph_data_execute(cur, res, start_dt, orig_dt)
     # r is the current entry in the database
     r = cur.fetchone()
     while r is not None:
@@ -572,6 +573,122 @@ def _get_detail_table(building, resolution, start_time):
             all_watthr_data[int(ID)]
     
     return dataDictionary
+
+##############################
+# Log accessing functions
+##############################
+def getLastStatus():
+    ''' Get the last status log for each sensor and return a list of
+        [sensor#, location, laststatus, time of laststatus]
+    '''
+    returnList = []
+    
+    for s in SENSOR_GROUPS:
+        for ind_sensors in s[3]:
+            loc = str(s[1])
+            logmessage = LogMessage.objects.filter(sensor=ind_sensors[0],
+                                                   sensor_type="M",
+                                                   log_type="S").order_by("-reading_time")[0]
+            topic = str(logmessage.topic)
+            topic_time = logmessage.reading_time
+            returnList += [[ind_sensors[0], loc, topic, topic_time]]
+    return returnList
+
+def grabLogs(sens_type, level, id_num):
+    '''
+    Returns the last ten logs in a list with elements:
+    [time, level, topic, details]
+    with inputs:
+    sensor_type = 'M': monitor
+                  'F': faker
+    level = 'A': any level
+            'S': only statuses
+            'W': only warnings
+            'E': only errors
+    id_num = the id num of the sensor
+    '''
+    returnList = []
+    logmessage = 1
+    if (level == 'A'):
+        logmessage = LogMessage.objects.filter(sensor=id_num, sensor_type=sens_type).order_by("-reading_time")[:10]
+    else:
+        logmessage = LogMessage.objects.filter(sensor=id_num, sensor_type=sens_type,
+                                               log_type=level).order_by("reading_time")[:10]
+    for lm in logmessage:
+        returnList += [[lm.reading_time, str(lm.log_type), str(lm.topic), str(lm.details)]]
+    return returnList
+
+################
+# system statistics functions
+################
+def system_statistics():
+    '''
+    Returns a dictionary with the load, mem usage and cpu usage:
+    load = a triple
+    mem = a list of lists - each sublist is the info for one process
+    cpu = a list of lists - ""
+    mem and cpu each hold only the top 5 processes.
+    '''
+    load_avg = os.getloadavg()
+    output = subprocess.Popen(['ps', 'aux', '--sort', '-%mem'], stdout=subprocess.PIPE).communicate()[0]
+    memList = output.split('\n')
+    memList = memList[:6]
+    output = subprocess.Popen(['ps', 'aux', '--sort', '-%cpu'], stdout=subprocess.PIPE).communicate()[0]
+    cpuList = output.split('\n')
+    cpuList = cpuList[:6]
+    for i in xrange(6):
+        # split the processes information into different strings
+        memList[i] = memList[i].split() 
+        # put the command name back together (is tenth/last field)
+        memList[i] = memList[i][:10] + [' '.join(memList[i][10:])]
+        cpuList[i] = cpuList[i].split()
+        cpuList[i] = cpuList[i][:10] + [' '.join(cpuList[i][10:])]
+    return {'load': load_avg, 'mem': memList,  'cpu': cpuList,}
+
+def viewCountStats():
+    '''
+    Retrieves the viewCount statistics for today, yesterday, 7 days ago, a month ago
+    returns a list of format:
+    [ [page_name, numViews today, numViews yesterday, numViews weekAgo, numViews monthAgo], ...]
+    '''
+    returnList = []
+    today = datetime.date.today()
+    yesterday = datetime.date.today() - RESOLUTION_DELTAS['day']
+    lastWeek = datetime.date.today() - RESOLUTION_DELTAS['week']
+    monthAgo = datetime.date.today() - RESOLUTION_DELTAS['month']
+    times = [today, yesterday, lastWeek, monthAgo]
+    for pages in PAGES:
+        data_accumulator = [pages]
+        for day in times:
+            numViews = 0
+            try:
+                numViews = viewCount.objects.get(date=day, page=pages).count
+            except:
+                numViews = 0
+            data_accumulator += [numViews]
+        returnList += [data_accumulator]
+    return returnList
+            
+            
+        
+
+##############################
+# To enable counting of views
+##############################
+
+def increase_count(page_name):
+    '''
+    Takes in the page name and increases the count for today or
+    creates the count for today.
+    '''
+    currCount = ""
+    today = datetime.date.today()
+    try:
+        currCount=viewCount.objects.get(date=today, page=page_name)
+    except:
+        currCount = viewCount(date=today, page=page_name, count=0)
+    currCount.count = currCount.count + 1
+    currCount.save()
 
 ##############################
 # Utility
